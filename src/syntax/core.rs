@@ -1,19 +1,20 @@
 use std::ops::Index;
+use std::rc::Rc;
 
 type Level = u32;
 type DBI = u32;
 
-/// Context
+/// Context, can be captured inside of a lambda
 #[derive(Debug, Clone)]
 pub enum Env {
     Nil,
-    Cons(Box<Self>, Box<Term>),
+    Cons(Rc<Self>, Box<Term>),
 }
 
 impl Index<DBI> for Env {
     type Output = Term;
 
-    /// Project from this environment
+    /// Projecting from this environment.
     fn index(&self, index: DBI) -> &Self::Output {
         match self {
             Env::Nil => panic!("DeBruijn index overflow."),
@@ -50,17 +51,29 @@ pub struct Term {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TermInfo {
     Type(Level),
-    /// Local variable, referred by de-bruijn index
+    /// Local variable, referred by de-bruijn index.
     Var(DBI),
-    /// Global variable, referred by variable name
+    /// Global variable, referred by variable name.
     Ref(String),
-    Lambda(LambdaInfo),
+    /// Closure.
+    Lambda(Closure),
+    /// Pi type. Since it affects type-checking translation, the visibility of the parameter
+    /// need to be specified.
+    Pi(Visib, Closure),
+    /// Sigma type, ditto.
+    Sigma(Visib, Closure),
+    Pair(Box<Term>, Box<Term>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct LambdaInfo {
+pub struct Closure {
     pub param_type: Box<Term>,
-    pub visib: Visib,
     pub body: Box<Term>,
     pub env: Env,
+}
+
+impl Closure {
+    pub fn instantiate(self, param: Term) -> Term {
+        unimplemented!()
+    }
 }
