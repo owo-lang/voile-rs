@@ -69,10 +69,10 @@ install:
 
 build: off
 
-# artifacts:
-  # - name: voilec-%channel%-%target%.exe
-    # path: target\release\voilec.exe
+artifacts:
+  - name: voilec-%channel%-%target%.exe
+    path: target\release\voilec.exe
 
 test_script:
-  # - cargo build --release --bin voilec --all-features
+  - cargo build --release --bin voilec --all-features
   - cargo test --verbose --all-features %cargoflags%
