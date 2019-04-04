@@ -2,17 +2,23 @@ use std::ops::Index;
 use std::rc::Rc;
 
 type Level = u32;
-type DBI = u32;
+type DBI = usize;
 
 /// Context, can be captured inside of a lambda
 #[derive(Debug, Clone)]
 pub enum Env {
     Nil,
-    Cons(Rc<Self>, Box<Term>),
+    Cons(Rc<Self>, Box<Canonical>),
+}
+
+impl Env {
+    pub fn up(self, canonical: Canonical) -> Self {
+        Env::Cons(Rc::new(self), Box::new(canonical))
+    }
 }
 
 impl Index<DBI> for Env {
-    type Output = Term;
+    type Output = Canonical;
 
     /// Projecting from this environment.
     fn index(&self, index: DBI) -> &Self::Output {
@@ -48,13 +54,33 @@ pub struct Term {
     pub info: TermInfo,
 }
 
+impl Term {
+    pub fn new(info: TermInfo) -> Self {
+        Self { info }
+    }
+
+    pub fn eval(self, env: Env) -> Canonical {
+        match self.info {
+            TermInfo::Canonical(e) => e,
+            TermInfo::Var(n) => env[n].clone(),
+            _ => unimplemented!(),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TermInfo {
-    Type(Level),
     /// Local variable, referred by de-bruijn index.
     Var(DBI),
     /// Global variable, referred by variable name.
     Ref(String),
+    /// Directly a canonical normal value which cannot reduce itself
+    Canonical(Canonical),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Canonical {
+    Type(Level),
     /// Closure.
     Lambda(Closure),
     /// Pi type. Since it affects type-checking translation, the visibility of the parameter
@@ -73,7 +99,7 @@ pub struct Closure {
 }
 
 impl Closure {
-    pub fn instantiate(self, param: Term) -> Term {
-        unimplemented!()
+    pub fn instantiate(self, param: Canonical) -> Canonical {
+        self.body.eval(Env::up(self.env, param))
     }
 }
