@@ -1,30 +1,46 @@
+use std::collections::BTreeMap;
 use std::ops::Index;
 use std::rc::Rc;
 
 type Level = u32;
 type DBI = usize;
 
-/// Context, can be captured inside of a lambda
+pub type GlobalEnv = BTreeMap<String, Canonical>;
+
+/// Local context, can be captured inside of a lambda
 #[derive(Debug, Clone)]
-pub enum Env {
+pub enum LocalEnv {
     Nil,
     Cons(Rc<Self>, Box<Canonical>),
 }
 
+#[derive(Debug, Clone)]
+pub struct Env {
+    pub local: LocalEnv,
+    pub global: GlobalEnv,
+}
+
 impl Env {
-    pub fn up(self, canonical: Canonical) -> Self {
-        Env::Cons(Rc::new(self), Box::new(canonical))
+    pub fn up_local(mut self, canonical: Canonical) -> Self {
+        self.local = self.local.up(canonical);
+        self
     }
 }
 
-impl Index<DBI> for Env {
+impl LocalEnv {
+    pub fn up(self, canonical: Canonical) -> Self {
+        LocalEnv::Cons(Rc::new(self), Box::new(canonical))
+    }
+}
+
+impl Index<DBI> for LocalEnv {
     type Output = Canonical;
 
     /// Projecting from this environment.
     fn index(&self, index: DBI) -> &Self::Output {
         match self {
-            Env::Nil => panic!("DeBruijn index overflow."),
-            Env::Cons(next, term) => {
+            LocalEnv::Nil => panic!("DeBruijn index overflow."),
+            LocalEnv::Cons(next, term) => {
                 if index == 0 {
                     term
                 } else {
@@ -59,11 +75,11 @@ impl Term {
         Self { info }
     }
 
-    pub fn eval(self, env: Env) -> Canonical {
+    pub fn eval(self, mut env: Env) -> Canonical {
         match self.info {
             TermInfo::Canonical(e) => e,
-            TermInfo::Var(n) => env[n].clone(),
-            _ => unimplemented!(),
+            TermInfo::Var(n) => env.local[n].clone(),
+            TermInfo::Ref(name) => env.global.remove(&name).unwrap(),
         }
     }
 }
@@ -93,13 +109,13 @@ pub enum Canonical {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Closure {
-    pub param_type: Box<Term>,
+    pub param_type: Box<Canonical>,
     pub body: Box<Term>,
     pub env: Env,
 }
 
 impl Closure {
     pub fn instantiate(self, param: Canonical) -> Canonical {
-        self.body.eval(Env::up(self.env, param))
+        self.body.eval(Env::up_local(self.env, param))
     }
 }
