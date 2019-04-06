@@ -1,63 +1,9 @@
-use std::collections::BTreeMap;
-use std::ops::Index;
-use std::rc::Rc;
+use crate::syntax::env::{Env_, GlobalEnv_, LocalEnv_, DBI};
 
-type Level = u32;
-type DBI = usize;
-
-pub type GlobalEnv = BTreeMap<String, Canonical>;
-
-/// Local context, can be captured inside of a lambda
-#[derive(Debug, Clone)]
-pub enum LocalEnv {
-    Nil,
-    Cons(Rc<Self>, Box<Canonical>),
-}
-
-#[derive(Debug, Clone)]
-pub struct Env {
-    pub local: LocalEnv,
-    pub global: GlobalEnv,
-}
-
-impl Env {
-    pub fn up_local(mut self, canonical: Canonical) -> Self {
-        self.local = self.local.up(canonical);
-        self
-    }
-}
-
-impl LocalEnv {
-    pub fn up(self, canonical: Canonical) -> Self {
-        LocalEnv::Cons(Rc::new(self), Box::new(canonical))
-    }
-}
-
-impl Index<DBI> for LocalEnv {
-    type Output = Canonical;
-
-    /// Projecting from this environment.
-    fn index(&self, index: DBI) -> &Self::Output {
-        match self {
-            LocalEnv::Nil => panic!("DeBruijn index overflow."),
-            LocalEnv::Cons(next, term) => {
-                if index == 0 {
-                    term
-                } else {
-                    &next[index - 1]
-                }
-            }
-        }
-    }
-}
-
-impl Eq for Env {}
-impl PartialEq for Env {
-    /// We don't do comparison for `Env`s.
-    fn eq(&self, _: &Self) -> bool {
-        true
-    }
-}
+pub type Level = u32;
+pub type Env = Env_<Canonical>;
+pub type LocalEnv = LocalEnv_<Canonical>;
+pub type GlobalEnv = GlobalEnv_<Canonical>;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum Visib {
