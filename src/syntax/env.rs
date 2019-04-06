@@ -5,13 +5,15 @@ use std::rc::Rc;
 pub type DBI = usize;
 pub type GlobalEnv_<T> = BTreeMap<String, T>;
 
-/// Local context, can be captured inside of a lambda
+/// Local context, can be captured inside of a lambda.
+/// Represented as a list, projected by de-bruijn indices.
 #[derive(Debug, Clone)]
 pub enum LocalEnv_<T> {
     Nil,
     Cons(Rc<Self>, Box<T>),
 }
 
+/// General context.
 #[derive(Debug, Clone)]
 pub struct Env_<T> {
     pub local: LocalEnv_<T>,

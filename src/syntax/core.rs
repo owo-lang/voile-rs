@@ -12,36 +12,43 @@ pub enum Visib {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Term {
-    pub info: TermInfo,
+pub struct TermInfo {
+    pub ast: Term,
+}
+
+impl TermInfo {
+    pub fn new(ast: Term) -> Self {
+        Self { ast }
+    }
+
+    pub fn eval(self, env: &Env) -> Canonical {
+        self.ast.eval(env)
+    }
 }
 
 impl Term {
-    pub fn new(info: TermInfo) -> Self {
-        Self { info }
-    }
-
-    pub fn eval(self, mut env: Env) -> Canonical {
-        match self.info {
-            TermInfo::Canonical(e) => e,
-            TermInfo::Var(n) => env.local[n].clone(),
-            TermInfo::Ref(name) => env.global.remove(&name).unwrap(),
+    pub fn eval(self, env: &Env) -> Canonical {
+        match self {
+            Term::Lambda(closure) => Canonical::Lambda(closure),
+            Term::Type(level) => Canonical::Type(level),
+            Term::Sigma(visibility, closure) => Canonical::Sigma(visibility, closure),
+            Term::Pi(visibility, closure) => Canonical::Pi(visibility, closure),
+            Term::Pair(first, second) => {
+                Canonical::Pair(Box::new(first.eval(env)), Box::new(second.eval(env)))
+            }
+            Term::Var(n) => env.local[n].clone(),
+            Term::Ref(name) => env.global[&name].clone(),
         }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum TermInfo {
+pub enum Term {
     /// Local variable, referred by de-bruijn index.
     Var(DBI),
     /// Global variable, referred by variable name.
     Ref(String),
-    /// Directly a canonical normal value which cannot reduce itself
-    Canonical(Canonical),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Canonical {
+    /// Type universe.
     Type(Level),
     /// Closure.
     Lambda(Closure),
@@ -50,18 +57,43 @@ pub enum Canonical {
     Pi(Visib, Closure),
     /// Sigma type, ditto.
     Sigma(Visib, Closure),
-    Pair(Box<Term>, Box<Term>),
+    /// Sigma instance.
+    Pair(Box<TermInfo>, Box<TermInfo>),
 }
 
+/// Non-redex.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Canonical {
+    /// Type universe.
+    Type(Level),
+    /// Closure.
+    Lambda(Closure),
+    /// Pi type. Since it affects type-checking translation, the visibility of the parameter
+    /// need to be specified.
+    Pi(Visib, Closure),
+    /// Sigma type, ditto.
+    Sigma(Visib, Closure),
+    /// Sigma instance.
+    Pair(Box<Canonical>, Box<Canonical>),
+}
+
+/// A closure with parameter type explicitly specified.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Closure {
     pub param_type: Box<Canonical>,
-    pub body: Box<Term>,
+    pub body: ClosureBody,
+}
+
+/// The instantiatable part of a closure.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct ClosureBody {
+    pub body: Box<TermInfo>,
     pub env: Env,
 }
 
-impl Closure {
+impl ClosureBody {
     pub fn instantiate(self, param: Canonical) -> Canonical {
-        self.body.eval(Env::up_local(self.env, param))
+        let env = self.env.up_local(param);
+        self.body.eval(&env)
     }
 }
