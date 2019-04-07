@@ -3,8 +3,8 @@ use crate::syntax::parser::concrete::SyntaxInfo;
 
 pub type Level = u32;
 pub type Env = Env_<Canonical>;
-pub type LocalEnv = LocalEnv_<Canonical>;
-pub type GlobalEnv = GlobalEnv_<Canonical>;
+pub type LocalEnv = LocalEnv_<Term>;
+pub type GlobalEnv = GlobalEnv_<Term>;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum Visib {
@@ -29,9 +29,9 @@ impl TermInfo {
 }
 
 impl Term {
-    pub fn app(self, arg: Canonical) -> Canonical {
+    pub fn apply(self, arg: Canonical) -> Canonical {
         match self {
-            Term::Lam(closure) => closure.body.instantiate(arg),
+            Term::Cano(canonical_value) => canonical_value.apply(arg),
             // TODO neutral value
             e => panic!("Cannot apply on `{:?}`.", e),
         }
@@ -39,42 +39,72 @@ impl Term {
 
     pub fn eval(self, env: &Env) -> Canonical {
         match self {
-            Term::Lam(closure) => Canonical::Lam(closure),
-            Term::Type(level) => Canonical::Type(level),
-            Term::Sig(visibility, closure) => Canonical::Sig(visibility, closure),
-            Term::Pi(visibility, closure) => Canonical::Pi(visibility, closure),
-            Term::App(function, argument) => function.ast.app(argument.eval(env)),
-            Term::Pair(first, second) => {
-                Canonical::Pair(Box::new(first.eval(env)), Box::new(second.eval(env)))
-            }
-            Term::Var(n) => env.local[n].clone(),
-            Term::Ref(name) => env.global[&name].clone(),
+            Term::Cano(canonical_value) => canonical_value,
+            Term::Neut(neutral_value) => neutral_value.eval(env),
         }
     }
 }
 
+/// Irreducible because of the presence of generated value.
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Term {
+pub enum Neutral {
     /// Local variable, referred by de-bruijn index.
-    Var(DBI),
-    /// Global variable, referred by variable name.
-    Ref(String),
-    /// Type universe.
-    Type(Level),
-    /// Closure.
-    Lam(Closure),
-    /// Pi type. Since it affects type-checking translation, the visibility of the parameter
-    /// need to be specified.
-    Pi(Visib, Closure),
-    /// Sigma type, ditto.
-    Sig(Visib, Closure),
-    /// Sigma instance.
-    Pair(Box<TermInfo>, Box<TermInfo>),
+    Gen(DBI),
     /// Function application.
-    App(Box<TermInfo>, Box<TermInfo>),
+    App(Box<Neutral>, Box<Term>),
+}
+
+impl Neutral {
+    pub fn eval(self, env: &Env) -> Canonical {
+        use crate::syntax::core::Neutral::*;
+        match self {
+            Gen(n) => env.local[n].clone(),
+            App(function, argument) => {
+                let argument = argument.eval(env);
+                function.eval(env).apply(argument)
+            }
+        }
+    }
 }
 
 /// Non-redex.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Term {
+    Cano(Canonical),
+    Neut(Neutral),
+}
+
+impl Term {
+    pub fn ty(level: Level) -> Self {
+        Term::Cano(Canonical::Type(level))
+    }
+
+    pub fn lam(closure: Closure) -> Self {
+        Term::Cano(Canonical::Lam(closure))
+    }
+
+    pub fn pi(visibility: Visib, closure: Closure) -> Self {
+        Term::Cano(Canonical::Pi(visibility, closure))
+    }
+
+    pub fn sig(visibility: Visib, closure: Closure) -> Self {
+        Term::Cano(Canonical::Sig(visibility, closure))
+    }
+
+    pub fn pair(first: Self, second: Self) -> Self {
+        Term::Cano(Canonical::Pair(Box::new(first), Box::new(second)))
+    }
+
+    pub fn gen(index: DBI) -> Self {
+        Term::Neut(Neutral::Gen(index))
+    }
+
+    pub fn app(function: Neutral, arg: Term) -> Self {
+        Term::Neut(Neutral::App(Box::new(function), Box::new(arg)))
+    }
+}
+
+/// Irreducible because it cannot.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Canonical {
     /// Type universe.
@@ -87,13 +117,23 @@ pub enum Canonical {
     /// Sigma type, ditto.
     Sig(Visib, Closure),
     /// Sigma instance.
-    Pair(Box<Canonical>, Box<Canonical>),
+    Pair(Box<Term>, Box<Term>),
+}
+
+impl Canonical {
+    /// Just for evaluation during beta-reduction.
+    pub fn apply(self, arg: Canonical) -> Canonical {
+        match self {
+            Canonical::Lam(closure) => closure.body.instantiate(arg),
+            e => panic!("Cannot apply on `{:?}`.", e),
+        }
+    }
 }
 
 /// A closure with parameter type explicitly specified.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Closure {
-    pub param_type: Box<Canonical>,
+    pub param_type: Box<Term>,
     pub body: ClosureBody,
 }
 
