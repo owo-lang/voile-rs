@@ -21,6 +21,19 @@ impl<T> LocalEnv_<T> {
     pub fn cons(self, canonical: T) -> Self {
         LocalEnv_::Cons(Rc::new(self), Box::new(canonical))
     }
+
+    pub fn project(&self, index: DBI) -> Option<&T> {
+        match self {
+            LocalEnv_::Nil => None,
+            LocalEnv_::Cons(next, term) => {
+                if index == 0 {
+                    Some(term)
+                } else {
+                    Some(&next[index - 1])
+                }
+            }
+        }
+    }
 }
 
 impl<T> Index<DBI> for LocalEnv_<T> {
@@ -28,16 +41,7 @@ impl<T> Index<DBI> for LocalEnv_<T> {
 
     /// Projecting from this environment.
     fn index(&self, index: DBI) -> &Self::Output {
-        match self {
-            LocalEnv_::Nil => panic!("DeBruijn index overflow."),
-            LocalEnv_::Cons(next, term) => {
-                if index == 0 {
-                    term
-                } else {
-                    &next[index - 1]
-                }
-            }
-        }
+        self.project(index).expect("DeBruijn index overflow.")
     }
 }
 

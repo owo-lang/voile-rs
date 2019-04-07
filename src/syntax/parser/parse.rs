@@ -1,6 +1,4 @@
-use crate::syntax::parser::concrete::{
-    Declaration, Expression, Identifier, NamedExpression, SyntaxInfo,
-};
+use crate::syntax::parser::concrete::{Declaration, Expression, Identifier, NamedExpression};
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use pest_derive::Parser;
@@ -69,7 +67,6 @@ fn declarations(the_rule: Tok) -> Vec<Declaration> {
 
 fn declaration(rules: Tok) -> Declaration {
     let the_rule: Tok = rules.into_inner().next().unwrap();
-    let span = the_rule.as_span();
     match the_rule.as_rule() {
         Rule::signature => Declaration::Sign(named_expression(the_rule)),
         Rule::implementation => Declaration::Impl(named_expression(the_rule)),
@@ -89,7 +86,10 @@ fn named_expression(rules: Tok) -> NamedExpression {
 }
 
 fn expression(rules: Tok) -> Expression {
-    unimplemented!()
+    match rules.as_rule() {
+        Rule::identifier => Expression::Var(next_identifier(&mut rules.into_inner()).info),
+        _ => unreachable!(),
+    }
 }
 
 fn identifier(rule: Tok) -> Identifier {

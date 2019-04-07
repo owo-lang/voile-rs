@@ -26,6 +26,7 @@ impl TermInfo {
         self.ast.reduce(env)
     }
 
+    /// Because in `reduce`, what actually moved is `self.ast`, not whole `self`.
     pub fn reduce_cloned(&self, env: &LocalEnv) -> Term {
         self.ast.clone().reduce(env)
     }
@@ -73,7 +74,8 @@ impl Term {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Neutral {
     /// Local variable, referred by de-bruijn index.
-    Gen(DBI),
+    /// `None` indicates that this is a postulated value.
+    Gen(Option<DBI>),
     /// Function application.
     App(Box<Neutral>, Box<Term>),
     /// Projecting the first element of a pair.
@@ -86,7 +88,9 @@ impl Neutral {
     pub fn reduce(self, env: &LocalEnv) -> Term {
         use crate::syntax::core::Neutral::*;
         match self {
-            Gen(n) => env[n].clone(),
+            Gen(n) => n.map_or_else(Term::mock, |n| {
+                env.project(n).cloned().unwrap_or_else(|| Term::gen(n))
+            }),
             App(function, argument) => {
                 let argument = argument.reduce(env);
                 function.reduce(env).apply(argument)
@@ -120,7 +124,11 @@ impl Term {
     }
 
     pub fn gen(index: DBI) -> Self {
-        Term::Neut(Neutral::Gen(index))
+        Term::Neut(Neutral::Gen(Some(index)))
+    }
+
+    pub fn mock() -> Self {
+        Term::Neut(Neutral::Gen(None))
     }
 
     pub fn app(function: Neutral, arg: Term) -> Self {
