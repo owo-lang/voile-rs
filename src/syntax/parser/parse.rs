@@ -1,4 +1,6 @@
-use crate::syntax::parser::concrete::Declaration;
+use crate::syntax::parser::concrete::{
+    Declaration, Expression, Identifier, NamedExpression, SyntaxInfo,
+};
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use pest_derive::Parser;
@@ -43,6 +45,16 @@ macro_rules! next_rule {
 }
 
 #[inline]
+fn next_identifier(inner: &mut Tik) -> Identifier {
+    next_rule!(inner, identifier, identifier)
+}
+
+#[inline]
+fn next_expression(inner: &mut Tik) -> Expression {
+    next_rule!(inner, expression, expression)
+}
+
+#[inline]
 fn end_of_rule(inner: &mut Tik) {
     debug_assert_eq!(inner.next(), None)
 }
@@ -59,7 +71,29 @@ fn declaration(rules: Tok) -> Declaration {
     let the_rule: Tok = rules.into_inner().next().unwrap();
     let span = the_rule.as_span();
     match the_rule.as_rule() {
-        Rule::signature => unimplemented!(),
+        Rule::signature => Declaration::Sign(named_expression(the_rule)),
+        Rule::implementation => Declaration::Impl(named_expression(the_rule)),
         _ => unreachable!(),
+    }
+}
+
+fn named_expression(rules: Tok) -> NamedExpression {
+    let mut inner: Tik = rules.into_inner();
+    let identifier = next_identifier(&mut inner);
+    let expression = next_expression(&mut inner);
+    end_of_rule(&mut inner);
+    NamedExpression {
+        name: identifier,
+        body: expression,
+    }
+}
+
+fn expression(rules: Tok) -> Expression {
+    unimplemented!()
+}
+
+fn identifier(rule: Tok) -> Identifier {
+    Identifier {
+        info: From::from(rule.as_span()),
     }
 }
