@@ -14,7 +14,11 @@ pub enum LocalEnv_<T> {
 }
 
 impl<T> LocalEnv_<T> {
-    pub fn up(self, canonical: T) -> Self {
+    pub fn nil() -> Self {
+        LocalEnv_::Nil
+    }
+
+    pub fn cons(self, canonical: T) -> Self {
         LocalEnv_::Cons(Rc::new(self), Box::new(canonical))
     }
 }

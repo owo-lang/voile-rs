@@ -1,6 +1,5 @@
 use crate::syntax::env::{GlobalEnv_, LocalEnv_, DBI};
 use crate::syntax::parser::concrete::SyntaxInfo;
-use std::fmt::Debug;
 
 pub type Level = u32;
 pub type LocalEnv = LocalEnv_<Term>;
@@ -153,12 +152,7 @@ pub struct ClosureBody {
 
 impl ClosureBody {
     pub fn instantiate(self, arg: Term) -> Term {
-        let env = self.env.up(arg);
+        let env = self.env.cons(arg);
         self.body.reduce(&env)
     }
-}
-
-// TODO: replace with Display once implemented.
-fn cannot_reduce(e: &impl Debug) -> ! {
-    panic!("Neutral value `{:?}` is not reducible.", e)
 }
