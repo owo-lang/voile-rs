@@ -1,4 +1,5 @@
 use crate::syntax::env::{Env_, GlobalEnv_, LocalEnv_, DBI};
+use crate::syntax::parser::concrete::SyntaxInfo;
 
 pub type Level = u32;
 pub type Env = Env_<Canonical>;
@@ -14,11 +15,12 @@ pub enum Visib {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TermInfo {
     pub ast: Term,
+    pub info: SyntaxInfo,
 }
 
 impl TermInfo {
-    pub fn new(ast: Term) -> Self {
-        Self { ast }
+    pub fn new(ast: Term, info: SyntaxInfo) -> Self {
+        Self { ast, info }
     }
 
     pub fn eval(self, env: &Env) -> Canonical {
@@ -27,12 +29,21 @@ impl TermInfo {
 }
 
 impl Term {
+    pub fn app(self, arg: Canonical) -> Canonical {
+        match self {
+            Term::Lam(closure) => closure.body.instantiate(arg),
+            // TODO neutral value
+            e => panic!("Cannot apply on `{:?}`.", e),
+        }
+    }
+
     pub fn eval(self, env: &Env) -> Canonical {
         match self {
-            Term::Lambda(closure) => Canonical::Lambda(closure),
+            Term::Lam(closure) => Canonical::Lam(closure),
             Term::Type(level) => Canonical::Type(level),
-            Term::Sigma(visibility, closure) => Canonical::Sigma(visibility, closure),
+            Term::Sig(visibility, closure) => Canonical::Sig(visibility, closure),
             Term::Pi(visibility, closure) => Canonical::Pi(visibility, closure),
+            Term::App(function, argument) => function.ast.app(argument.eval(env)),
             Term::Pair(first, second) => {
                 Canonical::Pair(Box::new(first.eval(env)), Box::new(second.eval(env)))
             }
@@ -51,14 +62,16 @@ pub enum Term {
     /// Type universe.
     Type(Level),
     /// Closure.
-    Lambda(Closure),
+    Lam(Closure),
     /// Pi type. Since it affects type-checking translation, the visibility of the parameter
     /// need to be specified.
     Pi(Visib, Closure),
     /// Sigma type, ditto.
-    Sigma(Visib, Closure),
+    Sig(Visib, Closure),
     /// Sigma instance.
     Pair(Box<TermInfo>, Box<TermInfo>),
+    /// Function application.
+    App(Box<TermInfo>, Box<TermInfo>),
 }
 
 /// Non-redex.
@@ -67,12 +80,12 @@ pub enum Canonical {
     /// Type universe.
     Type(Level),
     /// Closure.
-    Lambda(Closure),
+    Lam(Closure),
     /// Pi type. Since it affects type-checking translation, the visibility of the parameter
     /// need to be specified.
     Pi(Visib, Closure),
     /// Sigma type, ditto.
-    Sigma(Visib, Closure),
+    Sig(Visib, Closure),
     /// Sigma instance.
     Pair(Box<Canonical>, Box<Canonical>),
 }
@@ -92,8 +105,8 @@ pub struct ClosureBody {
 }
 
 impl ClosureBody {
-    pub fn instantiate(self, param: Canonical) -> Canonical {
-        let env = self.env.up_local(param);
+    pub fn instantiate(self, arg: Canonical) -> Canonical {
+        let env = self.env.up_local(arg);
         self.body.eval(&env)
     }
 }
