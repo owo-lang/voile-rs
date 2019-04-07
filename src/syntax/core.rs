@@ -1,8 +1,8 @@
-use crate::syntax::env::{Env_, GlobalEnv_, LocalEnv_, DBI};
+use crate::syntax::env::{GlobalEnv_, LocalEnv_, DBI};
 use crate::syntax::parser::concrete::SyntaxInfo;
+use std::fmt::Debug;
 
 pub type Level = u32;
-pub type Env = Env_<Canonical>;
 pub type LocalEnv = LocalEnv_<Term>;
 pub type GlobalEnv = GlobalEnv_<Term>;
 
@@ -23,24 +23,49 @@ impl TermInfo {
         Self { ast, info }
     }
 
-    pub fn eval(self, env: &Env) -> Canonical {
-        self.ast.eval(env)
+    pub fn reduce(self, env: &LocalEnv) -> Term {
+        self.ast.reduce(env)
+    }
+
+    pub fn reduce_cloned(&self, env: &LocalEnv) -> Term {
+        self.ast.clone().reduce(env)
     }
 }
 
 impl Term {
-    pub fn apply(self, arg: Canonical) -> Canonical {
+    /// Just for evaluation during beta-reduction.
+    pub fn apply(self, arg: Term) -> Term {
         match self {
-            Term::Cano(canonical_value) => canonical_value.apply(arg),
-            // TODO neutral value
+            Term::Lam(closure) => closure.body.instantiate(arg),
+            Term::Neut(n) => Term::app(n, arg),
             e => panic!("Cannot apply on `{:?}`.", e),
         }
     }
 
-    pub fn eval(self, env: &Env) -> Canonical {
+    /// Just for evaluation during beta-reduction.
+    pub fn first(self) -> Term {
         match self {
-            Term::Cano(canonical_value) => canonical_value,
-            Term::Neut(neutral_value) => neutral_value.eval(env),
+            Term::Pair(a, _) => *a,
+            Term::Neut(n) => Term::fst(n),
+            e => panic!("Cannot project on `{:?}`.", e),
+        }
+    }
+
+    /// Just for evaluation during beta-reduction.
+    pub fn second(self) -> Term {
+        match self {
+            Term::Pair(_, b) => *b,
+            Term::Neut(n) => Term::snd(n),
+            e => panic!("Cannot project on `{:?}`.", e),
+        }
+    }
+
+    pub fn reduce(self, env: &LocalEnv) -> Term {
+        match self {
+            Term::Pair(a, b) => Term::pair(a.reduce(env), b.reduce(env)),
+            Term::Neut(neutral_value) => neutral_value.reduce(env),
+            // Cannot reduce
+            e => e,
         }
     }
 }
@@ -52,17 +77,23 @@ pub enum Neutral {
     Gen(DBI),
     /// Function application.
     App(Box<Neutral>, Box<Term>),
+    /// Projecting the first element of a pair.
+    Fst(Box<Neutral>),
+    /// Projecting the second element of a pair.
+    Snd(Box<Neutral>),
 }
 
 impl Neutral {
-    pub fn eval(self, env: &Env) -> Canonical {
+    pub fn reduce(self, env: &LocalEnv) -> Term {
         use crate::syntax::core::Neutral::*;
         match self {
-            Gen(n) => env.local[n].clone(),
+            Gen(n) => env[n].clone(),
             App(function, argument) => {
-                let argument = argument.eval(env);
-                function.eval(env).apply(argument)
+                let argument = argument.reduce(env);
+                function.reduce(env).apply(argument)
             }
+            Fst(pair) => pair.reduce(env).first().reduce(env),
+            Snd(pair) => pair.reduce(env).second().reduce(env),
         }
     }
 }
@@ -70,43 +101,6 @@ impl Neutral {
 /// Non-redex.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Term {
-    Cano(Canonical),
-    Neut(Neutral),
-}
-
-impl Term {
-    pub fn ty(level: Level) -> Self {
-        Term::Cano(Canonical::Type(level))
-    }
-
-    pub fn lam(closure: Closure) -> Self {
-        Term::Cano(Canonical::Lam(closure))
-    }
-
-    pub fn pi(visibility: Visib, closure: Closure) -> Self {
-        Term::Cano(Canonical::Pi(visibility, closure))
-    }
-
-    pub fn sig(visibility: Visib, closure: Closure) -> Self {
-        Term::Cano(Canonical::Sig(visibility, closure))
-    }
-
-    pub fn pair(first: Self, second: Self) -> Self {
-        Term::Cano(Canonical::Pair(Box::new(first), Box::new(second)))
-    }
-
-    pub fn gen(index: DBI) -> Self {
-        Term::Neut(Neutral::Gen(index))
-    }
-
-    pub fn app(function: Neutral, arg: Term) -> Self {
-        Term::Neut(Neutral::App(Box::new(function), Box::new(arg)))
-    }
-}
-
-/// Irreducible because it cannot.
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Canonical {
     /// Type universe.
     Type(Level),
     /// Closure.
@@ -118,15 +112,28 @@ pub enum Canonical {
     Sig(Visib, Closure),
     /// Sigma instance.
     Pair(Box<Term>, Box<Term>),
+    Neut(Neutral),
 }
 
-impl Canonical {
-    /// Just for evaluation during beta-reduction.
-    pub fn apply(self, arg: Canonical) -> Canonical {
-        match self {
-            Canonical::Lam(closure) => closure.body.instantiate(arg),
-            e => panic!("Cannot apply on `{:?}`.", e),
-        }
+impl Term {
+    pub fn pair(first: Self, second: Self) -> Self {
+        Term::Pair(Box::new(first), Box::new(second))
+    }
+
+    pub fn gen(index: DBI) -> Self {
+        Term::Neut(Neutral::Gen(index))
+    }
+
+    pub fn app(function: Neutral, arg: Term) -> Self {
+        Term::Neut(Neutral::App(Box::new(function), Box::new(arg)))
+    }
+
+    pub fn fst(pair: Neutral) -> Self {
+        Term::Neut(Neutral::Fst(Box::new(pair)))
+    }
+
+    pub fn snd(pair: Neutral) -> Self {
+        Term::Neut(Neutral::Snd(Box::new(pair)))
     }
 }
 
@@ -141,12 +148,17 @@ pub struct Closure {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ClosureBody {
     pub body: Box<TermInfo>,
-    pub env: Env,
+    pub env: LocalEnv,
 }
 
 impl ClosureBody {
-    pub fn instantiate(self, arg: Canonical) -> Canonical {
-        let env = self.env.up_local(arg);
-        self.body.eval(&env)
+    pub fn instantiate(self, arg: Term) -> Term {
+        let env = self.env.up(arg);
+        self.body.reduce(&env)
     }
+}
+
+// TODO: replace with Display once implemented.
+fn cannot_reduce(e: &impl Debug) -> ! {
+    panic!("Neutral value `{:?}` is not reducible.", e)
 }

@@ -13,20 +13,6 @@ pub enum LocalEnv_<T> {
     Cons(Rc<Self>, Box<T>),
 }
 
-/// General context.
-#[derive(Debug, Clone)]
-pub struct Env_<T> {
-    pub local: LocalEnv_<T>,
-    pub global: GlobalEnv_<T>,
-}
-
-impl<T> Env_<T> {
-    pub fn up_local(mut self, canonical: T) -> Self {
-        self.local = self.local.up(canonical);
-        self
-    }
-}
-
 impl<T> LocalEnv_<T> {
     pub fn up(self, canonical: T) -> Self {
         LocalEnv_::Cons(Rc::new(self), Box::new(canonical))
@@ -51,8 +37,8 @@ impl<T> Index<DBI> for LocalEnv_<T> {
     }
 }
 
-impl<T> Eq for Env_<T> {}
-impl<T> PartialEq for Env_<T> {
+impl<T> Eq for LocalEnv_<T> {}
+impl<T> PartialEq for LocalEnv_<T> {
     /// We don't do comparison for `Env`s.
     fn eq(&self, _: &Self) -> bool {
         true
