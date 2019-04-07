@@ -1,0 +1,37 @@
+//
+// Created by intellij-pest on 2019-04-06
+// voile grammar
+// Author: ice1000
+//
+
+WHITESPACE = _{ WHITE_SPACE | ("//" ~ (!NEWLINE ~ ANY)*) }
+
+character =
+ _{ ASCII_ALPHA
+  | "_"
+  | "\'"
+  | "\\"
+  | '0'..'9'
+  }
+identifier_simple =
+ @{ !"_"
+  ~ character+
+  }
+identifier_raw =
+ @{ ("_" ~ character+)
+  }
+identifier = { identifier_simple | identifier_raw }
+
+/// TODO: more expressions
+expression = { identifier }
+
+signature = { identifier ~ ":" ~ expression }
+implementation = { identifier ~ "=" ~ expression }
+
+declaration =
+ { signature
+ ~ implementation
+ }
+
+// File
+file = { WHITESPACE* ~ declaration* }
