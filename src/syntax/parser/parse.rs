@@ -20,9 +20,6 @@ pub fn parse_str(input: &str) -> Result<Vec<Declaration>, String> {
     let the_rule: Tok = VoileParser::parse(Rule::file, input)
         .map_err(|err| format!("Parse failed at:{}", err))?
         .next()
-        .unwrap()
-        .into_inner()
-        .next()
         .unwrap();
     let end_pos = the_rule.as_span().end_pos().pos();
     let expression = declarations(the_rule);
@@ -86,14 +83,26 @@ fn named_expression(rules: Tok) -> NamedExpression {
 }
 
 fn expression(rules: Tok) -> Expression {
-    match rules.as_rule() {
-        Rule::identifier => Expression::Var(next_identifier(&mut rules.into_inner()).info),
-        _ => unreachable!(),
+    let the_rule: Tok = rules.into_inner().next().unwrap();
+    match the_rule.as_rule() {
+        Rule::identifier => Expression::Var(identifier(the_rule).info),
+        e => panic!("Unexpected rule: {:?}", e),
     }
 }
 
 fn identifier(rule: Tok) -> Identifier {
     Identifier {
         info: From::from(rule.as_span()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::parse_str_err_printed;
+
+    #[test]
+    fn simple_declaration_parsing() {
+        parse_str_err_printed("a : b").unwrap();
+        parse_str_err_printed("a = b").unwrap();
     }
 }

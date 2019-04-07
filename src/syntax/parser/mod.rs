@@ -4,8 +4,8 @@ pub mod concrete;
 /// Code to concrete syntax tree.
 pub mod parse;
 
-pub use crate::syntax::parser::concrete::*;
-pub use crate::syntax::parser::parse::parse_str;
+pub use self::concrete::*;
+pub use self::parse::parse_str;
 
 /// Parse a string into an optional expression and print error to stderr.
 #[inline]

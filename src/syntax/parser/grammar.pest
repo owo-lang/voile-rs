@@ -30,7 +30,7 @@ implementation = { identifier ~ "=" ~ expression }
 
 declaration =
  { signature
- ~ implementation
+ | implementation
  }
 
 // File
