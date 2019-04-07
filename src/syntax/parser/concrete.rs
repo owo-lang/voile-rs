@@ -15,13 +15,29 @@ pub struct Identifier {
 /// Concrete syntax tree node: Expression.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Expression {
-    Var,
+    Var(SyntaxInfo),
     // TODO more
 }
 
 /// Concrete syntax tree node: Declaration.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Declaration {
+pub enum Declaration {
+    /// Implementation.
+    Impl(NamedExpression),
+    /// Signature.
+    Sign(NamedExpression),
+}
+
+/// Concrete syntax tree node, like implementation or signature.
+///
+/// They're all like:
+/// ```ignore
+/// signature : Expression
+/// implementation = Expression
+/// ```
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct NamedExpression {
     pub name: Identifier,
-    // TODO more
+    pub body: Expression,
+    // TODO more, like pragma
 }
