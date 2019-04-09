@@ -101,6 +101,14 @@ impl Neutral {
     }
 }
 
+/// Various kinds of dependent types
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum DtKind {
+    Pi,
+    // TODO: discussion: do we need this?
+    Sigma,
+}
+
 /// Non-redex.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Term {
@@ -108,11 +116,9 @@ pub enum Term {
     Type(Level),
     /// Closure.
     Lam(Closure),
-    /// Pi type. Since it affects type-checking translation, the visibility of the parameter
-    /// need to be specified.
-    Pi(Visib, Closure),
-    /// Sigma type, ditto.
-    Sig(Visib, Closure),
+    /// Pi-like types (dependent types). Since it affects type-checking translation, the visibility
+    /// of the parameter need to be specified.
+    Dt(Visib, DtKind, Closure),
     /// Sigma instance.
     Pair(Box<Term>, Box<Term>),
     Neut(Neutral),
@@ -141,6 +147,18 @@ impl Term {
 
     pub fn snd(pair: Neutral) -> Self {
         Term::Neut(Neutral::Snd(Box::new(pair)))
+    }
+
+    pub fn dependent_type(visibility: Visib, kind: DtKind, closure: Closure) -> Self {
+        Term::Dt(visibility, kind, closure)
+    }
+
+    pub fn pi(visibility: Visib, closure: Closure) -> Self {
+        Self::dependent_type(visibility, DtKind::Pi, closure)
+    }
+
+    pub fn sig(visibility: Visib, closure: Closure) -> Self {
+        Self::dependent_type(visibility, DtKind::Sigma, closure)
     }
 }
 
