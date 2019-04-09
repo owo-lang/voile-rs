@@ -1,7 +1,6 @@
-use crate::syntax::env::{GlobalEnv_, LocalEnv_, DBI};
-use crate::syntax::parser::concrete::SyntaxInfo;
+use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
+use crate::syntax::env::{GlobalEnv_, LocalEnv_};
 
-pub type Level = u32;
 pub type LocalEnv = LocalEnv_<Term>;
 pub type GlobalEnv = GlobalEnv_<Term>;
 
@@ -99,14 +98,6 @@ impl Neutral {
             Snd(pair) => pair.reduce(env).second().reduce(env),
         }
     }
-}
-
-/// Various kinds of dependent types
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum DtKind {
-    Pi,
-    // TODO: discussion: do we need this?
-    Sigma,
 }
 
 /// Non-redex.

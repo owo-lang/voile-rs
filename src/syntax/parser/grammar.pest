@@ -22,7 +22,10 @@ let_keyword = _{ "let" }
 type_keyword = @{ "Type" ~ ASCII_DIGIT* }
 
 /// TODO: more expressions
-expression = { identifier }
+expression =
+ { type_keyword
+ | identifier
+ }
 
 /// ML-style type signature and definition
 signature = { val_keyword ~ identifier ~ ":" ~ expression }

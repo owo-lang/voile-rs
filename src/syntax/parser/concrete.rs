@@ -1,12 +1,5 @@
+use crate::syntax::common::{Level, SyntaxInfo};
 use pest::Span;
-
-/// Trivial information about the concrete syntax items.
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct SyntaxInfo {
-    pub text: String,
-    pub start: usize,
-    pub end: usize,
-}
 
 impl<'a> From<Span<'a>> for SyntaxInfo {
     fn from(span: Span) -> Self {
@@ -28,6 +21,7 @@ pub struct Identifier {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Expression {
     Var(SyntaxInfo),
+    Type(SyntaxInfo, Level),
     // TODO more
 }
 

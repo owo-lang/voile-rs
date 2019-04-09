@@ -1,8 +1,8 @@
+use crate::syntax::common::DBI;
 use std::collections::BTreeMap;
 use std::ops::Index;
 use std::rc::Rc;
 
-pub type DBI = usize;
 pub type GlobalEnv_<T> = BTreeMap<String, T>;
 
 /// Local context, can be captured inside of a lambda.

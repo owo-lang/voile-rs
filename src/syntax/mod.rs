@@ -1,3 +1,6 @@
+/// General definitions, like `Level`, `DBI`, etc.
+pub mod common;
+
 /// Environment, context, de Bruijn indices
 pub mod env;
 
