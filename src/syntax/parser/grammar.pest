@@ -14,22 +14,25 @@ identifier_char =
   | "\\"
   }
 identifier_raw = _{ identifier_char ~ (identifier_char | ASCII_DIGIT)* }
-identifier = { identifier_raw }
+identifier = @{ identifier_raw }
 
 /// Keywords
 val_keyword = _{ "val" }
 let_keyword = _{ "let" }
-type_keyword = @{ "Type" ~ ASCII_DIGIT* }
+type_level = @{ ASCII_DIGIT* }
+type_keyword = ${ "Type" ~ type_level }
 
 /// TODO: more expressions
-expression =
+expr =
  { type_keyword
  | identifier
  }
 
+expr_and_eol = ${ expr ~ (NEWLINE | EOI) }
+
 /// ML-style type signature and definition
-signature = { val_keyword ~ identifier ~ ":" ~ expression }
-implementation = { let_keyword ~ identifier ~ "=" ~ expression }
+signature = { val_keyword ~ identifier ~ ":" ~ expr_and_eol }
+implementation = { let_keyword ~ identifier ~ "=" ~ expr_and_eol }
 
 declaration =
  { signature
