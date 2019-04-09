@@ -1,5 +1,5 @@
 use crate::syntax::common::{Level, SyntaxInfo};
-use crate::syntax::parser::surf::{Declaration, Expression, Identifier, NamedExpression};
+use crate::syntax::surf::{Declaration, Expression, Identifier, NamedExpression};
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use pest_derive::Parser;
@@ -51,11 +51,6 @@ fn next_expr(inner: &mut Tik) -> Expression {
 }
 
 #[inline]
-fn next_expr_and_eol(inner: &mut Tik) -> Expression {
-    next_rule!(inner, expr_and_eol, expr_and_eol)
-}
-
-#[inline]
 fn end_of_rule(inner: &mut Tik) {
     debug_assert_eq!(inner.next(), None)
 }
@@ -80,19 +75,12 @@ fn declaration(rules: Tok) -> Declaration {
 fn named_expr(rules: Tok) -> NamedExpression {
     let mut inner: Tik = rules.into_inner();
     let identifier = next_identifier(&mut inner);
-    let expr = next_expr_and_eol(&mut inner);
+    let expr = next_expr(&mut inner);
     end_of_rule(&mut inner);
     NamedExpression {
         name: identifier,
         body: expr,
     }
-}
-
-fn expr_and_eol(rules: Tok) -> Expression {
-    let mut inner = rules.into_inner();
-    let expr = next_expr(&mut inner);
-    end_of_rule(&mut inner);
-    expr
 }
 
 fn expr(rules: Tok) -> Expression {

@@ -1,7 +1,7 @@
 use std::io::Read;
 use std::{fs, io, str};
-use voile::syntax::parser::parse_str;
-use voile::syntax::parser::surf::Declaration;
+use voile::syntax::surf::parse_str;
+use voile::syntax::surf::Declaration;
 
 fn read_file(file_arg: &str) -> io::Result<Vec<u8>> {
     let mut file = fs::File::open(file_arg)?;

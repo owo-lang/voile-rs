@@ -21,6 +21,7 @@ val_keyword = _{ "val" }
 let_keyword = _{ "let" }
 type_level = @{ ASCII_DIGIT* }
 type_keyword = ${ "Type" ~ type_level }
+semicolon = _{ ";" }
 
 /// TODO: more expressions
 expr =
@@ -28,11 +29,9 @@ expr =
  | identifier
  }
 
-expr_and_eol = { expr ~ ";" }
-
 /// ML-style type signature and definition
-signature = { val_keyword ~ identifier ~ ":" ~ expr_and_eol }
-implementation = { let_keyword ~ identifier ~ "=" ~ expr_and_eol }
+signature = { val_keyword ~ identifier ~ ":" ~ expr ~ semicolon }
+implementation = { let_keyword ~ identifier ~ "=" ~ expr ~ semicolon }
 
 declaration =
  { signature
