@@ -22,7 +22,7 @@ impl<'a> From<Span<'a>> for SyntaxInfo {
 }
 
 /// Trivial information about the surface syntax items.
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
 pub struct SyntaxInfo {
     pub text: String,
     pub start: usize,

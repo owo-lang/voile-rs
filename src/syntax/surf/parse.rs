@@ -40,6 +40,19 @@ macro_rules! next_rule {
     }};
 }
 
+macro_rules! expr_parser {
+    ($name:ident,$smaller:ident,$cons:ident) => {
+        fn $name(rules: Tok) -> Expr {
+            let the_rule: Tok = rules.into_inner().next().unwrap();
+            let mut exprs: Vec<Expr> = Default::default();
+            for smaller in the_rule.into_inner() {
+                exprs.push($smaller(smaller));
+            }
+            Expr::$cons(exprs)
+        }
+    };
+}
+
 #[inline]
 fn next_identifier(inner: &mut Tik) -> Identifier {
     next_rule!(inner, identifier, identifier)
@@ -83,12 +96,30 @@ fn named_expr(rules: Tok) -> NamedExpression {
     }
 }
 
+expr_parser!(dollar_expr, pipe_expr, Pipe);
+expr_parser!(pipe_expr, sum_expr, Pipe);
+expr_parser!(sum_expr, app_expr, Pipe);
+expr_parser!(app_expr, primary_expr, Pipe);
+
 fn expr(rules: Tok) -> Expression {
+    let the_rule: Tok = rules.into_inner().next().unwrap();
+    match the_rule.as_rule() {
+        Rule::dollar_expr => dollar_expr(the_rule),
+        Rule::pipe_expr => pipe_expr(the_rule),
+        Rule::sum_expr => sum_expr(the_rule),
+        Rule::app_expr => app_expr(the_rule),
+        Rule::primary_expr => primary_expr(the_rule),
+        e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
+    }
+}
+
+fn primary_expr(rules: Tok) -> Expression {
     let the_rule: Tok = rules.into_inner().next().unwrap();
     match the_rule.as_rule() {
         Rule::identifier => Expression::Var(From::from(the_rule.as_span())),
         Rule::type_keyword => type_keyword(the_rule),
-        e => panic!("Unexpected rule: {:?}", e),
+        Rule::expr => expr(the_rule),
+        e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
     }
 }
 

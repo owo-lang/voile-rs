@@ -11,7 +11,9 @@ pub struct Identifier {
 pub enum Expression {
     Var(SyntaxInfo),
     Type(SyntaxInfo, Level),
-    // TODO more
+    App(Vec<Expression>),
+    Pipe(Vec<Expression>),
+    Sum(Vec<Expression>),
 }
 
 /// Surface syntax tree node: Declaration.

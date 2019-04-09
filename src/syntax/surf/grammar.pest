@@ -23,10 +23,22 @@ type_level = @{ ASCII_DIGIT* }
 type_keyword = ${ "Type" ~ type_level }
 semicolon = _{ ";" }
 
-/// TODO: more expressions
 expr =
+ { dollar_expr
+ | pipe_expr
+ | sum_expr
+ | app_expr
+ | primary_expr
+ }
+
+dollar_expr = { pipe_expr ~ ("$" ~ pipe_expr)* }
+pipe_expr = { sum_expr ~ ("|>" ~ sum_expr)* }
+sum_expr = { app_expr ~ ("|" ~ app_expr)* }
+app_expr = { primary_expr+ }
+primary_expr =
  { type_keyword
  | identifier
+ | "(" ~ expr ~ ")"
  }
 
 /// ML-style type signature and definition
