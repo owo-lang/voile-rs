@@ -1,11 +1,11 @@
 /// Surface syntax tree.
-pub mod surf;
+pub mod ast;
 
 /// Code to surface syntax tree, based on pest.
 pub mod parse;
 
+pub use self::ast::*;
 pub use self::parse::parse_str;
-pub use self::surf::*;
 
 /// Parse a string into an optional expression and print error to stderr.
 #[inline]

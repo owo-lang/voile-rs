@@ -5,7 +5,7 @@ use pest::Parser;
 use pest_derive::Parser;
 
 #[derive(Parser)]
-#[grammar = "syntax/parser/grammar.pest"]
+#[grammar = "syntax/surf/grammar.pest"]
 /// The name stands for "Voile's Parser"
 struct VoileParser;
 
