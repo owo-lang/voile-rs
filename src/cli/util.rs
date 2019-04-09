@@ -1,6 +1,6 @@
 use std::io::Read;
 use std::{fs, io, str};
-use voile::syntax::surf::parse_str;
+use voile::syntax::surf::parse_str_err_printed;
 use voile::syntax::surf::Declaration;
 
 fn read_file(file_arg: &str) -> io::Result<Vec<u8>> {
@@ -23,5 +23,5 @@ pub fn parse_file(file_arg: &str) -> Option<Vec<Declaration>> {
     // Read file
     let file_content_utf8 = str::from_utf8(file_content.as_slice()).unwrap();
     // Parse
-    parse_str(file_content_utf8).ok()
+    parse_str_err_printed(file_content_utf8).ok()
 }
