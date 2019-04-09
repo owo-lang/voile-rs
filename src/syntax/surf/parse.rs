@@ -1,5 +1,5 @@
 use crate::syntax::common::{Level, SyntaxInfo};
-use crate::syntax::surf::{Declaration, Expression, Identifier, NamedExpression};
+use crate::syntax::surf::{Decl, Expr, Ident, NamedExpr};
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use pest_derive::Parser;
@@ -17,7 +17,7 @@ type Tik<'a> = Pairs<'a, Rule>;
 /// ```ignore
 /// file = { WHITESPACE* ~ expr }
 /// ```
-pub fn parse_str(input: &str) -> Result<Vec<Declaration>, String> {
+pub fn parse_str(input: &str) -> Result<Vec<Decl>, String> {
     let the_rule: Tok = VoileParser::parse(Rule::file, input)
         .map_err(|err| format!("Parse failed at:{}", err))?
         .next()
@@ -43,23 +43,26 @@ macro_rules! next_rule {
 macro_rules! expr_parser {
     ($name:ident,$smaller:ident,$cons:ident) => {
         fn $name(rules: Tok) -> Expr {
-            let the_rule: Tok = rules.into_inner().next().unwrap();
             let mut exprs: Vec<Expr> = Default::default();
-            for smaller in the_rule.into_inner() {
+            for smaller in rules.into_inner() {
                 exprs.push($smaller(smaller));
             }
-            Expr::$cons(exprs)
+            if exprs.len() == 1 {
+                exprs.remove(0)
+            } else {
+                Expr::$cons(exprs)
+            }
         }
     };
 }
 
 #[inline]
-fn next_identifier(inner: &mut Tik) -> Identifier {
+fn next_identifier(inner: &mut Tik) -> Ident {
     next_rule!(inner, identifier, identifier)
 }
 
 #[inline]
-fn next_expr(inner: &mut Tik) -> Expression {
+fn next_expr(inner: &mut Tik) -> Expr {
     next_rule!(inner, expr, expr)
 }
 
@@ -68,71 +71,66 @@ fn end_of_rule(inner: &mut Tik) {
     debug_assert_eq!(inner.next(), None)
 }
 
-fn declarations(the_rule: Tok) -> Vec<Declaration> {
-    let mut decls: Vec<Declaration> = Default::default();
+fn declarations(the_rule: Tok) -> Vec<Decl> {
+    let mut decls: Vec<Decl> = Default::default();
     for prefix_parameter in the_rule.into_inner() {
         decls.push(declaration(prefix_parameter));
     }
     decls
 }
 
-fn declaration(rules: Tok) -> Declaration {
+fn declaration(rules: Tok) -> Decl {
     let the_rule: Tok = rules.into_inner().next().unwrap();
     match the_rule.as_rule() {
-        Rule::signature => Declaration::Sign(named_expr(the_rule)),
-        Rule::implementation => Declaration::Impl(named_expr(the_rule)),
+        Rule::signature => Decl::Sign(named_expr(the_rule)),
+        Rule::implementation => Decl::Impl(named_expr(the_rule)),
         _ => unreachable!(),
     }
 }
 
-fn named_expr(rules: Tok) -> NamedExpression {
+fn named_expr(rules: Tok) -> NamedExpr {
     let mut inner: Tik = rules.into_inner();
     let identifier = next_identifier(&mut inner);
     let expr = next_expr(&mut inner);
     end_of_rule(&mut inner);
-    NamedExpression {
+    NamedExpr {
         name: identifier,
         body: expr,
     }
 }
 
-expr_parser!(dollar_expr, pipe_expr, Pipe);
+expr_parser!(dollar_expr, pipe_expr, App);
 expr_parser!(pipe_expr, sum_expr, Pipe);
-expr_parser!(sum_expr, app_expr, Pipe);
-expr_parser!(app_expr, primary_expr, Pipe);
+expr_parser!(sum_expr, app_expr, Sum);
+expr_parser!(app_expr, primary_expr, App);
 
-fn expr(rules: Tok) -> Expression {
-    let the_rule: Tok = rules.into_inner().next().unwrap();
-    match the_rule.as_rule() {
-        Rule::dollar_expr => dollar_expr(the_rule),
-        Rule::pipe_expr => pipe_expr(the_rule),
-        Rule::sum_expr => sum_expr(the_rule),
-        Rule::app_expr => app_expr(the_rule),
-        Rule::primary_expr => primary_expr(the_rule),
-        e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
-    }
+fn expr(rules: Tok) -> Expr {
+    let mut inner: Tik = rules.into_inner();
+    let expr = next_rule!(inner, dollar_expr, dollar_expr);
+    end_of_rule(&mut inner);
+    expr
 }
 
-fn primary_expr(rules: Tok) -> Expression {
+fn primary_expr(rules: Tok) -> Expr {
     let the_rule: Tok = rules.into_inner().next().unwrap();
     match the_rule.as_rule() {
-        Rule::identifier => Expression::Var(From::from(the_rule.as_span())),
+        Rule::identifier => Expr::Var(From::from(the_rule.as_span())),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
         e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
     }
 }
 
-fn type_keyword(rules: Tok) -> Expression {
+fn type_keyword(rules: Tok) -> Expr {
     let syntax_info: SyntaxInfo = From::from(rules.as_span());
     let mut inner: Tik = rules.into_inner();
     let level: Level = inner.next().unwrap().as_str().parse().unwrap();
     end_of_rule(&mut inner);
-    Expression::Type(syntax_info, level)
+    Expr::Type(syntax_info, level)
 }
 
-fn identifier(rule: Tok) -> Identifier {
-    Identifier {
+fn identifier(rule: Tok) -> Ident {
+    Ident {
         info: From::from(rule.as_span()),
     }
 }
@@ -151,7 +149,25 @@ mod tests {
     }
 
     #[test]
-    fn simple_expr_parsing() {
+    fn primary_expr_parsing() {
         parse_str_err_printed("let a = Type233;").unwrap();
+        parse_str_err_printed("let van = (Type233);").unwrap();
+        parse_str_err_printed("let darkholm = (Type233;").unwrap_err();
+    }
+
+    #[test]
+    fn simple_expr_parsing() {
+        parse_str_err_printed("let kirisame = utsuho|hakurei;")
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
+        parse_str_err_printed("let reimu = marisa|>alice;")
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
+        parse_str_err_printed("let madoka = homura sayaka kyoko;")
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
+        parse_str_err_printed("let komeji = satori$koishi orin$okku;")
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
     }
 }

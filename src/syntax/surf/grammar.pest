@@ -23,13 +23,7 @@ type_level = @{ ASCII_DIGIT* }
 type_keyword = ${ "Type" ~ type_level }
 semicolon = _{ ";" }
 
-expr =
- { dollar_expr
- | pipe_expr
- | sum_expr
- | app_expr
- | primary_expr
- }
+expr = { dollar_expr }
 
 dollar_expr = { pipe_expr ~ ("$" ~ pipe_expr)* }
 pipe_expr = { sum_expr ~ ("|>" ~ sum_expr)* }

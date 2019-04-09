@@ -2,27 +2,27 @@ use crate::syntax::common::{Level, SyntaxInfo};
 
 /// Surface syntax tree node: Identifier.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Identifier {
+pub struct Ident {
     pub info: SyntaxInfo,
 }
 
 /// Surface syntax tree node: Expression.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub enum Expression {
+pub enum Expr {
     Var(SyntaxInfo),
     Type(SyntaxInfo, Level),
-    App(Vec<Expression>),
-    Pipe(Vec<Expression>),
-    Sum(Vec<Expression>),
+    App(Vec<Expr>),
+    Pipe(Vec<Expr>),
+    Sum(Vec<Expr>),
 }
 
 /// Surface syntax tree node: Declaration.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub enum Declaration {
+pub enum Decl {
     /// Implementation.
-    Impl(NamedExpression),
+    Impl(NamedExpr),
     /// Signature.
-    Sign(NamedExpression),
+    Sign(NamedExpr),
 }
 
 /// Surface syntax tree node, like implementation or signature.
@@ -33,8 +33,8 @@ pub enum Declaration {
 /// implementation = Expression
 /// ```
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct NamedExpression {
-    pub name: Identifier,
-    pub body: Expression,
+pub struct NamedExpr {
+    pub name: Ident,
+    pub body: Expr,
     // TODO more, like pragma
 }

@@ -1,7 +1,7 @@
 use std::io::Read;
 use std::{fs, io, str};
 use voile::syntax::surf::parse_str_err_printed;
-use voile::syntax::surf::Declaration;
+use voile::syntax::surf::Decl;
 
 fn read_file(file_arg: &str) -> io::Result<Vec<u8>> {
     let mut file = fs::File::open(file_arg)?;
@@ -11,7 +11,7 @@ fn read_file(file_arg: &str) -> io::Result<Vec<u8>> {
     Ok(file_content)
 }
 
-pub fn parse_file(file_arg: &str) -> Option<Vec<Declaration>> {
+pub fn parse_file(file_arg: &str) -> Option<Vec<Decl>> {
     // If cannot read input, return.
     let file_content = match read_file(file_arg) {
         Ok(c) => c,
