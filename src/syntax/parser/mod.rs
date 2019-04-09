@@ -1,11 +1,11 @@
-/// Concrete syntax tree.
-pub mod concrete;
+/// Surface syntax tree.
+pub mod surf;
 
-/// Code to concrete syntax tree, based on pest.
+/// Code to surface syntax tree, based on pest.
 pub mod parse;
 
-pub use self::concrete::*;
 pub use self::parse::parse_str;
+pub use self::surf::*;
 
 /// Parse a string into an optional expression and print error to stderr.
 #[inline]

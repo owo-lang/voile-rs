@@ -1,5 +1,5 @@
 use crate::syntax::common::{Level, SyntaxInfo};
-use crate::syntax::parser::concrete::{Declaration, Expression, Identifier, NamedExpression};
+use crate::syntax::parser::surf::{Declaration, Expression, Identifier, NamedExpression};
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use pest_derive::Parser;
@@ -91,8 +91,6 @@ fn named_expr(rules: Tok) -> NamedExpression {
 fn expr_and_eol(rules: Tok) -> Expression {
     let mut inner = rules.into_inner();
     let expr = next_expr(&mut inner);
-    // Consume the `EOI` or the `NEWLINE`
-    inner.next().unwrap();
     end_of_rule(&mut inner);
     expr
 }
@@ -126,14 +124,15 @@ mod tests {
 
     #[test]
     fn simple_declaration_parsing() {
-        parse_str_err_printed("val a : b").unwrap();
+        parse_str_err_printed("val a : b;").unwrap();
+        parse_str_err_printed("val a : b").unwrap_err();
         parse_str_err_printed("a : b").unwrap_err();
-        parse_str_err_printed("let a = b").unwrap();
+        parse_str_err_printed("let a = b;").unwrap();
         parse_str_err_printed("a = b").unwrap_err();
     }
 
     #[test]
     fn simple_expr_parsing() {
-        parse_str_err_printed("let a = Type233").unwrap();
+        parse_str_err_printed("let a = Type233;").unwrap();
     }
 }

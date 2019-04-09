@@ -28,7 +28,7 @@ expr =
  | identifier
  }
 
-expr_and_eol = ${ expr ~ (NEWLINE | EOI) }
+expr_and_eol = { expr ~ ";" }
 
 /// ML-style type signature and definition
 signature = { val_keyword ~ identifier ~ ":" ~ expr_and_eol }

@@ -1,3 +1,5 @@
+use pest::Span;
+
 /// Various kinds of dependent types
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DtKind {
@@ -9,7 +11,17 @@ pub enum DtKind {
 pub type Level = u32;
 pub type DBI = usize;
 
-/// Trivial information about the concrete syntax items.
+impl<'a> From<Span<'a>> for SyntaxInfo {
+    fn from(span: Span) -> Self {
+        SyntaxInfo {
+            text: span.as_str().to_string(),
+            start: span.start(),
+            end: span.end(),
+        }
+    }
+}
+
+/// Trivial information about the surface syntax items.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SyntaxInfo {
     pub text: String,

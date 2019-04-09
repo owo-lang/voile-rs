@@ -1,23 +1,12 @@
 use crate::syntax::common::{Level, SyntaxInfo};
-use pest::Span;
 
-impl<'a> From<Span<'a>> for SyntaxInfo {
-    fn from(span: Span) -> Self {
-        SyntaxInfo {
-            text: span.as_str().to_string(),
-            start: span.start(),
-            end: span.end(),
-        }
-    }
-}
-
-/// Concrete syntax tree node: Identifier.
+/// Surface syntax tree node: Identifier.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Identifier {
     pub info: SyntaxInfo,
 }
 
-/// Concrete syntax tree node: Expression.
+/// Surface syntax tree node: Expression.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Expression {
     Var(SyntaxInfo),
@@ -25,7 +14,7 @@ pub enum Expression {
     // TODO more
 }
 
-/// Concrete syntax tree node: Declaration.
+/// Surface syntax tree node: Declaration.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Declaration {
     /// Implementation.
@@ -34,7 +23,7 @@ pub enum Declaration {
     Sign(NamedExpression),
 }
 
-/// Concrete syntax tree node, like implementation or signature.
+/// Surface syntax tree node, like implementation or signature.
 ///
 /// They're all like:
 /// ```ignore
