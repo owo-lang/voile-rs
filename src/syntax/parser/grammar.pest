@@ -6,27 +6,27 @@
 
 WHITESPACE = _{ WHITE_SPACE | ("//" ~ (!NEWLINE ~ ANY)*) }
 
-character =
+/// Identifier
+identifier_char =
  _{ ASCII_ALPHA
   | "_"
   | "\'"
   | "\\"
-  | '0'..'9'
   }
-identifier_simple =
- @{ !"_"
-  ~ character+
-  }
-identifier_raw =
- @{ ("_" ~ character+)
-  }
-identifier = { identifier_simple | identifier_raw }
+identifier_raw = _{ identifier_char ~ (identifier_char | ASCII_DIGIT)* }
+identifier = { identifier_raw }
+
+/// Keywords
+val_keyword = _{ "val" }
+let_keyword = _{ "let" }
+type_keyword = @{ "Type" ~ ASCII_DIGIT* }
 
 /// TODO: more expressions
 expression = { identifier }
 
-signature = { identifier ~ ":" ~ expression }
-implementation = { identifier ~ "=" ~ expression }
+/// ML-style type signature and definition
+signature = { val_keyword ~ identifier ~ ":" ~ expression }
+implementation = { let_keyword ~ identifier ~ "=" ~ expression }
 
 declaration =
  { signature

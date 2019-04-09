@@ -1,4 +1,4 @@
-/// AST, CST, well-typed term.
+/// AST, CST, parser, well-typed term.
 pub mod syntax;
 
 /// Type-Checking module.

@@ -1,7 +1,7 @@
 /// Concrete syntax tree.
 pub mod concrete;
 
-/// Code to concrete syntax tree.
+/// Code to concrete syntax tree, based on pest.
 pub mod parse;
 
 pub use self::concrete::*;
