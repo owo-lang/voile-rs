@@ -21,6 +21,7 @@ identifier_raw =
   }
 identifier = @{ identifier_raw }
 constructor = @{ "\'" ~ identifier_raw }
+meta_var = @{ "_" }
 
 /// Keywords
 val_keyword = _{ "val" }
@@ -38,6 +39,7 @@ app_expr = { primary_expr+ }
 primary_expr =
  { type_keyword
  | constructor
+ | meta_var
  | identifier
  | "(" ~ expr ~ ")"
  }

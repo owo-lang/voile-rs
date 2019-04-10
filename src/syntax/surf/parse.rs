@@ -116,6 +116,7 @@ fn primary_expr(rules: Tok) -> Expr {
     match the_rule.as_rule() {
         Rule::identifier => Expr::Var(From::from(the_rule.as_span())),
         Rule::constructor => Expr::Cons(From::from(the_rule.as_span())),
+        Rule::meta_var => Expr::Meta(From::from(the_rule.as_span())),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
         e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),

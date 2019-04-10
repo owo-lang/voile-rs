@@ -11,6 +11,7 @@ pub struct Ident {
 pub enum Expr {
     Var(SyntaxInfo),
     Cons(SyntaxInfo),
+    Meta(SyntaxInfo),
     Type(SyntaxInfo, Level),
     App(Vec<Expr>),
     Pipe(Vec<Expr>),
