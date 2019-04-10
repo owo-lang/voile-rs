@@ -10,6 +10,7 @@ pub struct Ident {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Expr {
     Var(SyntaxInfo),
+    Cons(SyntaxInfo),
     Type(SyntaxInfo, Level),
     App(Vec<Expr>),
     Pipe(Vec<Expr>),

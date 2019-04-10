@@ -2,7 +2,7 @@
 
 # 0.0.3
 
-+ Improve parser
++ Implemented the expression parser
 + Replace `Pi`, `Sigma` with `Dt`
 
 # 0.0.2

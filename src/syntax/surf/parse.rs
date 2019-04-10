@@ -115,6 +115,7 @@ fn primary_expr(rules: Tok) -> Expr {
     let the_rule: Tok = rules.into_inner().next().unwrap();
     match the_rule.as_rule() {
         Rule::identifier => Expr::Var(From::from(the_rule.as_span())),
+        Rule::constructor => Expr::Cons(From::from(the_rule.as_span())),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
         e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
@@ -151,6 +152,7 @@ mod tests {
     #[test]
     fn primary_expr_parsing() {
         parse_str_err_printed("let a = Type233;").unwrap();
+        parse_str_err_printed("let zero = 'Zero;").unwrap();
         parse_str_err_printed("let van = (Type233);").unwrap();
         parse_str_err_printed("let darkholm = (Type233;").unwrap_err();
     }

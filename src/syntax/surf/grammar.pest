@@ -10,11 +10,17 @@ WHITESPACE = _{ WHITE_SPACE | ("//" ~ (!NEWLINE ~ ANY)*) }
 identifier_char =
  _{ ASCII_ALPHA
   | "_"
-  | "\'"
   | "\\"
   }
-identifier_raw = _{ identifier_char ~ (identifier_char | ASCII_DIGIT)* }
+identifier_raw =
+ _{ identifier_char
+  ~ ( identifier_char
+    | ASCII_DIGIT
+    | "\'"
+    )*
+  }
 identifier = @{ identifier_raw }
+constructor = @{ "\'" ~ identifier_raw }
 
 /// Keywords
 val_keyword = _{ "val" }
@@ -31,6 +37,7 @@ sum_expr = { app_expr ~ ("|" ~ app_expr)* }
 app_expr = { primary_expr+ }
 primary_expr =
  { type_keyword
+ | constructor
  | identifier
  | "(" ~ expr ~ ")"
  }
