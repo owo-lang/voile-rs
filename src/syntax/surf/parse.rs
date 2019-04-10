@@ -1,5 +1,5 @@
 use crate::syntax::common::{Level, SyntaxInfo};
-use crate::syntax::surf::{Decl, Expr, Ident, NamedExpr};
+use crate::syntax::surf::{Decl, DeclKind, Expr, Ident};
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use pest_derive::Parser;
@@ -81,20 +81,18 @@ fn declarations(the_rule: Tok) -> Vec<Decl> {
 
 fn declaration(rules: Tok) -> Decl {
     let the_rule: Tok = rules.into_inner().next().unwrap();
-    match the_rule.as_rule() {
-        Rule::signature => Decl::Sign(named_expr(the_rule)),
-        Rule::implementation => Decl::Impl(named_expr(the_rule)),
+    let kind = match the_rule.as_rule() {
+        Rule::signature => DeclKind::Sign,
+        Rule::implementation => DeclKind::Impl,
         _ => unreachable!(),
-    }
-}
-
-fn named_expr(rules: Tok) -> NamedExpr {
-    let mut inner: Tik = rules.into_inner();
-    let identifier = next_identifier(&mut inner);
+    };
+    let mut inner: Tik = the_rule.into_inner();
+    let name = next_identifier(&mut inner);
     let expr = next_expr(&mut inner);
     end_of_rule(&mut inner);
-    NamedExpr {
-        name: identifier,
+    Decl {
+        kind,
+        name,
         body: expr,
     }
 }
@@ -112,15 +110,18 @@ fn expr(rules: Tok) -> Expr {
 }
 
 fn primary_expr(rules: Tok) -> Expr {
-    let the_rule: Tok = rules.into_inner().next().unwrap();
-    match the_rule.as_rule() {
-        Rule::identifier => Expr::Var(From::from(the_rule.as_span())),
-        Rule::constructor => Expr::Cons(From::from(the_rule.as_span())),
-        Rule::meta_var => Expr::Meta(From::from(the_rule.as_span())),
+    let mut inner: Tik = rules.into_inner();
+    let the_rule: Tok = inner.next().unwrap();
+    let expr = match the_rule.as_rule() {
+        Rule::identifier => Expr::Var(identifier(the_rule)),
+        Rule::constructor => Expr::Cons(identifier(the_rule)),
+        Rule::meta_var => Expr::Meta(identifier(the_rule)),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
         e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
-    }
+    };
+    end_of_rule(&mut inner);
+    expr
 }
 
 fn type_keyword(rules: Tok) -> Expr {
