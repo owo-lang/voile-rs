@@ -57,8 +57,8 @@ macro_rules! expr_parser {
 }
 
 #[inline]
-fn next_identifier(inner: &mut Tik) -> Ident {
-    next_rule!(inner, identifier, identifier)
+fn next_ident(inner: &mut Tik) -> Ident {
+    next_rule!(inner, ident, ident)
 }
 
 #[inline]
@@ -87,7 +87,7 @@ fn declaration(rules: Tok) -> Decl {
         _ => unreachable!(),
     };
     let mut inner: Tik = the_rule.into_inner();
-    let name = next_identifier(&mut inner);
+    let name = next_ident(&mut inner);
     let expr = next_expr(&mut inner);
     end_of_rule(&mut inner);
     Decl {
@@ -113,9 +113,9 @@ fn primary_expr(rules: Tok) -> Expr {
     let mut inner: Tik = rules.into_inner();
     let the_rule: Tok = inner.next().unwrap();
     let expr = match the_rule.as_rule() {
-        Rule::identifier => Expr::Var(identifier(the_rule)),
-        Rule::constructor => Expr::Cons(identifier(the_rule)),
-        Rule::meta_var => Expr::Meta(identifier(the_rule)),
+        Rule::ident => Expr::Var(ident(the_rule)),
+        Rule::cons => Expr::Cons(ident(the_rule)),
+        Rule::meta => Expr::Meta(ident(the_rule)),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
         e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
@@ -134,7 +134,7 @@ fn type_keyword(rules: Tok) -> Expr {
     Expr::Type(syntax_info, level)
 }
 
-fn identifier(rule: Tok) -> Ident {
+fn ident(rule: Tok) -> Ident {
     Ident {
         info: From::from(rule.as_span()),
     }

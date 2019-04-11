@@ -7,21 +7,25 @@
 WHITESPACE = _{ WHITE_SPACE | ("//" ~ (!NEWLINE ~ ANY)*) }
 
 /// Identifier
-identifier_char =
+ident_char =
  _{ ASCII_ALPHA
   | "_"
   | "\\"
   }
-identifier_raw =
- _{ identifier_char
-  ~ ( identifier_char
+ident_raw =
+ _{ ident_char
+  ~ ( ident_char
     | ASCII_DIGIT
     | "'"
     )*
   }
-identifier = @{ identifier_raw }
-constructor = @{ "'" ~ identifier_raw }
-meta_var = @{ "_" }
+ident = @{ ident_raw }
+cons = @{ "'" ~ ident_raw }
+meta = @{ "_" }
+
+// TODO: this syntax is intended to be a placeholder and going to be redesigned
+// TODO: since even its designer consider it ugly
+cons_type = @{ "," ~ ident_raw }
 
 /// Keywords
 val_keyword = _{ "val" }
@@ -38,15 +42,15 @@ sum_expr = { app_expr ~ ("|" ~ app_expr)* }
 app_expr = { primary_expr+ }
 primary_expr =
  { type_keyword
- | constructor
- | meta_var
- | identifier
+ | cons
+ | meta
+ | ident
  | "(" ~ expr ~ ")"
  }
 
 /// ML-style type signature and definition
-signature = { val_keyword ~ identifier ~ ":" ~ expr ~ semicolon }
-implementation = { let_keyword ~ identifier ~ "=" ~ expr ~ semicolon }
+signature = { val_keyword ~ ident ~ ":" ~ expr ~ semicolon }
+implementation = { let_keyword ~ ident ~ "=" ~ expr ~ semicolon }
 
 declaration =
  { signature
