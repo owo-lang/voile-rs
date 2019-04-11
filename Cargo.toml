@@ -1,6 +1,6 @@
 [package]
 name = "voile"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["ice1000 <ice1000kotlin@foxmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -21,7 +21,7 @@ is-it-maintained-open-issues = { repository = "owo-lang/voile-rs" }
 pest = "2.1.0"
 pest_derive = "2.1.0"
 either = "1.5"
-clap = { version = "2.32.0", features = ["wrap_help"], optional = true }
+clap = { version = "2.33.0", features = ["wrap_help"], optional = true }
 structopt = { version = "0.2", optional = true }
 rustyline = { version = "3.0.0", optional = true }
 
