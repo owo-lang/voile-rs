@@ -43,6 +43,7 @@ app_expr = { primary_expr+ }
 primary_expr =
  { type_keyword
  | cons
+ | cons_type
  | meta
  | ident
  | "(" ~ expr ~ ")"

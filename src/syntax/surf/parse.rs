@@ -115,6 +115,7 @@ fn primary_expr(rules: Tok) -> Expr {
     let expr = match the_rule.as_rule() {
         Rule::ident => Expr::Var(ident(the_rule)),
         Rule::cons => Expr::Cons(ident(the_rule)),
+        Rule::cons_type => Expr::ConsType(ident(the_rule)),
         Rule::meta => Expr::Meta(ident(the_rule)),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
@@ -176,6 +177,9 @@ mod tests {
             .map(|ast| println!("{:?}", ast))
             .unwrap();
         parse_str_err_printed("let reiuji = 'Cons herrington;")
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
+        parse_str_err_printed("val deep : ,Dark Fantasy;")
             .map(|ast| println!("{:?}", ast))
             .unwrap();
     }
