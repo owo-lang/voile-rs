@@ -47,7 +47,7 @@ pub enum Expr {
 }
 
 /// Indicates that whether a `Decl` is a type signature or an implementation.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum DeclKind {
     /// Implementation.
     Impl,

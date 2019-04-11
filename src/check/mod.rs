@@ -4,6 +4,7 @@ use crate::syntax::surf::ast::{Decl, Expr};
 use std::collections::BTreeMap;
 
 /// Type-Checking Error
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TCE {
     SomeErr,
 }
@@ -29,10 +30,10 @@ pub fn check_main(_decls: Vec<Decl>) -> TCM<TCS> {
 
 pub fn check_decl(tcs: TCS, decl: &Decl) -> TCM<TCS> {
     use crate::syntax::surf::ast::DeclKind::*;
-    let kind = &decl.kind;
-    match &kind {
-        Sign => check(tcs, decl.body).map(|val| update_gamma(tcs, val)),
-        Impl => check(tcs, decl.body).map(|val| update_env(tcs, val)),
+    let kind = decl.kind;
+    match kind {
+        Sign => check(tcs, &decl.body).map(|(tcs, val)| update_gamma(tcs, val)),
+        Impl => check(tcs, &decl.body).map(|(tcs, val)| update_env(tcs, val)),
     }
 }
 
@@ -44,6 +45,6 @@ pub fn update_env(tcs: TCS, term: Term) -> TCS {
     unimplemented!()
 }
 
-pub fn check(tcs: TCS, expr: Expr) -> TCM<Term> {
+pub fn check(tcs: TCS, expr: &Expr) -> TCM<(TCS, Term)> {
     unimplemented!()
 }
