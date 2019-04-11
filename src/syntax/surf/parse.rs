@@ -57,6 +57,24 @@ macro_rules! expr_parser {
     };
 }
 
+macro_rules! many_prefix_parser {
+    ($name:ident, $prefix_ty:ident, $prefix:ident, $end:ident) => {
+        fn $name(rules: Tok) -> (Vec<$prefix_ty>, Expr) {
+            let mut prefixes = vec![];
+            let mut end = None;
+            for the_rule in rules.into_inner() {
+                match the_rule.as_rule() {
+                    Rule::$prefix => prefixes.push($prefix(the_rule)),
+                    Rule::$end => end = Some($end(the_rule)),
+                    e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
+                }
+            }
+            // According to the grammar, `end` cannot be `None` (otherwise it's a pest bug).
+            (prefixes, end.unwrap())
+        }
+    };
+}
+
 #[inline]
 fn next_ident(inner: &mut Tik) -> Ident {
     next_rule!(inner, ident)
@@ -152,37 +170,16 @@ fn param(rules: Tok) -> Param {
     param
 }
 
+many_prefix_parser!(pi_expr_internal, Param, param, dollar_expr);
+many_prefix_parser!(multi_param, Ident, ident, expr);
+
 fn pi_expr(rules: Tok) -> Expr {
-    let mut params = vec![];
-    let mut ret = None;
-    for the_rule in rules.into_inner() {
-        match the_rule.as_rule() {
-            Rule::param => params.push(param(the_rule)),
-            Rule::dollar_expr => ret = Some(dollar_expr(the_rule)),
-            e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
-        }
-    }
-    // According to the grammar, ret cannot be `None` (otherwise it's a pest bug).
-    let ret = ret.unwrap();
+    let (params, ret) = pi_expr_internal(rules);
     if params.is_empty() {
         ret
     } else {
         Expr::Pi(params, Box::new(ret))
     }
-}
-
-fn multi_param(rules: Tok) -> (Vec<Ident>, Expr) {
-    let mut idents = vec![];
-    let mut ty = None;
-    for the_rule in rules.into_inner() {
-        match the_rule.as_rule() {
-            Rule::ident => idents.push(ident(the_rule)),
-            Rule::expr => ty = Some(expr(the_rule)),
-            e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
-        }
-    }
-    // According to the grammar, ty cannot be `None` (otherwise it's a pest bug).
-    (idents, ty.unwrap())
 }
 
 fn type_keyword(rules: Tok) -> Expr {
