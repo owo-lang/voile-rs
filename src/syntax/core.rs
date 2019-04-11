@@ -1,14 +1,8 @@
-use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
+use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI, ParamKind};
 use crate::syntax::env::{GlobalEnv_, LocalEnv_};
 
 pub type LocalEnv = LocalEnv_<Term>;
 pub type GlobalEnv = GlobalEnv_<Term>;
-
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
-pub enum Visib {
-    Explicit,
-    Implicit,
-}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TermInfo {
@@ -109,7 +103,7 @@ pub enum Term {
     Lam(Closure),
     /// Pi-like types (dependent types). Since it affects type-checking translation, the visibility
     /// of the parameter need to be specified.
-    Dt(Visib, DtKind, Closure),
+    Dt(ParamKind, DtKind, Closure),
     /// Sigma instance.
     Pair(Box<Term>, Box<Term>),
     Neut(Neutral),

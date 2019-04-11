@@ -4,6 +4,7 @@
 
 + Implemented the expression parser
 + Replace `Pi`, `Sigma` with `Dt`
++ Further improve the surface syntax tree for expressions
 
 # 0.0.2
 

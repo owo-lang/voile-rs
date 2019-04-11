@@ -1,7 +1,14 @@
 use pest::Span;
 
+/// Indicates that whether a parameter is implicit or explicit.
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
+pub enum ParamKind {
+    Explicit,
+    Implicit,
+}
+
 /// Various kinds of dependent types
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum DtKind {
     Pi,
     // TODO: discussion: do we need this?

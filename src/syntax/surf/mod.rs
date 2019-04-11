@@ -1,7 +1,13 @@
 /// Surface syntax tree.
+///
+/// The surface syntax tree is intended to be very close to the surface syntax so it may look a bit
+/// too surface (like `a|b|c` is parsed as a `[a, b, c]`-like structure instead of a
+/// `[a, [b, c]]`-like structure.
 pub mod ast;
 
-/// Code to surface syntax tree, based on pest.
+/// Code to surface syntax tree, based on [pest](https://pest.rs).
+///
+/// Macro is used for code reusing.
 pub mod parse;
 
 pub use self::ast::*;

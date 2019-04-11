@@ -1,4 +1,4 @@
-use crate::syntax::common::{Level, SyntaxInfo};
+use crate::syntax::common::{Level, ParamKind, SyntaxInfo};
 
 /// Surface syntax tree node: Identifier.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6,36 +6,43 @@ pub struct Ident {
     pub info: SyntaxInfo,
 }
 
-/// Indicates that whether a `Param` is implicit or explicit.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum ParamKind {
-    Explicit,
-    Implicit,
-}
-
 /// Surface syntax tree node: Parameter.
 ///
 /// It's a part of a pi-type or a sigma-type (if we have those syntax element).
-/// The `names` field can be empty -- this indicates the parameter to be anonymous.
-/// There can be many `names`, which is treated as many params with same type.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Param {
+    /// This field can be empty -- which indicates the parameter to be anonymous.
+    /// Many `name`s means there are many params with same type.
     pub names: Vec<Ident>,
+    /// Parameter type.
     pub ty: Expr,
+    /// Indicates that whether this `Param` is implicit or explicit.
     pub kind: ParamKind,
 }
 
 /// Surface syntax tree node: Expression.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Expr {
+    /// Variable reference
     Var(Ident),
+    /// Constructor call
     Cons(Ident),
+    /// Type of a constructor call
     ConsType(Ident),
+    /// Explicit meta variable
     Meta(Ident),
+    /// `Type` literal, with levels
     Type(SyntaxInfo, Level),
+    /// Function application, where `f a b` is represented as `App(vec![f, a, b])`
+    /// instead of `App(App(f, a), b)`.
     App(Vec<Expr>),
+    /// Pipeline operator, where `a |> b |> f` is represented as `Pipe(vec![a, b, f])`
+    /// instead of `Pipe(Pipe(a, b), f)`.
     Pipe(Vec<Expr>),
+    /// Type-sum operator.
     Sum(Vec<Expr>),
+    /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`
+    /// instead of `Pi(a, Pi(b, c))`.
     Pi(Vec<Param>, Box<Expr>),
 }
 
