@@ -127,7 +127,9 @@ fn primary_expr(rules: Tok) -> Expr {
 fn type_keyword(rules: Tok) -> Expr {
     let syntax_info: SyntaxInfo = From::from(rules.as_span());
     let mut inner: Tik = rules.into_inner();
-    let level: Level = inner.next().unwrap().as_str().parse().unwrap();
+    let level_ast_node: Tok = inner.next().unwrap();
+    debug_assert_eq!(level_ast_node.as_rule(), Rule::type_level);
+    let level: Level = level_ast_node.as_str().parse().unwrap();
     end_of_rule(&mut inner);
     Expr::Type(syntax_info, level)
 }
@@ -171,6 +173,9 @@ mod tests {
             .map(|ast| println!("{:?}", ast))
             .unwrap();
         parse_str_err_printed("let komeji = satori$koishi orin$okku;")
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
+        parse_str_err_printed("let reiuji = 'Cons herrington;")
             .map(|ast| println!("{:?}", ast))
             .unwrap();
     }

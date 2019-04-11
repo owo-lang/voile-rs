@@ -16,11 +16,11 @@ identifier_raw =
  _{ identifier_char
   ~ ( identifier_char
     | ASCII_DIGIT
-    | "\'"
+    | "'"
     )*
   }
 identifier = @{ identifier_raw }
-constructor = @{ "\'" ~ identifier_raw }
+constructor = @{ "'" ~ identifier_raw }
 meta_var = @{ "_" }
 
 /// Keywords
