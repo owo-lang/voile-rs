@@ -1,4 +1,5 @@
 use crate::syntax::common::{Level, SyntaxInfo};
+use crate::syntax::surf::ast::{Param, ParamKind};
 use crate::syntax::surf::{Decl, DeclKind, Expr, Ident};
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
@@ -33,10 +34,10 @@ pub fn parse_str(input: &str) -> Result<Vec<Decl>, String> {
 }
 
 macro_rules! next_rule {
-    ($inner:expr, $rule_name:ident, $function:ident) => {{
+    ($inner:expr, $rule_name:ident) => {{
         let token = $inner.next().unwrap();
         debug_assert_eq!(token.as_rule(), Rule::$rule_name);
-        $function(token)
+        $rule_name(token)
     }};
 }
 
@@ -58,12 +59,12 @@ macro_rules! expr_parser {
 
 #[inline]
 fn next_ident(inner: &mut Tik) -> Ident {
-    next_rule!(inner, ident, ident)
+    next_rule!(inner, ident)
 }
 
 #[inline]
 fn next_expr(inner: &mut Tik) -> Expr {
-    next_rule!(inner, expr, expr)
+    next_rule!(inner, expr)
 }
 
 #[inline]
@@ -104,7 +105,7 @@ expr_parser!(app_expr, primary_expr, App);
 
 fn expr(rules: Tok) -> Expr {
     let mut inner: Tik = rules.into_inner();
-    let expr = next_rule!(inner, dollar_expr, dollar_expr);
+    let expr = next_rule!(inner, dollar_expr);
     end_of_rule(&mut inner);
     expr
 }
@@ -123,6 +124,51 @@ fn primary_expr(rules: Tok) -> Expr {
     };
     end_of_rule(&mut inner);
     expr
+}
+
+fn one_param(rules: Tok, kind: ParamKind) -> Param {
+    let mut inner: Tik = rules.into_inner();
+    let (names, expr) = next_rule!(inner, multi_param);
+    end_of_rule(&mut inner);
+    Param {
+        kind,
+        names,
+        ty: expr,
+    }
+}
+
+fn param(rules: Tok) -> Param {
+    let mut inner: Tik = rules.into_inner();
+    let the_rule: Tok = inner.next().unwrap();
+    let param = match the_rule.as_rule() {
+        Rule::explicit => one_param(the_rule, ParamKind::Explicit),
+        Rule::implicit => one_param(the_rule, ParamKind::Implicit),
+        Rule::expr => {
+            let ty = expr(the_rule);
+            Param {
+                names: Vec::with_capacity(0),
+                kind: ParamKind::Explicit,
+                ty,
+            }
+        }
+        e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
+    };
+    end_of_rule(&mut inner);
+    param
+}
+
+fn multi_param(rules: Tok) -> (Vec<Ident>, Expr) {
+    let mut idents = vec![];
+    let mut ty = None;
+    for the_rule in rules.into_inner() {
+        match the_rule.as_rule() {
+            Rule::ident => idents.push(ident(the_rule)),
+            Rule::expr => ty = Some(expr(the_rule)),
+            e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
+        }
+    }
+    // According to the grammar, there must be a type (otherwise it's a pest bug).
+    (idents, ty.unwrap())
 }
 
 fn type_keyword(rules: Tok) -> Expr {
