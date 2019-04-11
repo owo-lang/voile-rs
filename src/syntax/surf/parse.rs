@@ -1,5 +1,5 @@
-use crate::syntax::common::{Level, SyntaxInfo};
-use crate::syntax::surf::ast::{Param, ParamKind};
+use crate::syntax::common::{Level, ParamKind, SyntaxInfo};
+use crate::syntax::surf::ast::Param;
 use crate::syntax::surf::{Decl, DeclKind, Expr, Ident};
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
