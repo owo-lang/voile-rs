@@ -63,11 +63,6 @@ fn next_ident(inner: &mut Tik) -> Ident {
 }
 
 #[inline]
-fn next_expr(inner: &mut Tik) -> Expr {
-    next_rule!(inner, expr)
-}
-
-#[inline]
 fn end_of_rule(inner: &mut Tik) {
     debug_assert_eq!(inner.next(), None)
 }
@@ -89,7 +84,7 @@ fn declaration(rules: Tok) -> Decl {
     };
     let mut inner: Tik = the_rule.into_inner();
     let name = next_ident(&mut inner);
-    let expr = next_expr(&mut inner);
+    let expr = next_rule!(inner, expr);
     end_of_rule(&mut inner);
     Decl {
         kind,
@@ -105,7 +100,7 @@ expr_parser!(app_expr, primary_expr, App);
 
 fn expr(rules: Tok) -> Expr {
     let mut inner: Tik = rules.into_inner();
-    let expr = next_rule!(inner, dollar_expr);
+    let expr = next_rule!(inner, pi_expr);
     end_of_rule(&mut inner);
     expr
 }
@@ -143,8 +138,8 @@ fn param(rules: Tok) -> Param {
     let param = match the_rule.as_rule() {
         Rule::explicit => one_param(the_rule, ParamKind::Explicit),
         Rule::implicit => one_param(the_rule, ParamKind::Implicit),
-        Rule::expr => {
-            let ty = expr(the_rule);
+        Rule::dollar_expr => {
+            let ty = dollar_expr(the_rule);
             Param {
                 names: Vec::with_capacity(0),
                 kind: ParamKind::Explicit,
@@ -157,6 +152,25 @@ fn param(rules: Tok) -> Param {
     param
 }
 
+fn pi_expr(rules: Tok) -> Expr {
+    let mut params = vec![];
+    let mut ret = None;
+    for the_rule in rules.into_inner() {
+        match the_rule.as_rule() {
+            Rule::param => params.push(param(the_rule)),
+            Rule::dollar_expr => ret = Some(dollar_expr(the_rule)),
+            e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
+        }
+    }
+    // According to the grammar, ret cannot be `None` (otherwise it's a pest bug).
+    let ret = ret.unwrap();
+    if params.is_empty() {
+        ret
+    } else {
+        Expr::Pi(params, Box::new(ret))
+    }
+}
+
 fn multi_param(rules: Tok) -> (Vec<Ident>, Expr) {
     let mut idents = vec![];
     let mut ty = None;
@@ -167,7 +181,7 @@ fn multi_param(rules: Tok) -> (Vec<Ident>, Expr) {
             e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
         }
     }
-    // According to the grammar, there must be a type (otherwise it's a pest bug).
+    // According to the grammar, ty cannot be `None` (otherwise it's a pest bug).
     (idents, ty.unwrap())
 }
 
@@ -206,6 +220,13 @@ mod tests {
         parse_str_err_printed("let zero = 'Zero;").unwrap();
         parse_str_err_printed("let van = (Type233);").unwrap();
         parse_str_err_printed("let darkholm = (Type233;").unwrap_err();
+    }
+
+    #[test]
+    fn pi_type_parsing() {
+        parse_str_err_printed("val mayori : monika -> (a: A) -> {b : B} -> (c d e : CDE) -> F;")
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
     }
 
     #[test]

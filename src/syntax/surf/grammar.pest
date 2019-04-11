@@ -33,6 +33,7 @@ let_keyword = _{ "let" }
 type_level = @{ ASCII_DIGIT* }
 type_keyword = ${ "Type" ~ type_level }
 semicolon = _{ ";" }
+arrow = _{ "->" }
 
 /// Syntactical helpers
 multi_param = { ident+ ~ ":" ~ expr }
@@ -41,11 +42,12 @@ implicit = { "{" ~ multi_param ~ "}" }
 param =
  { explicit
  | implicit
- | expr // unnamed parameter
+ | dollar_expr // unnamed parameter
  }
 
-expr = { dollar_expr }
+expr = { pi_expr }
 
+pi_expr = { (param ~ arrow)* ~ dollar_expr }
 dollar_expr = { pipe_expr ~ ("$" ~ pipe_expr)* }
 pipe_expr = { sum_expr ~ ("|>" ~ sum_expr)* }
 sum_expr = { app_expr ~ ("|" ~ app_expr)* }

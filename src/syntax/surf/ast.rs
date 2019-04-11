@@ -36,6 +36,7 @@ pub enum Expr {
     App(Vec<Expr>),
     Pipe(Vec<Expr>),
     Sum(Vec<Expr>),
+    Pi(Vec<Param>, Box<Expr>),
 }
 
 /// Indicates that whether a `Decl` is a type signature or an implementation.
