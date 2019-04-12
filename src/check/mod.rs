@@ -74,6 +74,10 @@ pub fn check_subtype(tcs: TCS, subtype: Term, supertype: Term) -> TCM<(TCS, Term
     }
 }
 
+pub fn check_main(decls: Vec<Decl>) -> TCM<TCS> {
+    check_declarations(Default::default(), decls)
+}
+
 pub fn check_declarations(mut tcs: TCS, decls: Vec<Decl>) -> TCM<TCS> {
     for decl in decls.into_iter() {
         tcs = check_decl(tcs, decl.clone())?;
