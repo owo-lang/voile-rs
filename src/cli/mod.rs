@@ -22,8 +22,7 @@ fn main() {
             if !args.parse_only {
                 // Type Check
                 let checked = check_main(ast)
-                    // TODO impl Display for TCE
-                    .map_err(|err| eprintln!("{:?}", err))
+                    .map_err(|err| eprintln!("{}", err))
                     .unwrap_or_else(|()| {
                         eprintln!("Type-Check failed.");
 

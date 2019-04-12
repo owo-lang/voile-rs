@@ -3,9 +3,12 @@ use crate::syntax::core::{LocalEnv, Term};
 use crate::syntax::env::GlobalEnv_;
 use crate::syntax::surf::ast::{Decl, Expr};
 
+mod pretty;
+
 /// Type-Checking Error.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TCE {
+    Textual(String),
     CouldNotInfer(Term),
     NotImplemented,
 }
