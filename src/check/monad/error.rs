@@ -1,6 +1,14 @@
-use crate::check::TCE;
+use crate::syntax::core::Term;
 use core::fmt::Debug;
 use std::fmt::{Display, Error as FmtError, Formatter};
+
+/// Type-Checking Error.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum TCE {
+    Textual(String),
+    CouldNotInfer(Term),
+    NotImplemented,
+}
 
 impl Display for TCE {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {

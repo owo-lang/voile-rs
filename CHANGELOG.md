@@ -2,6 +2,8 @@
 
 # 0.0.4
 
++ Introduce Type-Checking Monad
+
 # 0.0.3
 
 + Implemented the expression parser

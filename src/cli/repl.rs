@@ -1,5 +1,6 @@
 #![allow(unused_variables, unused_mut)]
-use voile::check::TCS;
+
+use voile::check::monad::TCS;
 
 pub fn repl_plain(mut tcs: TCS) {
     unimplemented!()

@@ -1,5 +1,5 @@
+use super::env::{GlobalEnv_, LocalEnv_};
 use crate::syntax::common::{DtKind, Level, ParamKind, SyntaxInfo, DBI};
-use crate::syntax::env::{GlobalEnv_, LocalEnv_};
 
 pub type LocalEnv = LocalEnv_<Term>;
 pub type GlobalEnv = GlobalEnv_<Term>;

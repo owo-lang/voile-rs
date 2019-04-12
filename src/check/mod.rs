@@ -1,52 +1,8 @@
-use crate::syntax::common::{SyntaxInfo, DBI};
-use crate::syntax::core::{LocalEnv, Term};
-use crate::syntax::env::GlobalEnv_;
+use self::monad::{GammaItem, TCE, TCM, TCS};
+use crate::syntax::core::Term;
 use crate::syntax::surf::ast::{Decl, Expr};
 
-mod pretty;
-
-/// Type-Checking Error.
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum TCE {
-    Textual(String),
-    CouldNotInfer(Term),
-    NotImplemented,
-}
-
-/// Gamma item.
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct GammaItem {
-    /// This is not a de Bruijn index, but it should be of the type `DBI`.
-    /// It refers to its index in `TCS::env`.
-    dbi: DBI,
-    /// Because it's a name binding, there should be source code location.
-    location: SyntaxInfo,
-    /// The type of this name.
-    r#type: Term,
-}
-
-/// Typing context.
-pub type Gamma = GlobalEnv_<GammaItem>;
-
-pub type TCM<T> = Result<T, TCE>;
-
-#[derive(Debug, Clone, Default)]
-pub struct TCS {
-    /// Global+local value context.
-    env: LocalEnv,
-    /// This is not a de Bruijn index, but it should be of the type `DBI`.
-    /// It represents the size of `env`.
-    env_size: DBI,
-    /// Global typing context.
-    gamma: Gamma,
-}
-
-impl TCS {
-    pub fn modify_env(mut self, f: impl FnOnce(LocalEnv) -> LocalEnv) -> Self {
-        self.env = f(self.env);
-        self
-    }
-}
+pub mod monad;
 
 /// Expr -> (well-typed) Term
 pub fn check(tcs: TCS, expr: Expr) -> TCM<(TCS, Term)> {
@@ -77,18 +33,18 @@ pub fn check_subtype(tcs: TCS, subtype: Term, supertype: Term) -> TCM<(TCS, Term
     }
 }
 
-pub fn check_main(decls: Vec<Decl>) -> TCM<TCS> {
+pub fn check_main(decls: Vec<Decl>) -> TCM {
     check_declarations(Default::default(), decls)
 }
 
-pub fn check_declarations(mut tcs: TCS, decls: Vec<Decl>) -> TCM<TCS> {
+pub fn check_declarations(mut tcs: TCS, decls: Vec<Decl>) -> TCM {
     for decl in decls.into_iter() {
         tcs = check_decl(tcs, decl.clone())?;
     }
     Ok(tcs)
 }
 
-pub fn check_decl(tcs: TCS, decl: Decl) -> TCM<TCS> {
+pub fn check_decl(tcs: TCS, decl: Decl) -> TCM {
     use crate::syntax::surf::ast::DeclKind::*;
     let name = decl.name;
     match decl.kind {
