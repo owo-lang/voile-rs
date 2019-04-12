@@ -14,12 +14,38 @@ pub enum LocalEnv_<T> {
 }
 
 impl<T> LocalEnv_<T> {
-    pub fn nil() -> Self {
-        LocalEnv_::Nil
+    pub fn is_empty(&self) -> bool {
+        self == &LocalEnv_::Nil
+    }
+
+    pub fn len(&self) -> usize {
+        match self {
+            LocalEnv_::Nil => 0,
+            LocalEnv_::Cons(me, _) => 1 + me.len(),
+        }
     }
 
     pub fn cons(self, canonical: T) -> Self {
-        LocalEnv_::Cons(Rc::new(self), Box::new(canonical))
+        LocalEnv_::cons_rc(Rc::new(self), canonical)
+    }
+
+    pub fn cons_rc(me: Rc<Self>, canonical: T) -> Self {
+        LocalEnv_::Cons(me, Box::new(canonical))
+    }
+
+    /// Return `Ok(self)` means substitution succeeded, `Err(self)` means failed.
+    pub fn substitute_at(&self, index: DBI, new: T) -> Result<Self, Self> {
+        use self::LocalEnv_::*;
+        match self {
+            Nil => Err(Nil),
+            Cons(next, _old_term) => {
+                if index == 0 {
+                    Ok(LocalEnv_::cons_rc(next.clone(), new))
+                } else {
+                    next.substitute_at(index - 1, new)
+                }
+            }
+        }
     }
 
     pub fn project(&self, index: DBI) -> Option<&T> {
@@ -29,10 +55,16 @@ impl<T> LocalEnv_<T> {
                 if index == 0 {
                     Some(term)
                 } else {
-                    Some(&next[index - 1])
+                    next.project(index - 1)
                 }
             }
         }
+    }
+}
+
+impl<T> Default for LocalEnv_<T> {
+    fn default() -> Self {
+        LocalEnv_::Nil
     }
 }
 

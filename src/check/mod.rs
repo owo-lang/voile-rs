@@ -1,28 +1,53 @@
-use crate::syntax::core::Term;
+use crate::syntax::common::{SyntaxInfo, DBI};
+use crate::syntax::core::{LocalEnv, Term};
 use crate::syntax::env::GlobalEnv_;
 use crate::syntax::surf::ast::{Decl, Expr};
-use std::collections::BTreeMap;
 
-/// Type-Checking Error
+/// Type-Checking Error.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TCE {
     CouldNotInfer(Term),
     NotImplemented,
 }
 
-/// env and gamma unit, todo: rename it
+/// Gamma item.
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct S {
-    term_value: Option<Term>,
-    term_type: Option<Term>,
+pub struct GammaItem {
+    /// This is not a de Bruijn index, but it should be of the type `DBI`.
+    /// It refers to its index in `TCS::env`.
+    dbi: DBI,
+    /// Because it's a name binding, there should be source code location.
+    location: SyntaxInfo,
+    /// The type of this name.
+    r#type: Term,
 }
+
+/// Typing context.
+pub type Gamma = GlobalEnv_<GammaItem>;
 
 pub type TCM<T> = Result<T, TCE>;
 
-pub type TCS = GlobalEnv_<S>; // value and type
+#[derive(Debug, Clone, Default)]
+pub struct TCS {
+    /// Global+local value context.
+    env: LocalEnv,
+    /// This is not a de Bruijn index, but it should be of the type `DBI`.
+    /// It represents the size of `env`.
+    env_size: DBI,
+    /// Global typing context.
+    gamma: Gamma,
+}
+
+impl TCS {
+    pub fn modify_env(mut self, f: impl FnOnce(LocalEnv) -> LocalEnv) -> Self {
+        self.env = f(self.env);
+        self
+    }
+}
 
 /// Expr -> (well-typed) Term
 pub fn check(tcs: TCS, expr: Expr) -> TCM<(TCS, Term)> {
+    // TODO: it should have another param, representing the expected type.
     match expr {
         Expr::Type(_, level) => Ok((tcs, Term::Type(level))),
         _ => Err(TCE::NotImplemented),
@@ -30,67 +55,58 @@ pub fn check(tcs: TCS, expr: Expr) -> TCM<(TCS, Term)> {
 }
 
 /// infer type of value
-pub fn check_infer(_tcs: TCS, value: Term) -> TCM<Term> {
+pub fn check_infer(tcs: TCS, value: Term) -> TCM<(TCS, Term)> {
     use crate::syntax::core::Term::*;
     match value {
-        Type(level) => Ok(Type(level + 1)),
+        Type(level) => Ok((tcs, Type(level + 1))),
         _ => Err(TCE::CouldNotInfer(value)),
     }
 }
 
 /// check if type1 is subtype of type2
-pub fn check_subtype(_tcs: TCS, subtype: Term, supertype: Term) -> TCM<Term> {
+pub fn check_subtype(tcs: TCS, subtype: Term, supertype: Term) -> TCM<(TCS, Term)> {
     use crate::syntax::core::Term::*;
     match (subtype, supertype) {
-        (Type(sub_level), Type(super_level)) if sub_level <= super_level => Ok(Type(super_level)),
+        (Type(sub_level), Type(super_level)) if sub_level <= super_level => {
+            Ok((tcs, Type(super_level)))
+        }
         _ => Err(TCE::NotImplemented),
     }
 }
 
-pub fn check_main(decls: Vec<Decl>) -> TCM<TCS> {
-    decls.iter().fold(
-        Result::Ok(BTreeMap::new()),
-        |tcm: TCM<TCS>, decl| match tcm {
-            Ok(env) => check_decl(env, decl.clone()),
-            _ => tcm,
-        },
-    )
+pub fn check_declarations(mut tcs: TCS, decls: Vec<Decl>) -> TCM<TCS> {
+    for decl in decls.into_iter() {
+        tcs = check_decl(tcs, decl.clone())?;
+    }
+    Ok(tcs)
 }
 
 pub fn check_decl(tcs: TCS, decl: Decl) -> TCM<TCS> {
     use crate::syntax::surf::ast::DeclKind::*;
-    let name = decl.name.clone();
+    let name = decl.name;
     match decl.kind {
         Sign => {
-            let (tcs, val) = check(tcs, decl.body)?;
-            let mut tcs = tcs.clone();
-            tcs.insert(
-                name.info.text,
-                S {
-                    term_value: None,
-                    term_type: Some(val),
+            let (mut tcs, val) = check(tcs, decl.body)?;
+            tcs.gamma.insert(
+                name.info.text.clone(),
+                GammaItem {
+                    dbi: tcs.env_size,
+                    location: name.info,
+                    r#type: val,
                 },
             );
+            tcs = tcs.modify_env(|env| env.cons(Term::mock()));
             Ok(tcs)
         }
         Impl => {
-            let (tcs, val) = check(tcs, decl.body)?;
-            let ty = check_infer(tcs.clone(), val.clone())?;
-            let checked_ty = match tcs.get(&name.info.text).cloned() {
-                Some(S {
-                    term_type: Some(sig_ty),
-                    ..
-                }) => check_subtype(tcs.clone(), ty, sig_ty),
-                _ => Ok(ty),
-            }?;
-            let mut tcs = tcs.clone();
-            tcs.insert(
-                name.info.text,
-                S {
-                    term_value: Some(val),
-                    term_type: Some(checked_ty),
-                },
-            );
+            // TODO: TC properly
+            let (mut tcs, val) = check(tcs, decl.body)?;
+            // let ty = check_infer(tcs, val.clone())?;
+            // TODO: Error handling for there's no corresponding item in Gamma
+            let ctx_ty: GammaItem = tcs.gamma[&name.info.text].clone();
+            // This is "replacing the type signature's corresponded value with a well-typed term"
+            // TODO: Error handling, ditto
+            tcs = tcs.modify_env(|env| env.substitute_at(ctx_ty.dbi, val).unwrap());
             Ok(tcs)
         }
     }

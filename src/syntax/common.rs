@@ -15,7 +15,11 @@ pub enum DtKind {
     Sigma,
 }
 
+/// Level literals (the `233` part of `Type233` literals)
 pub type Level = u32;
+
+/// De Bruijn Indices. Checkout [Wikipedia](https://en.wikipedia.org/wiki/De_Bruijn_index) if you
+/// have no idea about this and you are curious about it.
 pub type DBI = usize;
 
 impl<'a> From<Span<'a>> for SyntaxInfo {
