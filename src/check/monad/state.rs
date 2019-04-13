@@ -1,3 +1,4 @@
+use crate::check::monad::TCM;
 use crate::syntax::common::{SyntaxInfo, DBI};
 use crate::syntax::core::{LocalEnv, Term};
 use crate::syntax::env::GlobalEnv_;
@@ -32,5 +33,10 @@ impl TCS {
     pub fn modify_env(mut self, f: impl FnOnce(LocalEnv) -> LocalEnv) -> Self {
         self.env = f(self.env);
         self
+    }
+
+    pub fn try_modify_env(mut self, f: impl FnOnce(LocalEnv) -> TCM<LocalEnv>) -> TCM<Self> {
+        self.env = f(self.env)?;
+        Ok(self)
     }
 }

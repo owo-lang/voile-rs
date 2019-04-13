@@ -1,4 +1,5 @@
 use crate::syntax::core::Term;
+use crate::syntax::surf::ast::Ident;
 use core::fmt::Debug;
 use std::fmt::{Display, Error as FmtError, Formatter};
 
@@ -7,6 +8,8 @@ use std::fmt::{Display, Error as FmtError, Formatter};
 pub enum TCE {
     Textual(String),
     CouldNotInfer(Term),
+    TypeNotInGamma(Ident),
+    DbiOverflow,
 }
 
 impl Display for TCE {
@@ -18,6 +21,12 @@ impl Display for TCE {
                 term.fmt(f)?;
                 f.write_str("`.")
             }
+            TCE::TypeNotInGamma(id) => {
+                f.write_str("Type info not in Gamma for: `")?;
+                id.fmt(f)?;
+                f.write_str("`.")
+            }
+            TCE::DbiOverflow => f.write_str("DBI overflow."),
         }
     }
 }

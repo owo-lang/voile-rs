@@ -1,5 +1,5 @@
 use self::monad::{GammaItem, TermTCM, TCE, TCM, TCS};
-use crate::syntax::core::Term;
+use crate::syntax::core::{LocalEnv, Term};
 use crate::syntax::surf::ast::{Decl, Expr};
 
 pub mod monad;
@@ -51,7 +51,7 @@ pub fn check_declarations(mut tcs: TCS, decls: Vec<Decl>) -> TCM {
 
 pub fn check_decl(tcs: TCS, decl: Decl) -> TCM {
     use crate::syntax::surf::ast::DeclKind::*;
-    let name = decl.name;
+    let name = decl.name.clone();
     match decl.kind {
         Sign => {
             let (mut tcs, val) = check_type(tcs, decl.body)?;
@@ -67,14 +67,16 @@ pub fn check_decl(tcs: TCS, decl: Decl) -> TCM {
             Ok(tcs)
         }
         Impl => {
-            // TODO: Error handling for there's no corresponding item in Gamma
-            let ctx_ty: GammaItem = tcs.gamma[&name.info.text].clone();
-            let dbi = ctx_ty.dbi;
-            let (mut tcs, val) = check(tcs, decl.body, ctx_ty.r#type)?;
-            // This is "replacing the type signature's corresponded value with a well-typed term"
-            // TODO: Error handling, ditto
-            tcs = tcs.modify_env(|env| env.substitute_at(dbi, val).unwrap());
-            Ok(tcs)
+            let ctx_ty = tcs.gamma.get(&name.info.text).cloned();
+            ctx_ty.map_or(Err(TCE::TypeNotInGamma(name)), |ctx_ty| {
+                let dbi = ctx_ty.dbi;
+                let (tcs, val) = check(tcs, decl.body, ctx_ty.r#type)?;
+                // This is "replacing the type signature's corresponded value with a well-typed term"
+                tcs.try_modify_env(|env: LocalEnv| match env.substitute_at(dbi, val) {
+                    Ok(env) => Ok(env),
+                    Err(_) => Err(TCE::DbiOverflow),
+                })
+            })
         }
     }
 }
