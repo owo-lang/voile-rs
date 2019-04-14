@@ -20,12 +20,10 @@ ident_raw =
     )*
   }
 ident = @{ ident_raw }
-cons = @{ "'" ~ ident_raw }
+cons = @{ "@" ~ ident_raw }
 meta = @{ "_" }
-
-// TODO: this syntax is intended to be a placeholder and going to be redesigned
-// TODO: since even its designer consider it ugly
-cons_type = @{ "," ~ ident_raw }
+bottom = @{ "!" }
+one_sum = @{ "'" ~ ident_raw }
 
 /// Keywords
 val_keyword = _{ "val" }
@@ -34,6 +32,9 @@ type_level = @{ ASCII_DIGIT* }
 type_keyword = ${ "Type" ~ type_level }
 semicolon = _{ ";" }
 arrow = _{ "->" }
+sum_op = _{ "+" }
+pipe_op = _{ "|>" }
+dollar_op = _{ "$" }
 
 /// Syntactical helpers
 multi_param = { ident+ ~ ":" ~ expr }
@@ -48,14 +49,15 @@ param =
 expr = { pi_expr }
 
 pi_expr = { (param ~ arrow)* ~ dollar_expr }
-dollar_expr = { pipe_expr ~ ("$" ~ pipe_expr)* }
-pipe_expr = { sum_expr ~ ("|>" ~ sum_expr)* }
-sum_expr = { app_expr ~ ("|" ~ app_expr)* }
+dollar_expr = { pipe_expr ~ (dollar_op ~ pipe_expr)* }
+pipe_expr = { sum_expr ~ (pipe_op ~ sum_expr)* }
+sum_expr = { app_expr ~ (sum_op ~ app_expr)* }
 app_expr = { primary_expr+ }
 primary_expr =
  { type_keyword
  | cons
- | cons_type
+ | one_sum
+ | bottom
  | meta
  | ident
  | "(" ~ expr ~ ")"

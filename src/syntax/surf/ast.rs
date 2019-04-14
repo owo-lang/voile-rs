@@ -29,13 +29,17 @@ pub enum Expr {
     Cons(Ident),
     /// Type of a constructor call
     ConsType(Ident),
+    /// Empty type
+    Bot(Ident),
     /// Explicit meta variable
     Meta(Ident),
     /// `Type` literal, with levels
     Type(SyntaxInfo, Level),
-    /// Function application, where `f a b` is represented as `App(vec![f, a, b])`
+    /// Function application.<br/>
+    /// Application operator, where `f a b` is represented as `App(vec![f, a, b])`
     /// instead of `App(App(f, a), b)`.
     App(Vec<Expr>),
+    /// Function composition.<br/>
     /// Pipeline operator, where `a |> b |> f` is represented as `Pipe(vec![a, b, f])`
     /// instead of `Pipe(Pipe(a, b), f)`.
     Pipe(Vec<Expr>),
