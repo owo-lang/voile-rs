@@ -74,7 +74,7 @@ pub fn check_decl(tcs: TCS, decl: Decl) -> TCM {
                 // This is "replacing the type signature's corresponded value with a well-typed term"
                 tcs.try_modify_env(|env: LocalEnv| match env.substitute_at(dbi, val) {
                     Ok(env) => Ok(env),
-                    Err(_) => Err(TCE::DbiOverflow),
+                    Err(_) => Err(TCE::DbiOverflow(env.len(), dbi)),
                 })
             })
         }

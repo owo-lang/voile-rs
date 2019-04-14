@@ -1,6 +1,6 @@
+use crate::syntax::common::DBI;
 use crate::syntax::core::Term;
 use crate::syntax::surf::ast::Ident;
-use core::fmt::Debug;
 use std::fmt::{Display, Error as FmtError, Formatter};
 
 /// Type-Checking Error.
@@ -9,7 +9,8 @@ pub enum TCE {
     Textual(String),
     CouldNotInfer(Term),
     TypeNotInGamma(Ident),
-    DbiOverflow,
+    /// Maximum `DBI` vs. Requested `DBI`
+    DbiOverflow(DBI, DBI),
 }
 
 impl Display for TCE {
@@ -17,16 +18,24 @@ impl Display for TCE {
         match self {
             TCE::Textual(text) => f.write_str(text),
             TCE::CouldNotInfer(term) => {
+                use std::fmt::Debug;
                 f.write_str("Could not infer type of: `")?;
                 term.fmt(f)?;
                 f.write_str("`.")
             }
             TCE::TypeNotInGamma(id) => {
+                use std::fmt::Debug;
                 f.write_str("Type info not in Gamma for: `")?;
                 id.fmt(f)?;
                 f.write_str("`.")
             }
-            TCE::DbiOverflow => f.write_str("DBI overflow."),
+            TCE::DbiOverflow(expected, actual) => {
+                f.write_str("DBI overflow, maximum: ")?;
+                expected.fmt(f)?;
+                f.write_str(", got: ")?;
+                actual.fmt(f)?;
+                f.write_str(".")
+            }
         }
     }
 }
