@@ -1,8 +1,8 @@
-use super::env::{GlobalEnv_, LocalEnv_};
+use super::env::{DbiEnv_, NamedEnv_};
 use crate::syntax::common::{DtKind, Level, ParamKind, SyntaxInfo, DBI};
 
-pub type LocalEnv = LocalEnv_<Term>;
-pub type GlobalEnv = GlobalEnv_<Term>;
+pub type LocalEnv = DbiEnv_<Term>;
+pub type GlobalEnv = NamedEnv_<Term>;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TermInfo {

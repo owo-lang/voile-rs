@@ -1,7 +1,7 @@
 use crate::check::monad::TCM;
 use crate::syntax::common::{SyntaxInfo, DBI};
 use crate::syntax::core::{LocalEnv, Term};
-use crate::syntax::env::GlobalEnv_;
+use crate::syntax::env::NamedEnv_;
 
 /// Gamma item.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -16,7 +16,7 @@ pub struct GammaItem {
 }
 
 /// Typing context.
-pub type Gamma = GlobalEnv_<GammaItem>;
+pub type Gamma = NamedEnv_<GammaItem>;
 
 #[derive(Debug, Clone, Default)]
 pub struct TCS {
