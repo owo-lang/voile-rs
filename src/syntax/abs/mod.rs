@@ -3,8 +3,8 @@ use crate::check::monad::TCM;
 use crate::syntax::common::{DtKind, Level, DBI};
 use crate::syntax::env::NamedEnv_;
 use crate::syntax::surf::ast::{Decl, DeclKind, Expr, Ident};
+use either::Either;
 use std::collections::BTreeMap;
-use std::process::id;
 
 #[derive(Debug, Clone)]
 pub enum Abstract {
@@ -18,7 +18,7 @@ pub enum Abstract {
     /// Construct call
     Cons(Ident, Box<Abstract>),
     /// Apply or Pipeline in surface
-    App(Ident, Box<Self>, Box<Self>),
+    App(Box<Self>, Box<Self>),
     /// Dependent Type type
     Dt(Ident, DtKind, Box<Self>, Box<Self>),
     Pair(Ident, Box<Abstract>, Box<Abstract>),
@@ -64,18 +64,18 @@ pub fn trans(decls: Vec<Decl>) -> TCM<AbstractGlobalEnv> {
         .map(|(result, _)| result)
 }
 
-pub fn trans_expr(_expr: &Expr, _env: &AbstractGlobalEnv, _map: &NamedEnv_<DBI>) -> TCM<Abstract> {
-    trans_expr_inner(_expr, _env, _map, Default::default(), &BTreeMap::new())
+pub fn trans_expr(expr: &Expr, env: &AbstractGlobalEnv, map: &NamedEnv_<DBI>) -> TCM<Abstract> {
+    trans_expr_inner(expr, env, map, &BTreeMap::new(), &BTreeMap::new())
 }
 
 pub fn trans_expr_inner(
-    _expr: &Expr,
-    _env: &AbstractGlobalEnv,
+    expr: &Expr,
+    env: &AbstractGlobalEnv,
     global_map: &NamedEnv_<DBI>,
-    _local_env: AbstractGlobalEnv,
+    local_env: &AbstractGlobalEnv,
     local_map: &NamedEnv_<DBI>,
 ) -> TCM<Abstract> {
-    match _expr {
+    match expr {
         Expr::Type(syntax, level) => Ok(Abstract::Type(
             Ident {
                 info: syntax.clone(),
@@ -92,7 +92,34 @@ pub fn trans_expr_inner(
                 Err(TCE::LookUpFailed(name))
             }
         }
+        Expr::App(app_vec) => app_vec
+            .iter()
+            .fold(
+                Ok(Either::Left(None)),
+                |result: TCM<Either<Option<Abstract>, Abstract>>, each_expr| {
+                    let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
+                    Ok(match result? {
+                        Either::Left(None) => Either::Left(Some(abs)),
+                        Either::Left(Some(left_abs)) | Either::Right(left_abs) => {
+                            Either::Right(Abstract::App(Box::new(left_abs), Box::new(abs)))
+                        }
+                    })
+                },
+            )
+            .map(|e| match e {
+                Either::Right(abs) => abs,
+                _ => unreachable!(),
+            }),
+        Expr::Pipe(pipe_vec) => {
+            let mut app_vec = pipe_vec.clone();
+            app_vec.reverse();
+            trans_expr_inner(&Expr::App(app_vec), env, global_map, local_env, local_map)
+        }
         Expr::Meta(_) => unimplemented!(),
-        _ => unimplemented!(),
+        Expr::Cons(_) => unimplemented!(),
+        Expr::ConsType(_) => unimplemented!(),
+        Expr::Bot(_) => unimplemented!(),
+        Expr::Sum(_) => unimplemented!(),
+        Expr::Pi(_, _) => unimplemented!(),
     }
 }
