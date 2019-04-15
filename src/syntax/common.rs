@@ -35,6 +35,7 @@ impl<'a> From<Span<'a>> for SyntaxInfo {
 /// Trivial information about the surface syntax items.
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
 pub struct SyntaxInfo {
+    /// This is used for pretty-printing, it may probably be different from the original text.
     pub text: String,
     pub start: usize,
     pub end: usize,

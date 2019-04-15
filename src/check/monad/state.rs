@@ -1,6 +1,6 @@
 use crate::check::monad::TCM;
 use crate::syntax::common::{SyntaxInfo, DBI};
-use crate::syntax::core::{LocalEnv, Term};
+use crate::syntax::core::{DbiEnv, Term};
 use crate::syntax::env::NamedEnv_;
 
 /// Gamma item.
@@ -21,7 +21,7 @@ pub type Gamma = NamedEnv_<GammaItem>;
 #[derive(Debug, Clone, Default)]
 pub struct TCS {
     /// Global+local value context.
-    pub env: LocalEnv,
+    pub env: DbiEnv,
     /// This is not a de Bruijn index, but it should be of the type `DBI`.
     /// It represents the size of `env`.
     pub env_size: DBI,
@@ -30,12 +30,12 @@ pub struct TCS {
 }
 
 impl TCS {
-    pub fn modify_env(mut self, f: impl FnOnce(LocalEnv) -> LocalEnv) -> Self {
+    pub fn modify_env(mut self, f: impl FnOnce(DbiEnv) -> DbiEnv) -> Self {
         self.env = f(self.env);
         self
     }
 
-    pub fn try_modify_env(mut self, f: impl FnOnce(LocalEnv) -> TCM<LocalEnv>) -> TCM<Self> {
+    pub fn try_modify_env(mut self, f: impl FnOnce(DbiEnv) -> TCM<DbiEnv>) -> TCM<Self> {
         self.env = f(self.env)?;
         Ok(self)
     }

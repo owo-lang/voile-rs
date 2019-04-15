@@ -18,7 +18,7 @@ is-it-maintained-issue-resolution = { repository = "owo-lang/voile-rs" }
 is-it-maintained-open-issues = { repository = "owo-lang/voile-rs" }
 
 [dependencies]
-pest = "2.1.0"
+pest = "2.1.1"
 pest_derive = "2.1.0"
 either = "1.5"
 clap = { version = "2.33.0", features = ["wrap_help"], optional = true }

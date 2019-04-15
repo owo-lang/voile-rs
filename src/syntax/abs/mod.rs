@@ -1,29 +1,29 @@
 use crate::check::monad::error::TCE;
 use crate::check::monad::TCM;
-use crate::syntax::common::{DtKind, Level, DBI};
+use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
 use crate::syntax::env::NamedEnv_;
-use crate::syntax::surf::ast::{Decl, DeclKind, Expr, Ident};
+use crate::syntax::surf::ast::{Decl, DeclKind, Expr};
 use either::Either;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
 pub enum Abstract {
-    Type(Ident, Level),
+    Type(SyntaxInfo, Level),
     /// Bottom type
-    Bot(Ident),
+    Bot(SyntaxInfo),
     /// Global variable
-    Var(Ident, DBI),
+    Var(SyntaxInfo, DBI),
     /// Local variable
-    Local(Ident, DBI),
+    Local(SyntaxInfo, DBI),
     /// Construct call
-    Cons(Ident, Box<Abstract>),
+    Cons(SyntaxInfo, Box<Abstract>),
     /// Apply or Pipeline in surface
     App(Box<Self>, Box<Self>),
     /// Dependent Type type
-    Dt(Ident, DtKind, Box<Self>, Box<Self>),
-    Pair(Ident, Box<Abstract>, Box<Abstract>),
-    Fst(Ident, Box<Abstract>),
-    Snd(Ident, Box<Abstract>),
+    Dt(SyntaxInfo, DtKind, Box<Self>, Box<Self>),
+    Pair(SyntaxInfo, Box<Abstract>, Box<Abstract>),
+    Fst(SyntaxInfo, Box<Abstract>),
+    Snd(SyntaxInfo, Box<Abstract>),
 }
 
 /// type signature and value
@@ -76,18 +76,13 @@ pub fn trans_expr_inner(
     local_map: &NamedEnv_<DBI>,
 ) -> TCM<Abstract> {
     match expr {
-        Expr::Type(syntax, level) => Ok(Abstract::Type(
-            Ident {
-                info: syntax.clone(),
-            },
-            *level,
-        )),
+        Expr::Type(syntax, level) => Ok(Abstract::Type(syntax.clone(), *level)),
         Expr::Var(ident) => {
             let name = ident.info.text.clone();
             if local_map.contains_key(&name) {
-                Ok(Abstract::Local(ident.clone(), local_map[&name]))
+                Ok(Abstract::Local(ident.info.clone(), local_map[&name]))
             } else if global_map.contains_key(&name) {
-                Ok(Abstract::Var(ident.clone(), global_map[&name]))
+                Ok(Abstract::Var(ident.info.clone(), global_map[&name]))
             } else {
                 Err(TCE::LookUpFailed(name))
             }

@@ -1,8 +1,8 @@
 use super::env::{DbiEnv_, NamedEnv_};
 use crate::syntax::common::{DtKind, Level, ParamKind, SyntaxInfo, DBI};
 
-pub type LocalEnv = DbiEnv_<Term>;
-pub type GlobalEnv = NamedEnv_<Term>;
+pub type DbiEnv = DbiEnv_<Term>;
+pub type NamedEnv = NamedEnv_<Term>;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TermInfo {
@@ -15,12 +15,12 @@ impl TermInfo {
         Self { ast, info }
     }
 
-    pub fn reduce(self, env: &LocalEnv) -> Term {
+    pub fn reduce(self, env: &DbiEnv) -> Term {
         self.ast.reduce(env)
     }
 
     /// Because in `reduce`, what actually moved is `self.ast`, not whole `self`.
-    pub fn reduce_cloned(&self, env: &LocalEnv) -> Term {
+    pub fn reduce_cloned(&self, env: &DbiEnv) -> Term {
         self.ast.clone().reduce(env)
     }
 }
@@ -53,7 +53,7 @@ impl Term {
         }
     }
 
-    pub fn reduce(self, env: &LocalEnv) -> Term {
+    pub fn reduce(self, env: &DbiEnv) -> Term {
         match self {
             Term::Pair(a, b) => Term::pair(a.reduce(env), b.reduce(env)),
             Term::Neut(neutral_value) => neutral_value.reduce(env),
@@ -78,7 +78,7 @@ pub enum Neutral {
 }
 
 impl Neutral {
-    pub fn reduce(self, env: &LocalEnv) -> Term {
+    pub fn reduce(self, env: &DbiEnv) -> Term {
         use crate::syntax::core::Neutral::*;
         match self {
             Gen(n) => n.map_or_else(Term::mock, |n| {
@@ -158,7 +158,7 @@ pub struct Closure {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ClosureBody {
     pub body: Box<TermInfo>,
-    pub env: LocalEnv,
+    pub env: DbiEnv,
 }
 
 impl ClosureBody {

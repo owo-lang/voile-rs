@@ -1,5 +1,5 @@
 use self::monad::{GammaItem, TermTCM, TCE, TCM, TCS};
-use crate::syntax::core::{LocalEnv, Term};
+use crate::syntax::core::{DbiEnv, Term};
 use crate::syntax::surf::ast::{Decl, Expr};
 
 pub mod monad;
@@ -72,7 +72,7 @@ pub fn check_decl(tcs: TCS, decl: Decl) -> TCM {
                 let dbi = ctx_ty.dbi;
                 let (tcs, val) = check(tcs, decl.body, ctx_ty.r#type)?;
                 // This is "replacing the type signature's corresponded value with a well-typed term"
-                tcs.try_modify_env(|env: LocalEnv| match env.substitute_at(dbi, val) {
+                tcs.try_modify_env(|env: DbiEnv| match env.substitute_at(dbi, val) {
                     Ok(env) => Ok(env),
                     Err(_) => Err(TCE::DbiOverflow(env.len(), dbi)),
                 })
