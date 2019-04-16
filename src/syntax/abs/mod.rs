@@ -1,6 +1,6 @@
 use crate::check::monad::error::TCE;
 use crate::check::monad::TCM;
-use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
+use crate::syntax::common::{DtKind, Level, ParamKind, SyntaxInfo, DBI};
 use crate::syntax::env::NamedEnv_;
 use crate::syntax::surf::ast::{Decl, DeclKind, Expr};
 use either::Either;
@@ -16,19 +16,20 @@ pub enum Abstract {
     /// Local variable
     Local(SyntaxInfo, DBI),
     /// Construct call
-    Cons(SyntaxInfo, Box<Abstract>),
+    Cons(SyntaxInfo, Box<Self>),
     /// Construct call
-    ConsType(SyntaxInfo, Box<Abstract>),
+    ConsType(SyntaxInfo, Box<Self>),
     /// Apply or Pipeline in surface
     App(Box<Self>, Box<Self>),
     /// Dependent Type type
-    Dt(SyntaxInfo, DtKind, Box<Self>, Box<Self>),
-    Pair(SyntaxInfo, Box<Abstract>, Box<Abstract>),
-    Fst(SyntaxInfo, Box<Abstract>),
-    Snd(SyntaxInfo, Box<Abstract>),
+    Dt(DtKind, Box<Self>, Box<Self>),
+    Pair(SyntaxInfo, Box<Self>, Box<Self>),
+    Fst(SyntaxInfo, Box<Self>),
+    Snd(SyntaxInfo, Box<Self>),
 }
 
 /// type signature and value in abstract syntax
+#[derive(Debug, Clone)]
 pub enum AbstractDecl {
     JustSign(Abstract),
     JustImpl(Abstract),
@@ -91,8 +92,8 @@ pub fn trans_expr_inner(
     expr: &Expr,
     env: &AbstractGlobalEnv,
     global_map: &NamedEnv_<DBI>,
-    local_env: &AbstractGlobalEnv,
-    local_map: &NamedEnv_<DBI>,
+    mut local_env: &AbstractGlobalEnv,
+    mut local_map: &NamedEnv_<DBI>,
 ) -> TCM<Abstract> {
     match expr {
         Expr::Type(syntax, level) => Ok(Abstract::Type(syntax.clone(), *level)),
@@ -138,6 +139,41 @@ pub fn trans_expr_inner(
         Expr::ConsType(_) => unimplemented!(),
         Expr::Bot(ident) => Ok(Abstract::Bot(ident.info.clone())),
         Expr::Sum(_) => unimplemented!(),
-        Expr::Pi(_, _) => unimplemented!(),
+        Expr::Pi(params, result) => {
+            let mut pi_env = local_env.clone();
+            let mut pi_map = local_map.clone();
+            params
+                .iter()
+                .try_fold(
+                    Either::Left(None),
+                    |pi_abs: (Either<Option<Abstract>, Abstract>),
+                     param|
+                     -> TCM<Either<Option<Abstract>, Abstract>> {
+                        // todo: handle implicit parameter
+                        assert_eq!(param.kind, ParamKind::Explicit);
+                        let param_ty: Abstract =
+                            trans_expr_inner(&param.ty.clone(), env, global_map, &pi_env, &pi_map)?;
+                        for name in param.names.clone() {
+                            let param_name = name.info.text;
+                            let param_dbi: DBI = local_env.len();
+                            pi_env.insert(param_dbi, AbstractDecl::JustSign(param_ty.clone()));
+                            pi_map.insert(param_name, param_dbi);
+                        }
+                        Ok(pi_abs)
+                    },
+                )
+                .map_or_else(
+                    |e| Err(e),
+                    |pi_params| match pi_params {
+                        Either::Left(Some(pi_params)) | Either::Right(pi_params) => {
+                            let abs: Abstract =
+                                trans_expr_inner(expr, env, global_map, &pi_env, &pi_map)?;
+                            Ok(Abstract::Dt(DtKind::Pi, Box::new(pi_params), Box::new(abs)))
+                        }
+                        _ => unreachable!(),
+                    },
+                );
+            unimplemented!()
+        }
     }
 }
