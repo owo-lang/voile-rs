@@ -17,6 +17,8 @@ pub enum Abstract {
     Local(SyntaxInfo, DBI),
     /// Construct call
     Cons(SyntaxInfo, Box<Abstract>),
+    /// Construct call
+    ConsType(SyntaxInfo, Box<Abstract>),
     /// Apply or Pipeline in surface
     App(Box<Self>, Box<Self>),
     /// Dependent Type type
@@ -26,8 +28,12 @@ pub enum Abstract {
     Snd(SyntaxInfo, Box<Abstract>),
 }
 
-/// type signature and value
-pub type AbstractDecl = (Option<Abstract>, Option<Abstract>);
+/// type signature and value in abstract syntax
+pub enum AbstractDecl {
+    JustSign(Abstract),
+    JustImpl(Abstract),
+    Decl(Abstract, Abstract),
+}
 
 pub type AbstractGlobalEnv = VecDbiEnv_<AbstractDecl>;
 
@@ -49,15 +55,28 @@ pub fn trans(decls: Vec<Decl>) -> TCM<AbstractGlobalEnv> {
                     .entry(name.info.text)
                     .or_insert(result.len())
                     .clone();
-                if !result.contains_key(&dbi) {
-                    result.insert(dbi, (None, None));
-                }
-                result.entry(dbi).and_modify(|abs_tuple| {
-                    match decl.kind {
-                        DeclKind::Sign => abs_tuple.0 = Some(abs),
-                        DeclKind::Impl => abs_tuple.1 = Some(abs),
-                    };
-                });
+                let abs_decl = result.get(&dbi);
+                result.insert(
+                    dbi,
+                    match (decl.kind, abs_decl.clone()) {
+                        (DeclKind::Sign, None)
+                        | (DeclKind::Sign, Some(AbstractDecl::JustSign(_))) => {
+                            AbstractDecl::JustSign(abs)
+                        }
+                        (DeclKind::Impl, None)
+                        | (DeclKind::Impl, Some(AbstractDecl::JustImpl(_))) => {
+                            AbstractDecl::JustImpl(abs)
+                        }
+                        (DeclKind::Sign, Some(AbstractDecl::JustImpl(impl_abs)))
+                        | (DeclKind::Sign, Some(AbstractDecl::Decl(_, impl_abs))) => {
+                            AbstractDecl::Decl(abs, impl_abs.clone())
+                        }
+                        (DeclKind::Impl, Some(AbstractDecl::JustSign(sign_abs)))
+                        | (DeclKind::Impl, Some(AbstractDecl::Decl(sign_abs, _))) => {
+                            AbstractDecl::Decl(sign_abs.clone(), abs)
+                        }
+                    },
+                );
                 Ok((result, name_map))
             },
         )
@@ -94,7 +113,9 @@ pub fn trans_expr_inner(
                 |result: TCM<Either<Option<Abstract>, Abstract>>, each_expr| {
                     let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
                     Ok(match result? {
+                        // First item in vec
                         Either::Left(None) => Either::Left(Some(abs)),
+                        // Second or other, reduce to Right
                         Either::Left(Some(left_abs)) | Either::Right(left_abs) => {
                             Either::Right(Abstract::App(Box::new(left_abs), Box::new(abs)))
                         }
@@ -103,6 +124,8 @@ pub fn trans_expr_inner(
             )
             .map(|e| match e {
                 Either::Right(abs) => abs,
+                // Any apply calls should have more than 2 items in the surface vec
+                // so this should only have Right instance
                 _ => unreachable!(),
             }),
         Expr::Pipe(pipe_vec) => {
@@ -113,7 +136,7 @@ pub fn trans_expr_inner(
         Expr::Meta(_) => unimplemented!(),
         Expr::Cons(_) => unimplemented!(),
         Expr::ConsType(_) => unimplemented!(),
-        Expr::Bot(_) => unimplemented!(),
+        Expr::Bot(ident) => Ok(Abstract::Bot(ident.info.clone())),
         Expr::Sum(_) => unimplemented!(),
         Expr::Pi(_, _) => unimplemented!(),
     }
