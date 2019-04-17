@@ -3,7 +3,6 @@ use crate::check::monad::TCM;
 use crate::syntax::common::{DtKind, Level, ParamKind, SyntaxInfo, DBI};
 use crate::syntax::env::NamedEnv_;
 use crate::syntax::surf::ast::{Decl, DeclKind, Expr};
-use either::Either;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
@@ -22,7 +21,7 @@ pub enum Abstract {
     /// Apply or Pipeline in surface
     App(Box<Self>, Box<Self>),
     /// Dependent Type type
-    Dt(DtKind, Box<Self>, Box<Self>),
+    Dt(DtKind, Box<Abstract>, Box<Abstract>),
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
     Snd(SyntaxInfo, Box<Self>),
@@ -92,8 +91,8 @@ pub fn trans_expr_inner(
     expr: &Expr,
     env: &AbstractGlobalEnv,
     global_map: &NamedEnv_<DBI>,
-    mut local_env: &AbstractGlobalEnv,
-    mut local_map: &NamedEnv_<DBI>,
+    local_env: &AbstractGlobalEnv,
+    local_map: &NamedEnv_<DBI>,
 ) -> TCM<Abstract> {
     match expr {
         Expr::Type(syntax, level) => Ok(Abstract::Type(syntax.clone(), *level)),
@@ -109,26 +108,19 @@ pub fn trans_expr_inner(
         }
         Expr::App(app_vec) => app_vec
             .iter()
-            .fold(
-                Ok(Either::Left(None)),
-                |result: TCM<Either<Option<Abstract>, Abstract>>, each_expr| {
+            .try_fold(
+                None,
+                |result: Option<Abstract>, each_expr| -> TCM<Option<Abstract>> {
                     let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                    Ok(match result? {
+                    Ok(match result {
                         // First item in vec
-                        Either::Left(None) => Either::Left(Some(abs)),
+                        None => Some(abs),
                         // Second or other, reduce to Right
-                        Either::Left(Some(left_abs)) | Either::Right(left_abs) => {
-                            Either::Right(Abstract::App(Box::new(left_abs), Box::new(abs)))
-                        }
+                        Some(left_abs) => Some(Abstract::App(Box::new(left_abs), Box::new(abs))),
                     })
                 },
             )
-            .map(|e| match e {
-                Either::Right(abs) => abs,
-                // Any apply calls should have more than 2 items in the surface vec
-                // so this should only have Right instance
-                _ => unreachable!(),
-            }),
+            .map(|option_abs| option_abs.unwrap()),
         Expr::Pipe(pipe_vec) => {
             let mut app_vec = pipe_vec.clone();
             app_vec.reverse();
@@ -142,38 +134,30 @@ pub fn trans_expr_inner(
         Expr::Pi(params, result) => {
             let mut pi_env = local_env.clone();
             let mut pi_map = local_map.clone();
-            params
-                .iter()
-                .try_fold(
-                    Either::Left(None),
-                    |pi_abs: (Either<Option<Abstract>, Abstract>),
-                     param|
-                     -> TCM<Either<Option<Abstract>, Abstract>> {
-                        // todo: handle implicit parameter
-                        assert_eq!(param.kind, ParamKind::Explicit);
-                        let param_ty: Abstract =
-                            trans_expr_inner(&param.ty.clone(), env, global_map, &pi_env, &pi_map)?;
-                        for name in param.names.clone() {
-                            let param_name = name.info.text;
-                            let param_dbi: DBI = local_env.len();
-                            pi_env.insert(param_dbi, AbstractDecl::JustSign(param_ty.clone()));
-                            pi_map.insert(param_name, param_dbi);
-                        }
-                        Ok(pi_abs)
-                    },
-                )
-                .map_or_else(
-                    |e| Err(e),
-                    |pi_params| match pi_params {
-                        Either::Left(Some(pi_params)) | Either::Right(pi_params) => {
-                            let abs: Abstract =
-                                trans_expr_inner(expr, env, global_map, &pi_env, &pi_map)?;
-                            Ok(Abstract::Dt(DtKind::Pi, Box::new(pi_params), Box::new(abs)))
-                        }
-                        _ => unreachable!(),
-                    },
-                );
-            unimplemented!()
+            let mut pi_vec: Vec<Abstract> = params.iter().try_fold(
+                Vec::new(),
+                |mut pi_vec: Vec<Abstract>, param| -> TCM<Vec<Abstract>> {
+                    // todo: handle implicit parameter
+                    assert_eq!(param.kind, ParamKind::Explicit);
+                    let param_ty =
+                        trans_expr_inner(&param.ty.clone(), env, global_map, &pi_env, &pi_map)?;
+                    for name in param.names.clone() {
+                        let param_name = name.info.text;
+                        let param_dbi: DBI = local_env.len();
+                        pi_env.insert(param_dbi, AbstractDecl::JustSign(param_ty.clone()));
+                        pi_map.insert(param_name, param_dbi);
+                    }
+                    pi_vec.insert(pi_vec.len(), param_ty);
+                    Ok(pi_vec)
+                },
+            )?;
+
+            // fold from right
+            pi_vec.reverse();
+            Ok(pi_vec.iter().fold(
+                trans_expr_inner(result, env, global_map, &pi_env, &pi_map)?,
+                |pi_abs, param| Abstract::Dt(DtKind::Pi, Box::new(param.clone()), Box::new(pi_abs)),
+            ))
         }
     }
 }
