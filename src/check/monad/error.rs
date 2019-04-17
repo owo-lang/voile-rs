@@ -11,7 +11,7 @@ pub enum TCE {
     TypeNotInGamma(Ident),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
-    LookUpFailed(String),
+    LookUpFailed(Ident),
 }
 
 impl Display for TCE {
@@ -39,8 +39,9 @@ impl Display for TCE {
             }
             TCE::LookUpFailed(var) => {
                 f.write_str("Look up failed for `")?;
-                var.fmt(f)?;
-                f.write_str("`.")
+                // more information here?
+                var.info.text.fmt(f)?;
+                f.write_str("`, ")
             }
         }
     }

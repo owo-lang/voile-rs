@@ -20,7 +20,7 @@ pub enum Abstract {
     ConsType(SyntaxInfo, Box<Self>),
     /// Apply or Pipeline in surface
     App(Box<Self>, Box<Self>),
-    /// Dependent Type type
+    /// Dependent Type type, (a -> b -> c) as Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))
     Dt(DtKind, Box<Abstract>, Box<Abstract>),
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
@@ -30,9 +30,9 @@ pub enum Abstract {
 /// type signature and value in abstract syntax
 #[derive(Debug, Clone)]
 pub enum AbstractDecl {
-    JustSign(Abstract),
-    JustImpl(Abstract),
-    Decl(Abstract, Abstract),
+    Sign(Abstract),
+    Impl(Abstract),
+    Both(Abstract, Abstract),
 }
 
 pub type AbstractGlobalEnv = VecDbiEnv_<AbstractDecl>;
@@ -59,21 +59,19 @@ pub fn trans(decls: Vec<Decl>) -> TCM<AbstractGlobalEnv> {
                 result.insert(
                     dbi,
                     match (decl.kind, abs_decl.clone()) {
-                        (DeclKind::Sign, None)
-                        | (DeclKind::Sign, Some(AbstractDecl::JustSign(_))) => {
-                            AbstractDecl::JustSign(abs)
+                        (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbstractDecl::Sign(_))) => {
+                            AbstractDecl::Sign(abs)
                         }
-                        (DeclKind::Impl, None)
-                        | (DeclKind::Impl, Some(AbstractDecl::JustImpl(_))) => {
-                            AbstractDecl::JustImpl(abs)
+                        (DeclKind::Impl, None) | (DeclKind::Impl, Some(AbstractDecl::Impl(_))) => {
+                            AbstractDecl::Impl(abs)
                         }
-                        (DeclKind::Sign, Some(AbstractDecl::JustImpl(impl_abs)))
-                        | (DeclKind::Sign, Some(AbstractDecl::Decl(_, impl_abs))) => {
-                            AbstractDecl::Decl(abs, impl_abs.clone())
+                        (DeclKind::Sign, Some(AbstractDecl::Impl(impl_abs)))
+                        | (DeclKind::Sign, Some(AbstractDecl::Both(_, impl_abs))) => {
+                            AbstractDecl::Both(abs, impl_abs.clone())
                         }
-                        (DeclKind::Impl, Some(AbstractDecl::JustSign(sign_abs)))
-                        | (DeclKind::Impl, Some(AbstractDecl::Decl(sign_abs, _))) => {
-                            AbstractDecl::Decl(sign_abs.clone(), abs)
+                        (DeclKind::Impl, Some(AbstractDecl::Sign(sign_abs)))
+                        | (DeclKind::Impl, Some(AbstractDecl::Both(sign_abs, _))) => {
+                            AbstractDecl::Both(sign_abs.clone(), abs)
                         }
                     },
                 );
@@ -103,7 +101,7 @@ pub fn trans_expr_inner(
             } else if global_map.contains_key(&name) {
                 Ok(Abstract::Var(ident.info.clone(), global_map[&name]))
             } else {
-                Err(TCE::LookUpFailed(name))
+                Err(TCE::LookUpFailed(ident.clone()))
             }
         }
         Expr::App(app_vec) => app_vec
@@ -144,7 +142,7 @@ pub fn trans_expr_inner(
                     for name in param.names.clone() {
                         let param_name = name.info.text;
                         let param_dbi: DBI = local_env.len();
-                        pi_env.insert(param_dbi, AbstractDecl::JustSign(param_ty.clone()));
+                        pi_env.insert(param_dbi, AbstractDecl::Sign(param_ty.clone()));
                         pi_map.insert(param_name, param_dbi);
                     }
                     pi_vec.insert(pi_vec.len(), param_ty);
