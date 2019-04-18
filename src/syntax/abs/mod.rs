@@ -14,10 +14,12 @@ pub enum Abstract {
     Var(SyntaxInfo, DBI),
     /// Local variable
     Local(SyntaxInfo, DBI),
+    /// Meta variable
+    Meta(SyntaxInfo),
     /// Construct call
-    Cons(SyntaxInfo, Box<Self>),
+    Cons(SyntaxInfo),
     /// Construct call
-    ConsType(SyntaxInfo, Box<Self>),
+    ConsType(SyntaxInfo),
     /// Apply or Pipeline in surface
     App(Box<Self>, Box<Self>),
     /// Dependent Type type, (a -> b -> c) as Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))
@@ -25,6 +27,7 @@ pub enum Abstract {
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
     Snd(SyntaxInfo, Box<Self>),
+    Sum(Vec<Self>),
 }
 
 /// type signature and value in abstract syntax
@@ -124,11 +127,20 @@ pub fn trans_expr_inner(
             app_vec.reverse();
             trans_expr_inner(&Expr::App(app_vec), env, global_map, local_env, local_map)
         }
-        Expr::Meta(_) => unimplemented!(),
-        Expr::Cons(_) => unimplemented!(),
-        Expr::ConsType(_) => unimplemented!(),
+        Expr::Meta(ident) => Ok(Abstract::Meta(ident.info.clone())),
+        Expr::Cons(ident) => Ok(Abstract::Cons(ident.info.clone())),
+        Expr::ConsType(ident) => Ok(Abstract::ConsType(ident.info.clone())),
         Expr::Bot(ident) => Ok(Abstract::Bot(ident.info.clone())),
-        Expr::Sum(_) => unimplemented!(),
+        Expr::Sum(expr_vec) => {
+            let abs_vec = expr_vec.iter().try_fold(Vec::new(), |mut abs_vec, expr| {
+                abs_vec.insert(
+                    abs_vec.len(),
+                    trans_expr_inner(expr, env, global_map, local_env, local_map)?,
+                );
+                Ok(abs_vec)
+            })?;
+            Ok(Abstract::Sum(abs_vec))
+        }
         Expr::Pi(params, result) => {
             let mut pi_env = local_env.clone();
             let mut pi_map = local_map.clone();
