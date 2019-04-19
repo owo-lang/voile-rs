@@ -11,6 +11,7 @@ pub enum TCE {
     TypeNotInGamma(Ident),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
+    /// Cannot find the definition.
     LookUpFailed(Ident),
 }
 
