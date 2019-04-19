@@ -35,6 +35,18 @@ impl Abstract {
         Abstract::App(Box::new(function), Box::new(argument))
     }
 
+    pub fn fst(syntax_info: SyntaxInfo, of: Self) -> Self {
+        Abstract::Fst(syntax_info, Box::new(of))
+    }
+
+    pub fn snd(syntax_info: SyntaxInfo, of: Self) -> Self {
+        Abstract::Snd(syntax_info, Box::new(of))
+    }
+
+    pub fn pair(syntax_info: SyntaxInfo, first: Self, second: Self) -> Self {
+        Abstract::Pair(syntax_info, Box::new(first), Box::new(second))
+    }
+
     pub fn pi(input: Self, output: Self) -> Self {
         Self::dependent_type(DtKind::Pi, input, output)
     }

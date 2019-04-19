@@ -50,7 +50,7 @@ pub fn trans_expr(expr: &Expr, env: &AbstractGlobalEnv, map: &NamedEnv_<DBI>) ->
     trans_expr_inner(expr, env, map, &Default::default(), &Default::default())
 }
 
-pub fn trans_expr_inner(
+fn trans_expr_inner(
     expr: &Expr,
     env: &AbstractGlobalEnv,
     global_map: &NamedEnv_<DBI>,
@@ -60,11 +60,11 @@ pub fn trans_expr_inner(
     match expr {
         Expr::Type(syntax, level) => Ok(Abstract::Type(syntax.clone(), *level)),
         Expr::Var(ident) => {
-            let name = ident.info.text.clone();
-            if local_map.contains_key(&name) {
-                Ok(Abstract::Local(ident.info.clone(), local_map[&name]))
-            } else if global_map.contains_key(&name) {
-                Ok(Abstract::Var(ident.info.clone(), global_map[&name]))
+            let name = &ident.info.text;
+            if local_map.contains_key(name) {
+                Ok(Abstract::Local(ident.info.clone(), local_map[name]))
+            } else if global_map.contains_key(name) {
+                Ok(Abstract::Var(ident.info.clone(), global_map[name]))
             } else {
                 Err(TCE::LookUpFailed(ident.clone()))
             }
@@ -83,6 +83,7 @@ pub fn trans_expr_inner(
                     })
                 },
             )
+            // Because it's guaranteed to be non-empty.
             .map(std::option::Option::unwrap),
         Expr::Pipe(pipe_vec) => {
             let mut app_vec = pipe_vec.clone();
@@ -95,10 +96,9 @@ pub fn trans_expr_inner(
         Expr::Bot(ident) => Ok(Abstract::Bot(ident.info.clone())),
         Expr::Sum(expr_vec) => {
             let abs_vec = expr_vec.iter().try_fold(Vec::new(), |mut abs_vec, expr| {
-                abs_vec.insert(
-                    abs_vec.len(),
-                    trans_expr_inner(expr, env, global_map, local_env, local_map)?,
-                );
+                abs_vec.push(trans_expr_inner(
+                    expr, env, global_map, local_env, local_map,
+                )?);
                 Ok(abs_vec)
             })?;
             Ok(Abstract::Sum(abs_vec))
