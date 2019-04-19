@@ -2,22 +2,20 @@ use crate::check::monad::{TCE, TCM};
 use crate::syntax::abs::ast::*;
 use crate::syntax::common::{ParamKind, DBI};
 use crate::syntax::env::NamedEnv_;
-use crate::syntax::surf::{Decl, DeclKind, Expr};
+use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 /// todo: replace to proper location
 pub fn trans(decls: Vec<Decl>) -> TCM<AbstractGlobalEnv> {
     decls
         .iter()
-        .fold(Ok(Default::default()), trans_one_decl)
-        .map(|(result, _)| result)
+        .try_fold(Default::default(), trans_one_decl)
+        .map(|res| res.0)
 }
 
-type DeclTCM = TCM<(AbstractGlobalEnv, NamedEnv_<DBI>)>;
+type DeclTCS = (AbstractGlobalEnv, NamedEnv_<DBI>);
 
-fn trans_one_decl(result: DeclTCM, decl: &Decl) -> DeclTCM {
+fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclTCS> {
     let name = decl.name.clone();
-    let (mut result, mut name_map) = result?;
-
     let abs = trans_expr(&decl.body, &result, &name_map)?;
 
     let dbi = *name_map
@@ -71,18 +69,15 @@ fn trans_expr_inner(
         }
         Expr::App(app_vec) => app_vec
             .iter()
-            .try_fold(
-                None,
-                |result: Option<Abstract>, each_expr| -> TCM<Option<Abstract>> {
-                    let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                    Ok(match result {
-                        // First item in vec
-                        None => Some(abs),
-                        // Second or other, reduce to Right
-                        Some(left_abs) => Some(Abstract::app(left_abs, abs)),
-                    })
-                },
-            )
+            .try_fold(None::<Abstract>, |result, each_expr| -> TCM<_> {
+                let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
+                Ok(match result {
+                    // First item in vec
+                    None => Some(abs),
+                    // Second or other, reduce to Right
+                    Some(left_abs) => Some(Abstract::app(left_abs, abs)),
+                })
+            })
             // Because it's guaranteed to be non-empty.
             .map(std::option::Option::unwrap),
         Expr::Pipe(pipe_vec) => {
@@ -106,24 +101,10 @@ fn trans_expr_inner(
         Expr::Pi(params, result) => {
             let mut pi_env = local_env.clone();
             let mut pi_map = local_map.clone();
-            let mut pi_vec: Vec<Abstract> = params.iter().try_fold(
-                Vec::new(),
-                |mut pi_vec: Vec<Abstract>, param| -> TCM<Vec<Abstract>> {
-                    // todo: handle implicit parameter
-                    // reference implementation: https://github.com/owo-lang/OwO/blob/316e83cf532c447b03a7d210bbc3c4fc1409c861/src/type_check/elaborate.rs#L35-L64
-                    assert_eq!(param.kind, ParamKind::Explicit);
-                    let param_ty =
-                        trans_expr_inner(&param.ty.clone(), env, global_map, &pi_env, &pi_map)?;
-                    for name in param.names.clone() {
-                        let param_name = name.info.text;
-                        let param_dbi: DBI = local_env.len();
-                        pi_env.insert(param_dbi, AbstractDecl::Sign(param_ty.clone()));
-                        pi_map.insert(param_name, param_dbi);
-                    }
-                    pi_vec.insert(pi_vec.len(), param_ty);
-                    Ok(pi_vec)
-                },
-            )?;
+            let mut pi_vec: Vec<Abstract> =
+                params.iter().try_fold(Vec::new(), |pi_vec, param| {
+                    trans_pi(env, global_map, &mut pi_env, &mut pi_map, pi_vec, param)
+                })?;
 
             // fold from right
             pi_vec.reverse();
@@ -133,4 +114,27 @@ fn trans_expr_inner(
             ))
         }
     }
+}
+
+fn trans_pi(
+    env: &AbstractGlobalEnv,
+    global_map: &NamedEnv_<DBI>,
+    pi_env: &mut AbstractGlobalEnv,
+    pi_map: &mut NamedEnv_<DBI>,
+    mut pi_vec: Vec<Abstract>,
+    param: &Param,
+) -> TCM<Vec<Abstract>> {
+    // todo: handle implicit parameter
+    // reference implementation:
+    // https://github.com/owo-lang/OwO/blob/316e83cf532c447b03a7d210bbc3c4fc1409c861/src/type_check/elaborate.rs#L35-L64
+    assert_eq!(param.kind, ParamKind::Explicit);
+    let param_ty = trans_expr_inner(&param.ty, env, global_map, &pi_env, &pi_map)?;
+    for name in param.names.clone() {
+        let param_name = name.info.text;
+        let param_dbi: DBI = pi_env.len();
+        pi_env.insert(param_dbi, AbstractDecl::Sign(param_ty.clone()));
+        pi_map.insert(param_name, param_dbi);
+    }
+    pi_vec.insert(pi_vec.len(), param_ty);
+    Ok(pi_vec)
 }
