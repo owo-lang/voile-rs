@@ -17,6 +17,9 @@ maintenance = { status = "experimental" }
 is-it-maintained-issue-resolution = { repository = "owo-lang/voile-rs" }
 is-it-maintained-open-issues = { repository = "owo-lang/voile-rs" }
 
+[package.metadata.docs.rs]
+rustdoc-args = ["--html-in-header", "rustdoc/katex-header.html", "--document-private-items"]
+
 [dependencies]
 pest = "2.1.1"
 pest_derive = "2.1.0"

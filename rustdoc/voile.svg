@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40" height="40" viewBox="-40 -40 2.7467811 2.7467811" xmlns="http://www.w3.org/2000/svg">
+	<circle transform="matrix(.99851 .054558 -.057623 .99834 0 0)" cx="-40.792" cy="-36.46" r=".5" fill="#fff"/>
+	<circle cx="-38.447" cy="-38.792" r=".2" stroke-opacity=".9"/>
+	<path
+		d="m-38.627-39.245c-0.61803 0-0.61803 0.61803-0.61803 0.61803s0 0.61802 0.61803 0.61802c0.61802 0 0.61802-0.61802 0.61802-0.61802s0-0.61803-0.61802-0.61803z"
+		fill="none" stroke="#2B2B2B" stroke-opacity=".9" stroke-width=".3px"/>
+	<path d="m-38.627-39.381v-0.22016 0.0059" fill="none" stroke="#2b2b2b" stroke-opacity=".9" stroke-width=".26098"/>
+	<path d="m-37.597-38.627c0-1.236-1.03-1.1204-1.03-1.1204s-1.03-0.11562-1.03 1.1931" fill="none" stroke="#2B2B2B"
+				stroke-opacity=".9" stroke-width=".3px"/>
+	<path d="m-39.163-38.085-0.50418 0.49843" fill="none" stroke="#2b2b2b" stroke-opacity=".9" stroke-width=".27098px"/>
+	<path d="m-38.109-38.07 0.47994 0.50138" fill="none" stroke="#2b2b2b" stroke-opacity=".9" stroke-width=".27491px"/>
+	<circle cx="-38.493" cy="-38.76" r=".038459" fill="#f9f9f9" opacity=".771"/>
+	<circle cx="-38.434" cy="-38.86" r=".05344" fill="#f9f9f9" opacity=".771"/>
+</svg>
