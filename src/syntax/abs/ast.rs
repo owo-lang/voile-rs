@@ -1,5 +1,5 @@
 use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
-use std::collections::BTreeMap;
+use std::collections::btree_map::BTreeMap;
 
 #[derive(Debug, Clone)]
 pub enum Abstract {

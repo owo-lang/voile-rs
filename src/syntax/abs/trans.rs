@@ -132,6 +132,8 @@ fn trans_pi(
     for name in param.names.clone() {
         let param_name = name.info.text;
         let param_dbi: DBI = pi_env.len();
+        assert!(!pi_env.contains_key(&param_dbi));
+        assert!(!pi_map.contains_key(&param_name));
         pi_env.insert(param_dbi, AbstractDecl::Sign(param_ty.clone()));
         pi_map.insert(param_name, param_dbi);
     }
