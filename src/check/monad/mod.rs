@@ -1,5 +1,5 @@
-pub mod error;
-pub mod state;
+mod error;
+mod state;
 
 pub use self::error::*;
 pub use self::state::*;

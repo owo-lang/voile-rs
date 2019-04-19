@@ -1,6 +1,6 @@
 use self::monad::{GammaItem, TermTCM, TCE, TCM, TCS};
 use crate::syntax::core::{DbiEnv, Term};
-use crate::syntax::surf::ast::{Decl, Expr};
+use crate::syntax::surf::{Decl, Expr};
 
 pub mod monad;
 
@@ -50,7 +50,7 @@ pub fn check_declarations(mut tcs: TCS, decls: Vec<Decl>) -> TCM {
 }
 
 pub fn check_decl(tcs: TCS, decl: Decl) -> TCM {
-    use crate::syntax::surf::ast::DeclKind::*;
+    use crate::syntax::surf::DeclKind::*;
     let name = decl.name.clone();
     match decl.kind {
         Sign => {

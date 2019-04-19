@@ -1,6 +1,6 @@
 use crate::syntax::common::DBI;
 use crate::syntax::core::Term;
-use crate::syntax::surf::ast::Ident;
+use crate::syntax::surf::Ident;
 use std::fmt::{Display, Error as FmtError, Formatter};
 
 /// Type-Checking Error.
