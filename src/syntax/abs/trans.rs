@@ -1,6 +1,6 @@
 use crate::check::monad::{TCE, TCM};
 use crate::syntax::abs::ast::*;
-use crate::syntax::common::{DtKind, ParamKind, DBI};
+use crate::syntax::common::{ParamKind, DBI};
 use crate::syntax::env::NamedEnv_;
 use crate::syntax::surf::{Decl, DeclKind, Expr};
 
@@ -79,7 +79,7 @@ pub fn trans_expr_inner(
                         // First item in vec
                         None => Some(abs),
                         // Second or other, reduce to Right
-                        Some(left_abs) => Some(Abstract::App(Box::new(left_abs), Box::new(abs))),
+                        Some(left_abs) => Some(Abstract::app(left_abs, abs)),
                     })
                 },
             )
@@ -129,7 +129,7 @@ pub fn trans_expr_inner(
             pi_vec.reverse();
             Ok(pi_vec.iter().fold(
                 trans_expr_inner(result, env, global_map, &pi_env, &pi_map)?,
-                |pi_abs, param| Abstract::Dt(DtKind::Pi, Box::new(param.clone()), Box::new(pi_abs)),
+                |pi_abs, param| Abstract::pi(param.clone(), pi_abs),
             ))
         }
     }
