@@ -1,6 +1,6 @@
+use super::ast::Param;
+use super::{Decl, DeclKind, Expr, Ident};
 use crate::syntax::common::{Level, ParamKind, SyntaxInfo};
-use crate::syntax::surf::ast::Param;
-use crate::syntax::surf::{Decl, DeclKind, Expr, Ident};
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use pest_derive::Parser;
@@ -111,7 +111,8 @@ fn declaration(rules: Tok) -> Decl {
     }
 }
 
-expr_parser!(dollar_expr, pipe_expr, App);
+expr_parser!(dollar_expr, comma_expr, App);
+expr_parser!(comma_expr, pipe_expr, Tup);
 expr_parser!(pipe_expr, sum_expr, Pipe);
 expr_parser!(sum_expr, app_expr, Sum);
 expr_parser!(app_expr, primary_expr, App);
@@ -243,6 +244,9 @@ mod tests {
             .map(|ast| println!("{:?}", ast))
             .unwrap();
         parse_str_err_printed("let reiuji = 'Cons herrington;")
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
+        parse_str_err_printed("let scarlet = devil, mansion;")
             .map(|ast| println!("{:?}", ast))
             .unwrap();
         parse_str_err_printed("val deep : @Dark Fantasy;")

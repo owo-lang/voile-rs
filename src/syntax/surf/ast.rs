@@ -43,6 +43,10 @@ pub enum Expr {
     /// Pipeline operator, where `a |> b |> f` is represented as `Pipe(vec![a, b, f])`
     /// instead of `Pipe(Pipe(a, b), f)`.
     Pipe(Vec<Expr>),
+    /// Tuple constructor.<br/>
+    /// Comma operator, where `a, b, c` is represented as `Tup(vec![a, b, c])`
+    /// instead of `Tup(Tup(a, b), c)`.
+    Tup(Vec<Expr>),
     /// Type-sum operator.
     Sum(Vec<Expr>),
     /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`

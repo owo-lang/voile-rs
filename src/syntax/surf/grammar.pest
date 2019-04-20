@@ -34,6 +34,7 @@ semicolon = _{ ";" }
 arrow = _{ "->" }
 sum_op = _{ "+" }
 pipe_op = _{ "|>" }
+comma_op = _{ "," }
 dollar_op = _{ "$" }
 
 /// Syntactical helpers
@@ -49,7 +50,8 @@ param =
 expr = { pi_expr }
 
 pi_expr = { (param ~ arrow)* ~ dollar_expr }
-dollar_expr = { pipe_expr ~ (dollar_op ~ pipe_expr)* }
+dollar_expr = { comma_expr ~ (dollar_op ~ comma_expr)* }
+comma_expr = { pipe_expr ~ (comma_op ~ pipe_expr)* }
 pipe_expr = { sum_expr ~ (pipe_op ~ sum_expr)* }
 sum_expr = { app_expr ~ (sum_op ~ app_expr)* }
 app_expr = { primary_expr+ }
