@@ -33,6 +33,7 @@ type_keyword = ${ "Type" ~ type_level }
 semicolon = _{ ";" }
 arrow = _{ "->" }
 sum_op = _{ "+" }
+sig_op = _{ "*" }
 pipe_op = _{ "|>" }
 comma_op = _{ "," }
 dollar_op = _{ "$" }
@@ -47,8 +48,9 @@ param =
  | dollar_expr // unnamed parameter
  }
 
-expr = { pi_expr }
+expr = { sig_expr }
 
+sig_expr = { (param ~ sig_op)* ~ pi_expr }
 pi_expr = { (param ~ arrow)* ~ dollar_expr }
 dollar_expr = { comma_expr ~ (dollar_op ~ comma_expr)* }
 comma_expr = { pipe_expr ~ (comma_op ~ pipe_expr)* }

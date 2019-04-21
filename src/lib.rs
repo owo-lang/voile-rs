@@ -6,13 +6,13 @@ Voile is a dependently-typed programming language evolved from [Mini-TT](https:/
 
 # Design
 
-## Goal
+### Goal
 
 The focus of Voile is *extensible algebraic data types*.
 It can solve the expression problem without using any design patterns (like visitor or
 object-algebra in Java, or finally-tagless or dtlac in Haskell).
 
-## Features
+### Features
 
 Voile is supporting sum-types (coproduct), record types (product) as first-class
 language components.
@@ -23,11 +23,11 @@ TODO Something need to be written here.
 
 TODO Something need to be written here.
 
-## Problems
+### Problems
 
 TODO Something need to be written here.
 
-### About the name, Voile
+#### About the name, Voile
 This name is inspired from a friend whose username is [*Voile*][vo] (or [*Voileexperiments*][ve]).
 However, this is also the name of a library in the [*Scarlet Devil Mansion*][sdm].
 

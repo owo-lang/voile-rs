@@ -51,7 +51,12 @@ pub enum Expr {
     Sum(Vec<Expr>),
     /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`
     /// instead of `Pi(a, Pi(b, c))`.
+    /// `a` and `b` here can introduce telescopes.
     Pi(Vec<Param>, Box<Expr>),
+    /// Sigma-type expression, where `a * b * c` is represented as `Sig(vec![a, b], c)`
+    /// instead of `Sig(a, Sig(b, c))`.
+    /// `a` and `b` here can introduce telescopes.
+    Sig(Vec<Param>, Box<Expr>),
 }
 
 /// Indicates that whether a `Decl` is a type signature or an implementation.

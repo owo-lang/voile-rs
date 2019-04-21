@@ -119,7 +119,7 @@ expr_parser!(app_expr, primary_expr, App);
 
 fn expr(rules: Tok) -> Expr {
     let mut inner: Tik = rules.into_inner();
-    let expr = next_rule!(inner, pi_expr);
+    let expr = next_rule!(inner, sig_expr);
     end_of_rule(&mut inner);
     expr
 }
@@ -158,21 +158,25 @@ fn param(rules: Tok) -> Param {
     let param = match the_rule.as_rule() {
         Rule::explicit => one_param(the_rule, ParamKind::Explicit),
         Rule::implicit => one_param(the_rule, ParamKind::Implicit),
-        Rule::dollar_expr => {
-            let ty = dollar_expr(the_rule);
+        rule_type => {
+            let ty = match rule_type {
+                Rule::dollar_expr => dollar_expr(the_rule),
+                Rule::pi_expr => pi_expr(the_rule),
+                e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
+            };
             Param {
                 names: Vec::with_capacity(0),
                 kind: ParamKind::Explicit,
                 ty,
             }
         }
-        e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
     };
     end_of_rule(&mut inner);
     param
 }
 
 many_prefix_parser!(pi_expr_internal, Param, param, dollar_expr);
+many_prefix_parser!(sig_expr_internal, Param, param, pi_expr);
 many_prefix_parser!(multi_param, Ident, ident, expr);
 
 fn pi_expr(rules: Tok) -> Expr {
@@ -181,6 +185,15 @@ fn pi_expr(rules: Tok) -> Expr {
         ret
     } else {
         Expr::Pi(params, Box::new(ret))
+    }
+}
+
+fn sig_expr(rules: Tok) -> Expr {
+    let (params, ret) = sig_expr_internal(rules);
+    if params.is_empty() {
+        ret
+    } else {
+        Expr::Sig(params, Box::new(ret))
     }
 }
 
@@ -225,6 +238,9 @@ mod tests {
     #[test]
     fn pi_type_parsing() {
         parse_str_err_printed("val mayori : monika -> (a: A) -> {b : B} -> (c d e : CDE) -> F;")
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
+        parse_str_err_printed("val star : platinum * (a: A) * {b : B} * F;")
             .map(|ast| println!("{:?}", ast))
             .unwrap();
     }
