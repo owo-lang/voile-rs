@@ -99,6 +99,8 @@ impl Neutral {
 pub enum Term {
     /// Type universe.
     Type(Level),
+    /// An empty sum.
+    Bot,
     /// Closure.
     Lam(Closure),
     /// Pi-like types (dependent types). Since it affects type-checking translation, the visibility
