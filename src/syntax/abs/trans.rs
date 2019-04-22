@@ -4,7 +4,6 @@ use crate::syntax::common::{ParamKind, DBI};
 use crate::syntax::env::NamedEnv_;
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
-/// todo: replace to proper location
 pub fn trans(decls: Vec<Decl>) -> TCM<AbstractGlobalEnv> {
     decls
         .iter()
@@ -74,7 +73,7 @@ fn trans_expr_inner(
                 Ok(match result {
                     // First item in vec
                     None => Some(abs),
-                    // Second or other, reduce to Right
+                    // Second or other
                     Some(left_abs) => Some(Abstract::app(left_abs, abs)),
                 })
             })
