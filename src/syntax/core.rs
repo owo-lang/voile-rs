@@ -103,9 +103,9 @@ pub enum Term {
     Lam(Closure),
     /// Pi-like types (dependent types). Since it affects type-checking translation, the visibility
     /// of the parameter need to be specified.
-    Dt(ParamKind, DtKind, Closure),
+    Dt(ParamKind, DtKind, Box<Self>, Closure),
     /// Sigma instance.
-    Pair(Box<Term>, Box<Term>),
+    Pair(Box<Self>, Box<Self>),
     Neut(Neutral),
 }
 
@@ -134,16 +134,16 @@ impl Term {
         Term::Neut(Neutral::Snd(Box::new(pair)))
     }
 
-    pub fn dependent_type(visibility: ParamKind, kind: DtKind, closure: Closure) -> Self {
-        Term::Dt(visibility, kind, closure)
+    pub fn dependent_type(visib: ParamKind, kind: DtKind, input: Self, closure: Closure) -> Self {
+        Term::Dt(visib, kind, Box::new(input), closure)
     }
 
-    pub fn pi(visibility: ParamKind, closure: Closure) -> Self {
-        Self::dependent_type(visibility, DtKind::Pi, closure)
+    pub fn pi(visibility: ParamKind, input: Self, closure: Closure) -> Self {
+        Self::dependent_type(visibility, DtKind::Pi, input, closure)
     }
 
-    pub fn sig(visibility: ParamKind, closure: Closure) -> Self {
-        Self::dependent_type(visibility, DtKind::Sigma, closure)
+    pub fn sig(visibility: ParamKind, input: Self, closure: Closure) -> Self {
+        Self::dependent_type(visibility, DtKind::Sigma, input, closure)
     }
 }
 

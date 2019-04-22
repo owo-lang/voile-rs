@@ -2,7 +2,7 @@ use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
 use std::collections::btree_map::BTreeMap;
 
 #[derive(Debug, Clone)]
-pub enum Abstract {
+pub enum Abs {
     Type(SyntaxInfo, Level),
     /// Bottom type
     Bot(SyntaxInfo),
@@ -26,25 +26,25 @@ pub enum Abstract {
     Sum(Vec<Self>),
 }
 
-impl Abstract {
+impl Abs {
     pub fn dependent_type(kind: DtKind, a: Self, b: Self) -> Self {
-        Abstract::Dt(kind, Box::new(a), Box::new(b))
+        Abs::Dt(kind, Box::new(a), Box::new(b))
     }
 
     pub fn app(function: Self, argument: Self) -> Self {
-        Abstract::App(Box::new(function), Box::new(argument))
+        Abs::App(Box::new(function), Box::new(argument))
     }
 
     pub fn fst(syntax_info: SyntaxInfo, of: Self) -> Self {
-        Abstract::Fst(syntax_info, Box::new(of))
+        Abs::Fst(syntax_info, Box::new(of))
     }
 
     pub fn snd(syntax_info: SyntaxInfo, of: Self) -> Self {
-        Abstract::Snd(syntax_info, Box::new(of))
+        Abs::Snd(syntax_info, Box::new(of))
     }
 
     pub fn pair(syntax_info: SyntaxInfo, first: Self, second: Self) -> Self {
-        Abstract::Pair(syntax_info, Box::new(first), Box::new(second))
+        Abs::Pair(syntax_info, Box::new(first), Box::new(second))
     }
 
     pub fn pi(input: Self, output: Self) -> Self {
@@ -58,11 +58,11 @@ impl Abstract {
 
 /// type signature and value in abstract syntax
 #[derive(Debug, Clone)]
-pub enum AbstractDecl {
-    Sign(Abstract),
-    Impl(Abstract),
-    Both(Abstract, Abstract),
+pub enum AbsDecl {
+    Sign(Abs),
+    Impl(Abs),
+    Both(Abs, Abs),
 }
 
-pub type AbstractGlobalEnv = VecDbiEnv_<AbstractDecl>;
+pub type AbstractGlobalEnv = VecDbiEnv_<AbsDecl>;
 pub type VecDbiEnv_<T> = BTreeMap<DBI, T>;

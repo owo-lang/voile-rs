@@ -24,26 +24,22 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
     result.insert(
         dbi,
         match (decl.kind, abs_decl) {
-            (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbstractDecl::Sign(_))) => {
-                AbstractDecl::Sign(abs)
+            (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbsDecl::Sign(_))) => AbsDecl::Sign(abs),
+            (DeclKind::Impl, None) | (DeclKind::Impl, Some(AbsDecl::Impl(_))) => AbsDecl::Impl(abs),
+            (DeclKind::Sign, Some(AbsDecl::Impl(impl_abs)))
+            | (DeclKind::Sign, Some(AbsDecl::Both(_, impl_abs))) => {
+                AbsDecl::Both(abs, impl_abs.clone())
             }
-            (DeclKind::Impl, None) | (DeclKind::Impl, Some(AbstractDecl::Impl(_))) => {
-                AbstractDecl::Impl(abs)
-            }
-            (DeclKind::Sign, Some(AbstractDecl::Impl(impl_abs)))
-            | (DeclKind::Sign, Some(AbstractDecl::Both(_, impl_abs))) => {
-                AbstractDecl::Both(abs, impl_abs.clone())
-            }
-            (DeclKind::Impl, Some(AbstractDecl::Sign(sign_abs)))
-            | (DeclKind::Impl, Some(AbstractDecl::Both(sign_abs, _))) => {
-                AbstractDecl::Both(sign_abs.clone(), abs)
+            (DeclKind::Impl, Some(AbsDecl::Sign(sign_abs)))
+            | (DeclKind::Impl, Some(AbsDecl::Both(sign_abs, _))) => {
+                AbsDecl::Both(sign_abs.clone(), abs)
             }
         },
     );
     Ok((result, name_map))
 }
 
-pub fn trans_expr(expr: &Expr, env: &AbstractGlobalEnv, map: &NamedEnv_<DBI>) -> TCM<Abstract> {
+pub fn trans_expr(expr: &Expr, env: &AbstractGlobalEnv, map: &NamedEnv_<DBI>) -> TCM<Abs> {
     trans_expr_inner(expr, env, map, &Default::default(), &Default::default())
 }
 
@@ -53,29 +49,28 @@ fn trans_expr_inner(
     global_map: &NamedEnv_<DBI>,
     local_env: &AbstractGlobalEnv,
     local_map: &NamedEnv_<DBI>,
-) -> TCM<Abstract> {
+) -> TCM<Abs> {
     match expr {
-        Expr::Lam(_, _) => unimplemented!(), // TODO
-        Expr::Type(syntax, level) => Ok(Abstract::Type(syntax.clone(), *level)),
+        Expr::Type(syntax, level) => Ok(Abs::Type(syntax.clone(), *level)),
         Expr::Var(ident) => {
             let name = &ident.info.text;
             if local_map.contains_key(name) {
-                Ok(Abstract::Local(ident.info.clone(), local_map[name]))
+                Ok(Abs::Local(ident.info.clone(), local_map[name]))
             } else if global_map.contains_key(name) {
-                Ok(Abstract::Var(ident.info.clone(), global_map[name]))
+                Ok(Abs::Var(ident.info.clone(), global_map[name]))
             } else {
                 Err(TCE::LookUpFailed(ident.clone()))
             }
         }
         Expr::App(app_vec) => app_vec
             .iter()
-            .try_fold(None::<Abstract>, |result, each_expr| -> TCM<_> {
+            .try_fold(None::<Abs>, |result, each_expr| -> TCM<_> {
                 let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
                 Ok(match result {
                     // First item in vec
                     None => Some(abs),
                     // Second or other
-                    Some(left_abs) => Some(Abstract::app(left_abs, abs)),
+                    Some(left_abs) => Some(Abs::app(left_abs, abs)),
                 })
             })
             // Because it's guaranteed to be non-empty.
@@ -85,10 +80,10 @@ fn trans_expr_inner(
             app_vec.reverse();
             trans_expr_inner(&Expr::App(app_vec), env, global_map, local_env, local_map)
         }
-        Expr::Meta(ident) => Ok(Abstract::Meta(ident.info.clone())),
-        Expr::Cons(ident) => Ok(Abstract::Cons(ident.info.clone())),
-        Expr::ConsType(ident) => Ok(Abstract::ConsType(ident.info.clone())),
-        Expr::Bot(ident) => Ok(Abstract::Bot(ident.info.clone())),
+        Expr::Meta(ident) => Ok(Abs::Meta(ident.info.clone())),
+        Expr::Cons(ident) => Ok(Abs::Cons(ident.info.clone())),
+        Expr::ConsType(ident) => Ok(Abs::ConsType(ident.info.clone())),
+        Expr::Bot(ident) => Ok(Abs::Bot(ident.info.clone())),
         Expr::Sum(expr_vec) => {
             let abs_vec = expr_vec.iter().try_fold(Vec::new(), |mut abs_vec, expr| {
                 abs_vec.push(trans_expr_inner(
@@ -96,23 +91,22 @@ fn trans_expr_inner(
                 )?);
                 Ok(abs_vec)
             })?;
-            Ok(Abstract::Sum(abs_vec))
+            Ok(Abs::Sum(abs_vec))
         }
         Expr::Tup(tup_vec) => unimplemented!(),
         Expr::Sig(_, _) => unimplemented!(),
         Expr::Pi(params, result) => {
             let mut pi_env = local_env.clone();
             let mut pi_map = local_map.clone();
-            let mut pi_vec: Vec<Abstract> =
-                params.iter().try_fold(Vec::new(), |pi_vec, param| {
-                    trans_pi(env, global_map, &mut pi_env, &mut pi_map, pi_vec, param)
-                })?;
+            let mut pi_vec: Vec<Abs> = params.iter().try_fold(Vec::new(), |pi_vec, param| {
+                trans_pi(env, global_map, &mut pi_env, &mut pi_map, pi_vec, param)
+            })?;
 
             // fold from right
             pi_vec.reverse();
             Ok(pi_vec.iter().fold(
                 trans_expr_inner(result, env, global_map, &pi_env, &pi_map)?,
-                |pi_abs, param| Abstract::pi(param.clone(), pi_abs),
+                |pi_abs, param| Abs::pi(param.clone(), pi_abs),
             ))
         }
     }
@@ -123,9 +117,9 @@ fn trans_pi(
     global_map: &NamedEnv_<DBI>,
     pi_env: &mut AbstractGlobalEnv,
     pi_map: &mut NamedEnv_<DBI>,
-    mut pi_vec: Vec<Abstract>,
+    mut pi_vec: Vec<Abs>,
     param: &Param,
-) -> TCM<Vec<Abstract>> {
+) -> TCM<Vec<Abs>> {
     // todo: handle implicit parameter
     // reference implementation:
     // https://github.com/owo-lang/OwO/blob/316e83cf532c447b03a7d210bbc3c4fc1409c861/src/type_check/elaborate.rs#L35-L64
@@ -136,7 +130,7 @@ fn trans_pi(
         let param_dbi: DBI = pi_env.len();
         assert!(!pi_env.contains_key(&param_dbi));
         assert!(!pi_map.contains_key(&param_name));
-        pi_env.insert(param_dbi, AbstractDecl::Sign(param_ty.clone()));
+        pi_env.insert(param_dbi, AbsDecl::Sign(param_ty.clone()));
         pi_map.insert(param_name, param_dbi);
     }
     pi_vec.insert(pi_vec.len(), param_ty);

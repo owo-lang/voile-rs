@@ -1,20 +1,28 @@
 use self::monad::{GammaItem, TermTCM, TCE, TCM, TCS};
+use crate::syntax::abs::Abs;
+use crate::syntax::common::{DtKind, ParamKind};
 use crate::syntax::core::{DbiEnv, Term};
-use crate::syntax::surf::{Decl, Expr};
+use crate::syntax::surf::Decl;
 
 pub mod monad;
 
 /// Expr -> (well-typed) Term
-pub fn check(tcs: TCS, expr: Expr, expected_type: Term) -> TermTCM {
+pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
     match (expr, expected_type) {
-        // TODO: shouldn't type-check on surface syntax. Please do abstract syntax.
-        (Expr::Type(_, lower), Term::Type(upper)) if upper > lower => Ok((tcs, Term::Type(lower))),
+        // TODO: error message with syntax info
+        (Abs::Type(_, lower), Term::Type(upper)) if upper > lower => Ok((tcs, Term::Type(lower))),
+        (Abs::Pair(_, fst, snd), Term::Dt(ParamKind::Explicit, DtKind::Sigma, fst_ty, snd_ty)) => {
+            let (tcs, fst_term) = check(tcs, *fst, *fst_ty)?;
+            let snd_ty = snd_ty.body.instantiate(fst_term.clone());
+            let (tcs, snd_term) = check(tcs, *snd, snd_ty)?;
+            Ok((tcs, Term::pair(fst_term, snd_term)))
+        }
         _ => unimplemented!(),
     }
 }
 
 /// Check if an expression is a valid type expression
-pub fn check_type(_tcs: TCS, _expr: Expr) -> TermTCM {
+pub fn check_type(_tcs: TCS, _expr: Abs) -> TermTCM {
     unimplemented!()
 }
 
