@@ -26,6 +26,7 @@ impl<'a> From<Span<'a>> for SyntaxInfo {
     fn from(span: Span) -> Self {
         SyntaxInfo {
             text: span.as_str().to_string(),
+            start_line: span.start_pos().line_col().0,
             start: span.start(),
             end: span.end(),
         }
@@ -38,5 +39,16 @@ pub struct SyntaxInfo {
     /// This is used for pretty-printing, it may probably be different from the original text.
     pub text: String,
     pub start: usize,
+    pub start_line: usize,
     pub end: usize,
+}
+
+impl std::fmt::Display for SyntaxInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "expression `{}` at line {:?} ({:?}:{:?})",
+            self.text, self.start_line, self.start, self.end
+        )
+    }
 }
