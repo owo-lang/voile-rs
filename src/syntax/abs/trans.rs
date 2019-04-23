@@ -93,7 +93,7 @@ fn trans_expr_inner(
             })?;
             Ok(Abs::Sum(abs_vec))
         }
-        Expr::Tup(tup_vec) => unimplemented!(),
+        Expr::Tup(_tup_vec) => unimplemented!(),
         Expr::Sig(_, _) => unimplemented!(),
         Expr::Pi(params, result) => {
             let mut pi_env = local_env.clone();

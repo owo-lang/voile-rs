@@ -1,5 +1,5 @@
 use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
-use std::collections::btree_map::BTreeMap;
+use crate::syntax::env::VecDbiEnv_;
 
 #[derive(Debug, Clone)]
 pub enum Abs {
@@ -65,4 +65,3 @@ pub enum AbsDecl {
 }
 
 pub type AbstractGlobalEnv = VecDbiEnv_<AbsDecl>;
-pub type VecDbiEnv_<T> = BTreeMap<DBI, T>;

@@ -1,8 +1,7 @@
 use self::monad::{GammaItem, TermTCM, TCE, TCM, TCS};
-use crate::syntax::abs::Abs;
+use crate::syntax::abs::{Abs, AbsDecl};
 use crate::syntax::common::{DtKind::*, ParamKind::*};
 use crate::syntax::core::{DbiEnv, Term, TermInfo};
-use crate::syntax::surf::Decl;
 
 pub mod monad;
 
@@ -54,45 +53,38 @@ pub fn check_subtype(tcs: TCS, subtype: &Term, supertype: &Term) -> TCM {
     }
 }
 
-pub fn check_main(decls: Vec<Decl>) -> TCM {
+pub fn check_main(decls: Vec<AbsDecl>) -> TCM {
     check_declarations(Default::default(), decls)
 }
 
-pub fn check_declarations(mut tcs: TCS, decls: Vec<Decl>) -> TCM {
+pub fn check_declarations(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
     for decl in decls.into_iter() {
         tcs = check_decl(tcs, decl.clone())?;
     }
     Ok(tcs)
 }
 
-pub fn check_decl(tcs: TCS, decl: Decl) -> TCM {
-    use crate::syntax::surf::DeclKind::*;
-    let name = decl.name.clone();
-    match decl.kind {
-        Sign => {
-            let (mut tcs, val) = check_type(tcs, decl.body)?;
+pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
+    match decl {
+        AbsDecl::Both(sign_abs, impl_abs) => {
+            let new_dbi = tcs.env_size.clone();
+            let (mut tcs, val) = check_type(tcs, sign_abs)?;
             tcs.gamma.insert(
-                name.info.text.clone(),
+                new_dbi,
                 GammaItem {
-                    dbi: tcs.env_size,
-                    location: name.info,
-                    r#type: val.ast,
+                    dbi: new_dbi,
+                    r#type: val.ast.clone(),
                 },
             );
             tcs = tcs.modify_env(|env| env.cons(Term::mock()));
-            Ok(tcs)
-        }
-        Impl => {
-            let ctx_ty = tcs.gamma.get(&name.info.text).cloned();
-            ctx_ty.map_or(Err(TCE::TypeNotInGamma(name.info)), |ctx_ty| {
-                let dbi = ctx_ty.dbi;
-                let (tcs, val) = check(tcs, decl.body, ctx_ty.r#type)?;
-                // This is "replacing the type signature's corresponded value with a well-typed term"
-                tcs.try_modify_env(|env: DbiEnv| match env.substitute_at(dbi, val.ast) {
-                    Ok(env) => Ok(env),
-                    Err(_) => Err(TCE::DbiOverflow(env.len(), dbi)),
-                })
+
+            let (tcs, val) = check(tcs, impl_abs, val.ast)?;
+
+            tcs.try_modify_env(|env: DbiEnv| match env.substitute_at(new_dbi, val.ast) {
+                Ok(env) => Ok(env),
+                Err(_) => Err(TCE::DbiOverflow(env.len(), new_dbi)),
             })
         }
+        _ => unreachable!(),
     }
 }

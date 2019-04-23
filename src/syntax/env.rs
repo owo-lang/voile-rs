@@ -4,6 +4,7 @@ use std::ops::Index;
 use std::rc::Rc;
 
 pub type NamedEnv_<T> = BTreeMap<String, T>;
+pub type VecDbiEnv_<T> = BTreeMap<DBI, T>;
 
 /// Local context, can be captured inside of a lambda.
 /// Represented as a list, projected by de-bruijn indices.
