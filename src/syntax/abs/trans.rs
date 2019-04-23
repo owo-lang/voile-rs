@@ -55,6 +55,7 @@ fn trans_expr_inner(
     local_map: &NamedEnv_<DBI>,
 ) -> TCM<Abstract> {
     match expr {
+        Expr::Lam(_, _) => unimplemented!(), // TODO
         Expr::Type(syntax, level) => Ok(Abstract::Type(syntax.clone(), *level)),
         Expr::Var(ident) => {
             let name = &ident.info.text;

@@ -61,6 +61,23 @@ pub enum Expr {
     Lam(Vec<Ident>, Box<Expr>),
 }
 
+impl Expr {
+    pub fn pi(params: Vec<Param>, expr: Self) -> Self {
+        Expr::Pi(params, Box::new(expr))
+    }
+    pub fn lam(params: Vec<Ident>, expr: Self) -> Self {
+        Expr::Lam(params, Box::new(expr))
+    }
+
+    pub fn sig(params: Vec<Param>, expr: Self) -> Self {
+        if params.is_empty() {
+            expr
+        } else {
+            Expr::Sig(params, Box::new(expr))
+        }
+    }
+}
+
 /// Indicates that whether a `Decl` is a type signature or an implementation.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum DeclKind {

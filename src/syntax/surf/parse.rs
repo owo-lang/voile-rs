@@ -186,7 +186,7 @@ fn pi_expr(rules: Tok) -> Expr {
     if params.is_empty() {
         ret
     } else {
-        Expr::Pi(params, Box::new(ret))
+        Expr::pi(params, ret)
     }
 }
 
@@ -195,13 +195,13 @@ fn sig_expr(rules: Tok) -> Expr {
     if params.is_empty() {
         ret
     } else {
-        Expr::Sig(params, Box::new(ret))
+        Expr::sig(params, ret)
     }
 }
 
 fn lambda(rules: Tok) -> Expr {
     let (params, ret) = lambda_internal(rules);
-    Expr::Lam(params, Box::new(ret))
+    Expr::lam(params, ret)
 }
 
 fn type_keyword(rules: Tok) -> Expr {
