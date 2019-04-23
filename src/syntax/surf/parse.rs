@@ -48,10 +48,11 @@ macro_rules! expr_parser {
             for smaller in rules.into_inner() {
                 exprs.push($smaller(smaller));
             }
-            if exprs.len() == 1 {
-                exprs.remove(0)
+            let first = exprs.remove(0);
+            if exprs.is_empty() {
+                first
             } else {
-                Expr::$cons(exprs)
+                Expr::$cons(first, exprs)
             }
         }
     };
@@ -111,11 +112,11 @@ fn declaration(rules: Tok) -> Decl {
     }
 }
 
-expr_parser!(dollar_expr, comma_expr, App);
-expr_parser!(comma_expr, pipe_expr, Tup);
-expr_parser!(pipe_expr, sum_expr, Pipe);
-expr_parser!(sum_expr, app_expr, Sum);
-expr_parser!(app_expr, primary_expr, App);
+expr_parser!(dollar_expr, comma_expr, app);
+expr_parser!(comma_expr, pipe_expr, tup);
+expr_parser!(pipe_expr, sum_expr, pipe);
+expr_parser!(sum_expr, app_expr, sum);
+expr_parser!(app_expr, primary_expr, app);
 
 fn expr(rules: Tok) -> Expr {
     let mut inner: Tik = rules.into_inner();
