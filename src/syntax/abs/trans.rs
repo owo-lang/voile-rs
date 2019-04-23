@@ -21,27 +21,25 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
     let dbi = *name_map
         .entry(name.info.text)
         .or_insert_with(|| result.len());
-    let abs_decl = result.get(&dbi);
     let decl_info = decl.name.info.clone();
-    result.insert(
-        dbi,
-        match (decl.kind, abs_decl) {
-            (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbsDecl::Sign(_, _))) => {
-                AbsDecl::Sign(decl_info, abs)
-            }
-            (DeclKind::Impl, None) | (DeclKind::Impl, Some(AbsDecl::Impl(_, _))) => {
-                AbsDecl::Impl(decl_info, abs)
-            }
-            (DeclKind::Sign, Some(AbsDecl::Impl(impl_info, impl_abs)))
-            | (DeclKind::Sign, Some(AbsDecl::Both(_, _, impl_info, impl_abs))) => {
-                AbsDecl::Both(decl_info, abs, impl_info.clone(), impl_abs.clone())
-            }
-            (DeclKind::Impl, Some(AbsDecl::Sign(sign_info, sign_abs)))
-            | (DeclKind::Impl, Some(AbsDecl::Both(sign_info, sign_abs, _, _))) => {
-                AbsDecl::Both(sign_info.clone(), sign_abs.clone(), decl_info, abs)
-            }
-        },
-    );
+    let original = result.get(&dbi);
+    let modified = match (decl.kind, original) {
+        (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbsDecl::Sign(_, _))) => {
+            AbsDecl::Sign(decl_info, abs)
+        }
+        (DeclKind::Impl, None) | (DeclKind::Impl, Some(AbsDecl::Impl(_, _))) => {
+            AbsDecl::Impl(decl_info, abs)
+        }
+        (DeclKind::Sign, Some(AbsDecl::Impl(impl_info, impl_abs)))
+        | (DeclKind::Sign, Some(AbsDecl::Both(_, _, impl_info, impl_abs))) => {
+            AbsDecl::Both(decl_info, abs, impl_info.clone(), impl_abs.clone())
+        }
+        (DeclKind::Impl, Some(AbsDecl::Sign(sign_info, sign_abs)))
+        | (DeclKind::Impl, Some(AbsDecl::Both(sign_info, sign_abs, _, _))) => {
+            AbsDecl::Both(sign_info.clone(), sign_abs.clone(), decl_info, abs)
+        }
+    };
+    result.insert(dbi, modified);
     Ok((result, name_map))
 }
 
@@ -68,25 +66,21 @@ fn trans_expr_inner(
                 Err(TCE::LookUpFailed(ident.clone()))
             }
         }
-        Expr::App(applied, app_vec) => {
-            let applied = trans_expr_inner(applied, env, global_map, local_env, local_map)?;
-            app_vec
-                .iter()
-                .try_fold(applied, |result, each_expr| -> TCM<_> {
-                    let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                    Ok(Abs::app(result, abs))
-                })
-        }
-        Expr::Pipe(startup, pipe_vec) => {
-            // I really hope I can reuse the code with `App` here :(
-            let startup = trans_expr_inner(startup, env, global_map, local_env, local_map)?;
-            pipe_vec
-                .iter()
-                .try_fold(startup, |result, each_expr| -> TCM<_> {
-                    let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                    Ok(Abs::app(result, abs))
-                })
-        }
+        Expr::App(applied, app_vec) => app_vec.iter().try_fold(
+            trans_expr_inner(applied, env, global_map, local_env, local_map)?,
+            |result, each_expr| -> TCM<_> {
+                let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
+                Ok(Abs::app(result, abs))
+            },
+        ),
+        // I really hope I can reuse the code with `App` here :(
+        Expr::Pipe(startup, pipe_vec) => pipe_vec.iter().try_fold(
+            trans_expr_inner(startup, env, global_map, local_env, local_map)?,
+            |result, each_expr| -> TCM<_> {
+                let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
+                Ok(Abs::app(result, abs))
+            },
+        ),
         Expr::Meta(ident) => Ok(Abs::Meta(ident.info.clone())),
         Expr::Cons(ident) => Ok(Abs::Cons(ident.info.clone())),
         Expr::ConsType(ident) => Ok(Abs::ConsType(ident.info.clone())),

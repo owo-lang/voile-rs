@@ -2,7 +2,7 @@
 extern crate voile;
 
 use voile::check::check_main;
-use voile::syntax::abs::trans::trans;
+use voile::syntax::abs;
 
 mod args;
 mod repl;
@@ -23,7 +23,7 @@ fn main() {
             if !args.parse_only {
                 // Translate to abstract syntax
                 // todo: some confusion: https://github.com/owo-lang/voile-rs/commit/237b422574e2d1d2b0446b12303812269cff0b34#r33261393
-                let abs = trans(ast)
+                let abs = abs::trans(ast)
                     .map_err(|err| eprintln!("{}", err))
                     .unwrap_or_else(|()| {
                         eprintln!("Translate failed.");
@@ -31,7 +31,7 @@ fn main() {
                     })
                     .iter()
                     .fold(Vec::new(), |mut vec, (index, decl)| {
-                        vec[index.clone()] = decl.clone();
+                        vec[*index] = decl.clone();
                         vec
                     });
 
@@ -53,7 +53,7 @@ fn main() {
                 Default::default()
             }
         })
-        .unwrap_or_else(|| Default::default());
+        .unwrap_or_else(Default::default);
 
     // REPL
     if args.interactive_plain {

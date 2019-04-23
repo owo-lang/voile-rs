@@ -1,7 +1,8 @@
-use crate::syntax::common::DBI;
-use std::collections::BTreeMap;
+use std::collections::btree_map::BTreeMap;
 use std::ops::Index;
 use std::rc::Rc;
+
+use crate::syntax::common::DBI;
 
 pub type NamedEnv_<T> = BTreeMap<String, T>;
 pub type VecDbiEnv_<T> = BTreeMap<DBI, T>;
@@ -79,6 +80,7 @@ impl<T> Index<DBI> for DbiEnv_<T> {
 }
 
 impl<T> Eq for DbiEnv_<T> {}
+
 impl<T> PartialEq for DbiEnv_<T> {
     /// We don't do comparison for `Env`s.
     fn eq(&self, _: &Self) -> bool {
