@@ -21,18 +21,23 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         .entry(name.info.text)
         .or_insert_with(|| result.len());
     let abs_decl = result.get(&dbi);
+    let decl_info = decl.name.info.clone();
     result.insert(
         dbi,
         match (decl.kind, abs_decl) {
-            (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbsDecl::Sign(_))) => AbsDecl::Sign(abs),
-            (DeclKind::Impl, None) | (DeclKind::Impl, Some(AbsDecl::Impl(_))) => AbsDecl::Impl(abs),
-            (DeclKind::Sign, Some(AbsDecl::Impl(impl_abs)))
-            | (DeclKind::Sign, Some(AbsDecl::Both(_, impl_abs))) => {
-                AbsDecl::Both(abs, impl_abs.clone())
+            (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbsDecl::Sign(_, _))) => {
+                AbsDecl::Sign(decl_info, abs)
             }
-            (DeclKind::Impl, Some(AbsDecl::Sign(sign_abs)))
-            | (DeclKind::Impl, Some(AbsDecl::Both(sign_abs, _))) => {
-                AbsDecl::Both(sign_abs.clone(), abs)
+            (DeclKind::Impl, None) | (DeclKind::Impl, Some(AbsDecl::Impl(_, _))) => {
+                AbsDecl::Impl(decl_info, abs)
+            }
+            (DeclKind::Sign, Some(AbsDecl::Impl(impl_info, impl_abs)))
+            | (DeclKind::Sign, Some(AbsDecl::Both(_, _, impl_info, impl_abs))) => {
+                AbsDecl::Both(decl_info, abs, impl_info.clone(), impl_abs.clone())
+            }
+            (DeclKind::Impl, Some(AbsDecl::Sign(sign_info, sign_abs)))
+            | (DeclKind::Impl, Some(AbsDecl::Both(sign_info, sign_abs, _, _))) => {
+                AbsDecl::Both(sign_info.clone(), sign_abs.clone(), decl_info, abs)
             }
         },
     );
@@ -126,11 +131,14 @@ fn trans_pi(
     assert_eq!(param.kind, ParamKind::Explicit);
     let param_ty = trans_expr_inner(&param.ty, env, global_map, &pi_env, &pi_map)?;
     for name in param.names.clone() {
-        let param_name = name.info.text;
+        let param_name = name.info.text.clone();
         let param_dbi: DBI = pi_env.len();
         assert!(!pi_env.contains_key(&param_dbi));
         assert!(!pi_map.contains_key(&param_name));
-        pi_env.insert(param_dbi, AbsDecl::Sign(param_ty.clone()));
+        pi_env.insert(
+            param_dbi,
+            AbsDecl::Sign(name.info.clone(), param_ty.clone()),
+        );
         pi_map.insert(param_name, param_dbi);
     }
     pi_vec.insert(pi_vec.len(), param_ty);

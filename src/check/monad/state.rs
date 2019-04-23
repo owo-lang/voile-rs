@@ -1,5 +1,5 @@
 use crate::check::monad::TCM;
-use crate::syntax::common::DBI;
+use crate::syntax::common::{SyntaxInfo, DBI};
 use crate::syntax::core::{DbiEnv, Term};
 use crate::syntax::env::VecDbiEnv_;
 
@@ -10,8 +10,7 @@ pub struct GammaItem {
     /// It refers to its index in `TCS::env`.
     pub dbi: DBI,
     /// Because it's a name binding, there should be source code location.
-    /// todo: preserve location info during abstract syntax translation
-    //   pub location: SyntaxInfo,
+    pub location: SyntaxInfo,
     /// The type of this name.
     pub r#type: Term,
 }

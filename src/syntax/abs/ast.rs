@@ -59,9 +59,10 @@ impl Abs {
 /// type signature and value in abstract syntax
 #[derive(Debug, Clone)]
 pub enum AbsDecl {
-    Sign(Abs),
-    Impl(Abs),
-    Both(Abs, Abs),
+    Sign(SyntaxInfo, Abs),
+    Impl(SyntaxInfo, Abs),
+    /// `Sign` and `Impl`
+    Both(SyntaxInfo, Abs, SyntaxInfo, Abs),
 }
 
 pub type AbstractGlobalEnv = VecDbiEnv_<AbsDecl>;

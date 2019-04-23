@@ -66,13 +66,14 @@ pub fn check_declarations(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
 
 pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
     match decl {
-        AbsDecl::Both(sign_abs, impl_abs) => {
+        AbsDecl::Both(sign_info, sign_abs, _, impl_abs) => {
             let new_dbi = tcs.env_size.clone();
             let (mut tcs, val) = check_type(tcs, sign_abs)?;
             tcs.gamma.insert(
                 new_dbi,
                 GammaItem {
                     dbi: new_dbi,
+                    location: sign_info.clone(),
                     r#type: val.ast.clone(),
                 },
             );
