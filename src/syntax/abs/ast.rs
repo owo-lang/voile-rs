@@ -1,7 +1,7 @@
 use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
 use crate::syntax::env::VecDbiEnv_;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Abs {
     Type(SyntaxInfo, Level),
     /// Bottom type

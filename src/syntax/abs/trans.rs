@@ -79,7 +79,7 @@ fn trans_expr_inner(
                 })
             })
             // Because it's guaranteed to be non-empty.
-            .map(std::option::Option::unwrap),
+            .map(Option::unwrap),
         Expr::Pipe(pipe_vec) => {
             let mut app_vec = pipe_vec.clone();
             app_vec.reverse();

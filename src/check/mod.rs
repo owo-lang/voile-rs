@@ -1,7 +1,8 @@
-use self::monad::{GammaItem, TermTCM, TCE, TCM, TCS};
 use crate::syntax::abs::{Abs, AbsDecl};
 use crate::syntax::common::{DtKind::*, ParamKind::*};
-use crate::syntax::core::{DbiEnv, Term, TermInfo};
+use crate::syntax::core::{DbiEnv, Term};
+
+use self::monad::{GammaItem, TermTCM, TCE, TCM, TCS};
 
 pub mod monad;
 
@@ -11,21 +12,18 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
         // TODO: error message with syntax info
         (Abs::Type(info, lower), Term::Type(upper)) => {
             if upper > lower {
-                Ok((tcs, TermInfo::new(Term::Type(lower), info)))
+                Ok((tcs, Term::Type(lower).into_info(info)))
             } else {
                 Err(TCE::LevelMismatch(info.text, lower + 1, upper))
             }
         }
-        (Abs::Pair(info, fst, snd), Term::Dt(Explicit, Sigma, fst_ty, snd_ty)) => {
-            let (tcs, fst_term) = check(tcs, *fst, *fst_ty)?;
+        (Abs::Pair(info, fst, snd), Term::Dt(Explicit, Sigma, snd_ty)) => {
+            let (tcs, fst_term) = check(tcs, *fst, *snd_ty.param_type)?;
             let snd_ty = snd_ty.body.instantiate(fst_term.ast.clone());
             let (tcs, snd_term) = check(tcs, *snd, snd_ty)?;
-            Ok((
-                tcs,
-                TermInfo::new(Term::pair(fst_term.ast, snd_term.ast), info),
-            ))
+            Ok((tcs, Term::pair(fst_term.ast, snd_term.ast).into_info(info)))
         }
-        (Abs::Bot(info), Term::Type(_)) => Ok((tcs, TermInfo::new(Term::Bot, info))),
+        (Abs::Bot(info), Term::Type(_)) => Ok((tcs, Term::Bot.into_info(info))),
         _ => unimplemented!(),
     }
 }
@@ -67,7 +65,7 @@ pub fn check_declarations(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
 pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
     match decl {
         AbsDecl::Both(sign_info, sign_abs, _, impl_abs) => {
-            let new_dbi = tcs.env_size.clone();
+            let new_dbi = tcs.env_size;
             let (mut tcs, val) = check_type(tcs, sign_abs)?;
             tcs.gamma.insert(
                 new_dbi,

@@ -5,7 +5,7 @@
 mod ast;
 
 /// Desugaring the surface syntax tree to an abstract syntax tree.
-pub mod trans;
+mod trans;
 
 pub use self::ast::*;
 pub use self::trans::*;
