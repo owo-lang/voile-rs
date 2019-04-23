@@ -57,6 +57,8 @@ pub enum Expr {
     /// instead of `Sig(a, Sig(b, c))`.
     /// `a` and `b` here can introduce telescopes.
     Sig(Vec<Param>, Box<Expr>),
+    /// Anonymous function, aka lambda expression.
+    Lam(Vec<Ident>, Box<Expr>),
 }
 
 /// Indicates that whether a `Decl` is a type signature or an implementation.

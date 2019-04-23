@@ -133,6 +133,7 @@ fn primary_expr(rules: Tok) -> Expr {
         Rule::bottom => Expr::Bot(ident(the_rule)),
         Rule::one_sum => Expr::ConsType(ident(the_rule)),
         Rule::meta => Expr::Meta(ident(the_rule)),
+        Rule::lambda => lambda(the_rule),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
         e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
@@ -178,6 +179,7 @@ fn param(rules: Tok) -> Param {
 many_prefix_parser!(pi_expr_internal, Param, param, dollar_expr);
 many_prefix_parser!(sig_expr_internal, Param, param, pi_expr);
 many_prefix_parser!(multi_param, Ident, ident, expr);
+many_prefix_parser!(lambda_internal, Ident, ident, expr);
 
 fn pi_expr(rules: Tok) -> Expr {
     let (params, ret) = pi_expr_internal(rules);
@@ -195,6 +197,11 @@ fn sig_expr(rules: Tok) -> Expr {
     } else {
         Expr::Sig(params, Box::new(ret))
     }
+}
+
+fn lambda(rules: Tok) -> Expr {
+    let (params, ret) = lambda_internal(rules);
+    Expr::Lam(params, Box::new(ret))
 }
 
 fn type_keyword(rules: Tok) -> Expr {

@@ -6,29 +6,36 @@
 
 WHITESPACE = _{ WHITE_SPACE | ("//" ~ (!NEWLINE ~ ANY)*) }
 
-/// Identifier
+// Identifier
 ident_char =
  _{ ASCII_ALPHA
-  | "_"
-  | "\\"
+  | "\\\\"
   }
 ident_raw =
  _{ ident_char
   ~ ( ident_char
     | ASCII_DIGIT
     | "'"
+    | "_"
     )*
   }
+///Yellow
 ident = @{ ident_raw }
+///Pink
 cons = @{ "@" ~ ident_raw }
+///Red
 meta = @{ "_" }
+///#E0957B
 bottom = @{ "!" }
+///Pink
 one_sum = @{ "'" ~ ident_raw }
 
-/// Keywords
+// Keywords
 val_keyword = _{ "val" }
 let_keyword = _{ "let" }
+lambda_keyword = _{ "\\" | "\u{03BB}" }
 type_level = @{ ASCII_DIGIT* }
+///#E0957B
 type_keyword = ${ "Type" ~ type_level }
 semicolon = _{ ";" }
 arrow = _{ "->" }
@@ -38,7 +45,7 @@ pipe_op = _{ "|>" }
 comma_op = _{ "," }
 dollar_op = _{ "$" }
 
-/// Syntactical helpers
+// Parameters
 multi_param = { ident+ ~ ":" ~ expr }
 explicit = { "(" ~ multi_param ~ ")" }
 implicit = { "{" ~ multi_param ~ "}" }
@@ -46,6 +53,14 @@ param =
  { explicit
  | implicit
  | dollar_expr // unnamed parameter
+ }
+
+// Lambdas
+lambda =
+ { lambda_keyword
+ ~ ident+
+ ~ arrow
+ ~ expr
  }
 
 expr = { sig_expr }
@@ -63,13 +78,26 @@ primary_expr =
  | one_sum
  | bottom
  | meta
+ | lambda
  | ident
  | "(" ~ expr ~ ")"
  }
 
-/// ML-style type signature and definition
-signature = { val_keyword ~ ident ~ ":" ~ expr ~ semicolon }
-implementation = { let_keyword ~ ident ~ "=" ~ expr ~ semicolon }
+// ML-style type signature and definition
+signature =
+ { val_keyword
+ ~ ident
+ ~ ":"
+ ~ expr
+ ~ semicolon
+ }
+implementation =
+ { let_keyword
+ ~ ident
+ ~ "="
+ ~ expr
+ ~ semicolon
+ }
 
 declaration =
  { signature
