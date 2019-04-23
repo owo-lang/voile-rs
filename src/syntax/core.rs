@@ -1,7 +1,9 @@
-use super::env::{DbiEnv_, NamedEnv_};
-use crate::syntax::common::{DtKind, Level, ParamKind, SyntaxInfo, DBI};
+use std::rc::Rc;
 
-pub type DbiEnv = DbiEnv_<Term>;
+use super::common::{DtKind, Level, ParamKind, SyntaxInfo, DBI};
+use super::env::{DbiEnv_, NamedEnv_};
+
+pub type DbiEnv = Rc<DbiEnv_<Term>>;
 pub type NamedEnv = NamedEnv_<Term>;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -15,12 +17,12 @@ impl TermInfo {
         Self { ast, info }
     }
 
-    pub fn reduce(self, env: &DbiEnv) -> Term {
+    pub fn reduce(self, env: DbiEnv) -> Term {
         self.ast.reduce(env)
     }
 
     /// Because in `reduce`, what actually moved is `self.ast`, not whole `self`.
-    pub fn reduce_cloned(&self, env: &DbiEnv) -> Term {
+    pub fn reduce_cloned(&self, env: DbiEnv) -> Term {
         self.ast.clone().reduce(env)
     }
 }
@@ -53,9 +55,9 @@ impl Term {
         }
     }
 
-    pub fn reduce(self, env: &DbiEnv) -> Term {
+    pub fn reduce(self, env: DbiEnv) -> Term {
         match self {
-            Term::Pair(a, b) => Term::pair(a.reduce(env), b.reduce(env)),
+            Term::Pair(a, b) => Term::pair(a.reduce(env.clone()), b.reduce(env)),
             Term::Neut(neutral_value) => neutral_value.reduce(env),
             // Cannot reduce
             e => e,
@@ -78,18 +80,18 @@ pub enum Neutral {
 }
 
 impl Neutral {
-    pub fn reduce(self, env: &DbiEnv) -> Term {
+    pub fn reduce(self, env: DbiEnv) -> Term {
         use crate::syntax::core::Neutral::*;
         match self {
             Gen(n) => n.map_or_else(Term::mock, |n| {
                 env.project(n).cloned().unwrap_or_else(|| Term::gen(n))
             }),
             App(function, argument) => {
-                let argument = argument.reduce(env);
+                let argument = argument.reduce(env.clone());
                 function.reduce(env).apply(argument)
             }
-            Fst(pair) => pair.reduce(env).first().reduce(env),
-            Snd(pair) => pair.reduce(env).second().reduce(env),
+            Fst(pair) => pair.reduce(env.clone()).first().reduce(env),
+            Snd(pair) => pair.reduce(env.clone()).second().reduce(env),
         }
     }
 }
@@ -160,6 +162,15 @@ pub struct Closure {
     pub body: ClosureBody,
 }
 
+impl Closure {
+    pub fn new(param_type: Term, body: ClosureBody) -> Self {
+        Self {
+            param_type: Box::new(param_type),
+            body,
+        }
+    }
+}
+
 /// The instantiatable part of a closure.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ClosureBody {
@@ -169,7 +180,13 @@ pub struct ClosureBody {
 
 impl ClosureBody {
     pub fn instantiate(self, arg: Term) -> Term {
-        let env = self.env.cons(arg);
-        self.body.reduce(&env)
+        self.body.reduce(Rc::new(DbiEnv_::cons_rc(self.env, arg)))
+    }
+
+    pub fn new(body: TermInfo, env: DbiEnv) -> Self {
+        Self {
+            body: Box::new(body),
+            env,
+        }
     }
 }

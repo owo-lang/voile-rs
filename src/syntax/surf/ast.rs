@@ -36,29 +36,29 @@ pub enum Expr {
     /// `Type` literal, with levels
     Type(SyntaxInfo, Level),
     /// Function application.<br/>
-    /// Application operator, where `f a b` is represented as `App(vec![f, a, b])`
-    /// instead of `App(App(f, a), b)`.
-    App(Vec<Expr>),
+    /// Application operator, where `f a b c` is represented as `App(f, vec![a, b, c])`
+    /// instead of `App(App(App(f, a), b), c)`.
+    App(Box<Self>, Vec<Self>),
     /// Function composition.<br/>
     /// Pipeline operator, where `a |> b |> f` is represented as `Pipe(vec![a, b, f])`
-    /// instead of `Pipe(Pipe(a, b), f)`.
-    Pipe(Vec<Expr>),
+    /// instead of `App(App(App(f, a), b), c)App(App(App(f, a), b), c)`.
+    Pipe(Box<Self>, Vec<Self>),
     /// Tuple constructor.<br/>
     /// Comma operator, where `a, b, c` is represented as `Tup(vec![a, b, c])`
     /// instead of `Tup(Tup(a, b), c)`.
-    Tup(Vec<Expr>),
+    Tup(Vec<Self>),
     /// Type-sum operator.
-    Sum(Vec<Expr>),
+    Sum(Vec<Self>),
     /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`
     /// instead of `Pi(a, Pi(b, c))`.
     /// `a` and `b` here can introduce telescopes.
-    Pi(Vec<Param>, Box<Expr>),
+    Pi(Vec<Param>, Box<Self>),
     /// Sigma-type expression, where `a * b * c` is represented as `Sig(vec![a, b], c)`
     /// instead of `Sig(a, Sig(b, c))`.
     /// `a` and `b` here can introduce telescopes.
-    Sig(Vec<Param>, Box<Expr>),
+    Sig(Vec<Param>, Box<Self>),
     /// Anonymous function, aka lambda expression.
-    Lam(Vec<Ident>, Box<Expr>),
+    Lam(Vec<Ident>, Box<Self>),
 }
 
 impl Expr {
@@ -69,12 +69,26 @@ impl Expr {
         Expr::Lam(params, Box::new(expr))
     }
 
+    pub fn app(applied: Self, arguments: Vec<Self>) -> Self {
+        Expr::App(Box::new(applied), arguments)
+    }
+
+    pub fn pipe(first: Self, functions: Vec<Self>) -> Self {
+        Expr::Pipe(Box::new(first), functions)
+    }
+
+    pub fn sum(first: Self, mut rest: Vec<Self>) -> Self {
+        rest.push(first);
+        Expr::Sum(rest)
+    }
+
+    pub fn tup(first: Self, mut rest: Vec<Self>) -> Self {
+        rest.push(first);
+        Expr::Tup(rest)
+    }
+
     pub fn sig(params: Vec<Param>, expr: Self) -> Self {
-        if params.is_empty() {
-            expr
-        } else {
-            Expr::Sig(params, Box::new(expr))
-        }
+        Expr::Sig(params, Box::new(expr))
     }
 }
 

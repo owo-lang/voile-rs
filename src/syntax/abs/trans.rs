@@ -1,8 +1,9 @@
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::abs::ast::*;
 use crate::syntax::common::{ParamKind, DBI};
 use crate::syntax::env::NamedEnv_;
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
+
+use super::ast::*;
 
 pub fn trans(decls: Vec<Decl>) -> TCM<AbstractGlobalEnv> {
     decls
@@ -67,35 +68,34 @@ fn trans_expr_inner(
                 Err(TCE::LookUpFailed(ident.clone()))
             }
         }
-        Expr::App(app_vec) => app_vec
-            .iter()
-            .try_fold(None::<Abs>, |result, each_expr| -> TCM<_> {
-                let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                Ok(match result {
-                    // First item in vec
-                    None => Some(abs),
-                    // Second or other
-                    Some(left_abs) => Some(Abs::app(left_abs, abs)),
+        Expr::App(applied, app_vec) => {
+            let applied = trans_expr_inner(applied, env, global_map, local_env, local_map)?;
+            app_vec
+                .iter()
+                .try_fold(applied, |result, each_expr| -> TCM<_> {
+                    let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
+                    Ok(Abs::app(result, abs))
                 })
-            })
-            // Because it's guaranteed to be non-empty.
-            .map(Option::unwrap),
-        Expr::Pipe(pipe_vec) => {
-            let mut app_vec = pipe_vec.clone();
-            app_vec.reverse();
-            trans_expr_inner(&Expr::App(app_vec), env, global_map, local_env, local_map)
+        }
+        Expr::Pipe(startup, pipe_vec) => {
+            // I really hope I can reuse the code with `App` here :(
+            let startup = trans_expr_inner(startup, env, global_map, local_env, local_map)?;
+            pipe_vec
+                .iter()
+                .try_fold(startup, |result, each_expr| -> TCM<_> {
+                    let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
+                    Ok(Abs::app(result, abs))
+                })
         }
         Expr::Meta(ident) => Ok(Abs::Meta(ident.info.clone())),
         Expr::Cons(ident) => Ok(Abs::Cons(ident.info.clone())),
         Expr::ConsType(ident) => Ok(Abs::ConsType(ident.info.clone())),
         Expr::Bot(ident) => Ok(Abs::Bot(ident.info.clone())),
-        Expr::Sum(expr_vec) => {
-            let abs_vec = expr_vec.iter().try_fold(Vec::new(), |mut abs_vec, expr| {
-                abs_vec.push(trans_expr_inner(
-                    expr, env, global_map, local_env, local_map,
-                )?);
-                Ok(abs_vec)
-            })?;
+        Expr::Sum(variants) => {
+            let abs_vec = variants
+                .iter()
+                .map(|expr| trans_expr_inner(expr, env, global_map, local_env, local_map))
+                .collect::<TCM<_>>()?;
             Ok(Abs::Sum(abs_vec))
         }
         // TODO: implement these three

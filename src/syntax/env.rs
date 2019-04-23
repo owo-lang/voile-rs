@@ -30,8 +30,8 @@ impl<T> DbiEnv_<T> {
         DbiEnv_::cons_rc(Rc::new(self), canonical)
     }
 
-    pub fn cons_rc(me: Rc<Self>, canonical: T) -> Self {
-        DbiEnv_::Cons(me, Box::new(canonical))
+    pub fn cons_rc(self: Rc<Self>, canonical: T) -> Self {
+        DbiEnv_::Cons(self, Box::new(canonical))
     }
 
     /// Return `Ok(self)` means substitution succeeded, `Err(self)` means failed.

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::syntax::abs::{Abs, AbsDecl};
 use crate::syntax::common::{DtKind::*, ParamKind::*};
 use crate::syntax::core::{DbiEnv, Term};
@@ -34,11 +36,15 @@ pub fn check_type(_tcs: TCS, _expr: Abs) -> TermTCM {
 }
 
 /// infer type of value
-pub fn check_infer(tcs: TCS, value: TermInfo) -> TermTCM {
-    use crate::syntax::core::Term::*;
-    match value.ast {
-        Type(level) => Ok((tcs, TermInfo::new(Type(level + 1), value.info))),
-        _ => Err(TCE::CouldNotInfer(value.info)),
+pub fn check_infer(tcs: TCS, value: Abs) -> TermTCM {
+    use crate::syntax::abs::Abs::*;
+    match value {
+        Type(info, level) => Ok((tcs, Term::Type(level + 1).into_info(info))),
+        // ConsType(info) => Ok((
+        //     tcs,
+        //     Term::Lam(Closure::new(Term::gen(0), ClosureBody::new(sum))),
+        // )),
+        _ => unimplemented!(),
     }
 }
 
@@ -75,12 +81,12 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
                     r#type: val.ast.clone(),
                 },
             );
-            tcs = tcs.modify_env(|env| env.cons(Term::mock()));
+            tcs = tcs.modify_env(|env| Rc::new(env.cons_rc(Term::mock())));
 
             let (tcs, val) = check(tcs, impl_abs, val.ast)?;
 
             tcs.try_modify_env(|env: DbiEnv| match env.substitute_at(new_dbi, val.ast) {
-                Ok(env) => Ok(env),
+                Ok(env) => Ok(Rc::new(env)),
                 Err(_) => Err(TCE::DbiOverflow(env.len(), new_dbi)),
             })
         }
