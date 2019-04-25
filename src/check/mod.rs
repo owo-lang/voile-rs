@@ -25,7 +25,7 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             let (tcs, snd_term) = check(tcs, *snd, snd_ty)?;
             Ok((tcs, Term::pair(fst_term.ast, snd_term.ast).into_info(info)))
         }
-        (Abs::Bot(info), Term::Type(_)) => Ok((tcs, Term::Bot.into_info(info))),
+        (Abs::Bot(info), Term::Type(level)) => Ok((tcs, Term::Bot(level - 1).into_info(info))),
         _ => unimplemented!(),
     }
 }
