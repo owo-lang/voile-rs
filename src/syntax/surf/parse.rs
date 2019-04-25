@@ -210,7 +210,7 @@ fn type_keyword(rules: Tok) -> Expr {
     let mut inner: Tik = rules.into_inner();
     let level_ast_node: Tok = inner.next().unwrap();
     debug_assert_eq!(level_ast_node.as_rule(), Rule::type_level);
-    let level: Level = level_ast_node.as_str().parse().unwrap();
+    let level: Level = level_ast_node.as_str().parse().unwrap_or(0);
     end_of_rule(&mut inner);
     Expr::Type(syntax_info, level)
 }
@@ -237,6 +237,7 @@ mod tests {
 
     #[test]
     fn primary_expr_parsing() {
+        parse_str_err_printed("let a = Type;").unwrap();
         parse_str_err_printed("let a = Type233;").unwrap();
         parse_str_err_printed("let zero = 'Zero;").unwrap();
         parse_str_err_printed("let van = (Type233);").unwrap();

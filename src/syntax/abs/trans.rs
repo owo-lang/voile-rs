@@ -5,7 +5,7 @@ use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
 
-pub fn trans(decls: Vec<Decl>) -> TCM<AbstractGlobalEnv> {
+pub fn trans_decls(decls: Vec<Decl>) -> TCM<AbstractGlobalEnv> {
     decls
         .iter()
         .try_fold(Default::default(), trans_one_decl)
