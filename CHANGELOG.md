@@ -3,6 +3,8 @@
 # 0.0.4
 
 + Introduce Type-Checking Monad
++ Introduce the abstract syntax
++ Basic desugar: translate surface syntax to abstract syntax
 
 # 0.0.3
 
