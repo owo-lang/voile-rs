@@ -65,6 +65,7 @@ impl Expr {
     pub fn pi(params: Vec<Param>, expr: Self) -> Self {
         Expr::Pi(params, Box::new(expr))
     }
+
     pub fn lam(params: Vec<Ident>, expr: Self) -> Self {
         Expr::Lam(params, Box::new(expr))
     }

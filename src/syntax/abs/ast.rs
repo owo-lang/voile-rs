@@ -65,4 +65,4 @@ pub enum AbsDecl {
     Both(SyntaxInfo, Abs, SyntaxInfo, Abs),
 }
 
-pub type AbstractGlobalEnv = VecDbiEnv_<AbsDecl>;
+pub type AbsGlobEnv = VecDbiEnv_<AbsDecl>;

@@ -5,14 +5,14 @@ use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
 
-pub fn trans_decls(decls: Vec<Decl>) -> TCM<AbstractGlobalEnv> {
+pub fn trans_decls(decls: Vec<Decl>) -> TCM<AbsGlobEnv> {
     decls
         .iter()
         .try_fold(Default::default(), trans_one_decl)
         .map(|res| res.0)
 }
 
-type DeclTCS = (AbstractGlobalEnv, NamedEnv_<DBI>);
+type DeclTCS = (AbsGlobEnv, NamedEnv_<DBI>);
 
 fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclTCS> {
     let name = decl.name.clone();
@@ -43,15 +43,15 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
     Ok((result, name_map))
 }
 
-pub fn trans_expr(expr: &Expr, env: &AbstractGlobalEnv, map: &NamedEnv_<DBI>) -> TCM<Abs> {
+pub fn trans_expr(expr: &Expr, env: &AbsGlobEnv, map: &NamedEnv_<DBI>) -> TCM<Abs> {
     trans_expr_inner(expr, env, map, &Default::default(), &Default::default())
 }
 
 fn trans_expr_inner(
     expr: &Expr,
-    env: &AbstractGlobalEnv,
+    env: &AbsGlobEnv,
     global_map: &NamedEnv_<DBI>,
-    local_env: &AbstractGlobalEnv,
+    local_env: &AbsGlobEnv,
     local_map: &NamedEnv_<DBI>,
 ) -> TCM<Abs> {
     match expr {
@@ -114,9 +114,9 @@ fn trans_expr_inner(
 }
 
 fn trans_pi(
-    env: &AbstractGlobalEnv,
+    env: &AbsGlobEnv,
     global_map: &NamedEnv_<DBI>,
-    pi_env: &mut AbstractGlobalEnv,
+    pi_env: &mut AbsGlobEnv,
     pi_map: &mut NamedEnv_<DBI>,
     mut pi_vec: Vec<Abs>,
     param: &Param,
