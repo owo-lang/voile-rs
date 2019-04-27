@@ -27,13 +27,17 @@ destruction of "records" can be done locally -- without the need of declaring a
 record type globally.
 In other words, the "record type" itself is a kind of expression.
 
-The study on type systems against extensible records has a long history.
+The study on extensible records has a long history.
 
 <p style="color: yellowgreen;">
 TODO Something need to be written here.
 </p>
 
-However, there lacks research and implementations on extensible sums.
+However, there isn't much research and implementations on extensible sums yet.
+Extensible sums are quite complicated because there will be:
+
++ First-class pattern matching
++ Subtyping on sums
 
  [rec-calc]: https://dl.acm.org/citation.cfm?id=218572
  [ext-rec]: https://wiki.haskell.org/Extensible_record
@@ -57,7 +61,7 @@ TODO Something need to be written here.
 Recursion on sum types is a very big problem against the design of first-class
 sum types.
 
-In the cliché programming languages supporting non-first-class sums (where the
+In the cliché programming languages with non-first-class sums (where the
 sum types need to be declared globally before usage), type-checking against
 recursive sums can be easily supported because the types are known to the
 type-checker -- there's no need of reduction on an already-resolved sum type.
@@ -76,7 +80,7 @@ The type-checker will infinitely loop on its reduction.
 
 The above definition will actually be rejected by the termination checker,
 but recursion on sum types *have* to be supported because we have been using
-it for a long time -- we cannot sacrifice this crucial language feature.
+it for a long time -- we shouldn't sacrifice this crucial language feature.
 
 <p style="color: yellowgreen;">
 TODO Something need to be written here.
