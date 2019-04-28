@@ -15,13 +15,13 @@ pub fn trans_decls(decls: Vec<Decl>) -> TCM<AbsGlobEnv> {
 type DeclTCS = (AbsGlobEnv, NamedEnv_<DBI>);
 
 fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclTCS> {
-    let name = decl.name.clone();
+    let name = &decl.name;
     let abs = trans_expr(&decl.body, &result, &name_map)?;
 
     let dbi = *name_map
-        .entry(name.info.text)
+        .entry(name.info.text.clone())
         .or_insert_with(|| result.len());
-    let decl_info = decl.name.info.clone();
+    let decl_info = name.info.clone();
     let original = if result.len() > dbi {
         Some(result.remove(dbi))
     } else {
@@ -36,26 +36,26 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         }
         (DeclKind::Sign, Some(AbsDecl::Impl(impl_info, impl_abs)))
         | (DeclKind::Sign, Some(AbsDecl::Both(_, _, impl_info, impl_abs))) => {
-            AbsDecl::Both(decl_info, abs, impl_info.clone(), impl_abs.clone())
+            AbsDecl::Both(decl_info, abs, impl_info, impl_abs)
         }
         (DeclKind::Impl, Some(AbsDecl::Sign(sign_info, sign_abs)))
         | (DeclKind::Impl, Some(AbsDecl::Both(sign_info, sign_abs, _, _))) => {
-            AbsDecl::Both(sign_info.clone(), sign_abs.clone(), decl_info, abs)
+            AbsDecl::Both(sign_info, sign_abs, decl_info, abs)
         }
     };
     result.insert(dbi, modified);
     Ok((result, name_map))
 }
 
-pub fn trans_expr(expr: &Expr, env: &AbsGlobEnv, map: &NamedEnv_<DBI>) -> TCM<Abs> {
-    trans_expr_inner(expr, env, map, &Default::default(), &Default::default())
+pub fn trans_expr(expr: &Expr, env: &[AbsDecl], map: &NamedEnv_<DBI>) -> TCM<Abs> {
+    trans_expr_inner(expr, env, map, &[], &Default::default())
 }
 
 fn trans_expr_inner(
     expr: &Expr,
-    env: &AbsGlobEnv,
+    env: &[AbsDecl],
     global_map: &NamedEnv_<DBI>,
-    local_env: &AbsGlobEnv,
+    local_env: &[AbsDecl],
     local_map: &NamedEnv_<DBI>,
 ) -> TCM<Abs> {
     match expr {
@@ -101,15 +101,13 @@ fn trans_expr_inner(
         Expr::Sig(_, _) => unimplemented!(),
         Expr::Lam(_, _) => unimplemented!(),
         Expr::Pi(params, result) => {
-            let mut pi_env = local_env.clone();
+            let mut pi_env = local_env.to_vec();
             let mut pi_map = local_map.clone();
-            let mut pi_vec: Vec<Abs> = params.iter().try_fold(Vec::new(), |pi_vec, param| {
+            let pi_vec: Vec<Abs> = params.iter().try_fold(Vec::new(), |pi_vec, param| {
                 trans_pi(env, global_map, &mut pi_env, &mut pi_map, pi_vec, param)
             })?;
 
-            // fold from right
-            pi_vec.reverse();
-            Ok(pi_vec.iter().fold(
+            Ok(pi_vec.iter().rev().fold(
                 trans_expr_inner(result, env, global_map, &pi_env, &pi_map)?,
                 |pi_abs, param| Abs::pi(param.clone(), pi_abs),
             ))
@@ -118,7 +116,7 @@ fn trans_expr_inner(
 }
 
 fn trans_pi(
-    env: &AbsGlobEnv,
+    env: &[AbsDecl],
     global_map: &NamedEnv_<DBI>,
     pi_env: &mut AbsGlobEnv,
     pi_map: &mut NamedEnv_<DBI>,
@@ -131,16 +129,14 @@ fn trans_pi(
     assert_eq!(param.kind, ParamKind::Explicit);
     let param_ty = trans_expr_inner(&param.ty, env, global_map, &pi_env, &pi_map)?;
     for name in param.names.clone() {
-        let param_name = name.info.text.clone();
+        let param_name = name.info.clone();
         let param_dbi: DBI = pi_env.len();
+        // These two are actually our assumption. Hope they're correct.
         assert!(!pi_env.len() < param_dbi);
-        assert!(!pi_map.contains_key(&param_name));
-        pi_env.insert(
-            param_dbi,
-            AbsDecl::Sign(name.info.clone(), param_ty.clone()),
-        );
-        pi_map.insert(param_name, param_dbi);
+        assert!(!pi_map.contains_key(&param_name.text));
+        pi_map.insert(param_name.text.clone(), param_dbi);
+        pi_env.insert(param_dbi, AbsDecl::Sign(param_name, param_ty.clone()));
     }
-    pi_vec.insert(pi_vec.len(), param_ty);
+    pi_vec.push(param_ty);
     Ok(pi_vec)
 }

@@ -28,12 +28,6 @@ fn main() {
                     .unwrap_or_else(|()| {
                         eprintln!("Translate failed.");
                         std::process::exit(1)
-                    })
-                    .iter()
-                    .fold(Vec::new(), |mut vec, decl| {
-                        let index = vec.len();
-                        vec[index] = decl.clone();
-                        vec
                     });
 
                 // Type Check
