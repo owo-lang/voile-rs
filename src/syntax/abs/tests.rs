@@ -9,7 +9,7 @@ fn trans_bot() {
     )
     .unwrap();
     let ctx = trans_decls(surf).unwrap();
-    assert_eq!(1, ctx.len());
+    assert_eq!(2, ctx.len());
     let decl = ctx[0].clone();
     println!("{:?}", decl);
     match decl {
