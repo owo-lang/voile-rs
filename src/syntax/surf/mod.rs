@@ -18,3 +18,6 @@ pub use self::parse::parse_str;
 pub fn parse_str_err_printed(code: &str) -> Result<Vec<Decl>, ()> {
     parse_str(code).map_err(|err| eprintln!("{}", err))
 }
+
+#[cfg(test)]
+mod tests;

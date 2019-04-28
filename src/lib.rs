@@ -10,9 +10,18 @@ Voile is a dependently-typed programming language evolved from [Mini-TT][mtt].
 
 ### Goal
 
-The focus of Voile is *extensible algebraic data types*.
+The focus of Voile is *extensible algebraic data types* on top of
+*dependent types*.
 It can solve the expression problem without using any design patterns (like
-visitor or object-algebra in Java, or finally-tagless or dtlac in Haskell).
+visitor or object-algebra in Java, or finally-tagless or dtalc in Haskell).
+
+This is greatly inspired by the coexistence of guarded recursion, coinductive
+data types and inductive types in Agda,
+which does not work very well according to a discussion [here][agda-bad-bad].
+We can observe that sums, records and (dependent) pattern matching in Agda only
+work well when being top-level bindings.
+
+ [agda-bad-bad]: https://github.com/agda/cubical/pull/57#discussion_r253974409
 
 ### Features
 
@@ -34,14 +43,23 @@ TODO Something need to be written here.
 </p>
 
 However, there isn't much research and implementations on extensible sums yet.
-Extensible sums are quite complicated because there will be:
+Extensible sums are quite complicated because it probably requires:
 
 + First-class pattern matching
 + Subtyping on sums
 
+While currently I can only find one programming language, [MLPolyR][mlpolyr]
+([language spec][spec], papers: [first-class cases][fc-c],
+[type-safe extensible programming][tse]), whose pattern matching is first-class
+(in the papers it's called "first-class cases").
+
  [rec-calc]: https://dl.acm.org/citation.cfm?id=218572
  [ext-rec]: https://wiki.haskell.org/Extensible_record
  [row-poly]: https://en.wikipedia.org/wiki/Row_polymorphism
+ [mlpolyr]: https://github.com/nojb/mlpolyr
+ [fc-c]: https://people.cs.uchicago.edu/~blume/papers/icfp06.pdf
+ [tse]: https://arxiv.org/abs/0910.2654
+ [spec]: https://people.cs.uchicago.edu/~blume/classes/spr2005/cmsc22620/docs/langspec.pdf
 
 # Implementation
 
