@@ -22,7 +22,7 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         .entry(name.info.text)
         .or_insert_with(|| result.len());
     let decl_info = decl.name.info.clone();
-    let original = result.get(&dbi);
+    let original = result.get(dbi);
     let modified = match (decl.kind, original) {
         (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbsDecl::Sign(_, _))) => {
             AbsDecl::Sign(decl_info, abs)
@@ -129,7 +129,7 @@ fn trans_pi(
     for name in param.names.clone() {
         let param_name = name.info.text.clone();
         let param_dbi: DBI = pi_env.len();
-        assert!(!pi_env.contains_key(&param_dbi));
+        assert!(!pi_env.len() < param_dbi);
         assert!(!pi_map.contains_key(&param_name));
         pi_env.insert(
             param_dbi,

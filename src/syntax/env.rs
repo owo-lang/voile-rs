@@ -5,7 +5,7 @@ use std::rc::Rc;
 use crate::syntax::common::DBI;
 
 pub type NamedEnv_<T> = BTreeMap<String, T>;
-pub type VecDbiEnv_<T> = BTreeMap<DBI, T>;
+pub type VecDbiEnv_<T> = Vec<T>;
 
 /// Local context, can be captured inside of a lambda.
 /// Represented as a list, projected by de-bruijn indices.
