@@ -22,7 +22,11 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         .entry(name.info.text)
         .or_insert_with(|| result.len());
     let decl_info = decl.name.info.clone();
-    let original = result.get(dbi);
+    let original = if result.len() > dbi {
+        Some(result.remove(dbi))
+    } else {
+        None
+    };
     let modified = match (decl.kind, original) {
         (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbsDecl::Sign(_, _))) => {
             AbsDecl::Sign(decl_info, abs)
