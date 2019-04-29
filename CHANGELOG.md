@@ -1,10 +1,13 @@
 # Change Log
 
+# 0.0.5
+
 # 0.0.4
 
 + Introduce Type-Checking Monad
 + Introduce the abstract syntax
 + Basic desugar: translate surface syntax to abstract syntax
++ Improve documentation, start writing the tutorial
 
 # 0.0.3
 
