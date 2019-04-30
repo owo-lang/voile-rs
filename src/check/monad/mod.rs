@@ -1,4 +1,6 @@
+/// `Control.Monad.Except`, as type-checking error.
 mod error;
+/// `Control.Monad.State`, as type-checking state.
 mod state;
 
 pub use self::error::*;

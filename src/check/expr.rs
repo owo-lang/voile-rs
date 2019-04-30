@@ -4,7 +4,7 @@ use crate::syntax::core::Term;
 
 use super::monad::{TermTCM, TCE, TCM, TCS};
 
-/// Expr -> (well-typed) Term
+/// Abstract Term -> Core Term.
 pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
     match (expr, expected_type) {
         // TODO: error message with syntax info
@@ -36,6 +36,14 @@ pub fn check_infer(tcs: TCS, value: Abs) -> TermTCM {
     use crate::syntax::abs::Abs::*;
     match value {
         Type(info, level) => Ok((tcs, Term::Type(level + 1).into_info(info))),
+        Local(info, dbi) => {
+            let ty = tcs.local_gamma[dbi].r#type.clone().into_info(info);
+            Ok((tcs, ty))
+        }
+        Var(info, dbi) => {
+            let ty = tcs.gamma[dbi].r#type.clone().into_info(info);
+            Ok((tcs, ty))
+        }
         // ConsType(info) => Ok((
         //     tcs,
         //     Term::Lam(Closure::new(Term::gen(0), ClosureBody::new(sum))),

@@ -26,6 +26,8 @@ pub struct TCS {
     pub env_size: DBI,
     /// Global typing context.
     pub gamma: Gamma,
+    /// Local typing context.
+    pub local_gamma: Gamma,
 }
 
 impl TCS {
