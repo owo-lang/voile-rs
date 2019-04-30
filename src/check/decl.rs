@@ -6,7 +6,7 @@ use crate::syntax::core::{DbiEnv, Term};
 use super::expr::{check, check_type};
 use super::monad::{GammaItem, TCE, TCM, TCS};
 
-pub fn check_declarations(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
+pub fn check_decls(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
     for decl in decls.into_iter() {
         tcs = check_decl(tcs, decl.clone())?;
     }

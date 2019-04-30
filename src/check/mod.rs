@@ -13,5 +13,5 @@ mod decl;
 mod expr;
 
 pub fn check_main(decls: Vec<AbsDecl>) -> self::monad::TCM {
-    check_declarations(Default::default(), decls)
+    check_decls(Default::default(), decls)
 }

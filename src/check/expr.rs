@@ -4,6 +4,16 @@ use crate::syntax::core::Term;
 
 use super::monad::{TermTCM, TCE, TCM, TCS};
 
+/// $$
+/// \newcommand\U{\textsf{Type}}
+/// \frac{i < j}{\Gamma \vdash \U\_i : \U\_j \rightsquigarrow \U\_i}
+/// \quad
+/// \frac{}{\Gamma \vdash\bot:\U\_i \rightsquigarrow \bot\_i}
+/// $$
+/// $$
+/// \frac{\Gamma \vdash a:A \quad \Gamma,a:A \vdash b:B(a)}
+///      {\Gamma \vdash (a,b):\Sigma (a:A).B(a) \rightsquigarrow (a,b)}
+/// $$
 /// Abstract Term -> Core Term.
 pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
     match (expr, expected_type) {
