@@ -1,5 +1,4 @@
 use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
-use crate::syntax::env::VecDbiEnv_;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Abs {
@@ -64,5 +63,3 @@ pub enum AbsDecl {
     /// `Sign` and `Impl`
     Both(SyntaxInfo, Abs, SyntaxInfo, Abs),
 }
-
-pub type AbsGlobEnv = VecDbiEnv_<AbsDecl>;

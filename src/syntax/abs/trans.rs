@@ -5,14 +5,14 @@ use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
 
-pub fn trans_decls(decls: Vec<Decl>) -> TCM<AbsGlobEnv> {
+pub fn trans_decls(decls: Vec<Decl>) -> TCM<Vec<AbsDecl>> {
     decls
         .iter()
         .try_fold(Default::default(), trans_one_decl)
         .map(|res| res.0)
 }
 
-type DeclTCS = (AbsGlobEnv, NamedEnv_<DBI>);
+type DeclTCS = (Vec<AbsDecl>, NamedEnv_<DBI>);
 
 fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclTCS> {
     let name = &decl.name;
@@ -118,7 +118,7 @@ fn trans_expr_inner(
 fn trans_pi(
     env: &[AbsDecl],
     global_map: &NamedEnv_<DBI>,
-    pi_env: &mut AbsGlobEnv,
+    pi_env: &mut Vec<AbsDecl>,
     pi_map: &mut NamedEnv_<DBI>,
     mut pi_vec: Vec<Abs>,
     param: &Param,

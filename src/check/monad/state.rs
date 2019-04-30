@@ -1,7 +1,6 @@
 use crate::check::monad::TCM;
 use crate::syntax::common::{SyntaxInfo, DBI};
 use crate::syntax::core::{DbiEnv, Term};
-use crate::syntax::env::VecDbiEnv_;
 
 /// Gamma item.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -16,7 +15,7 @@ pub struct GammaItem {
 }
 
 /// Typing context.
-pub type Gamma = VecDbiEnv_<GammaItem>;
+pub type Gamma = Vec<GammaItem>;
 
 #[derive(Debug, Clone, Default)]
 pub struct TCS {
