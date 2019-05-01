@@ -12,6 +12,6 @@ mod decl;
 /// Expression/Type relevant checking.
 mod expr;
 
-pub fn check_main(decls: Vec<AbsDecl>) -> self::monad::TCM {
+pub fn check_main(decls: Vec<AbsDecl>) -> monad::TCM {
     check_decls(Default::default(), decls)
 }

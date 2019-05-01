@@ -11,7 +11,7 @@ documentation = "https://docs.rs/voile"
 repository = "https://github.com/owo-lang/voile-rs"
 
 [badges]
-appveyor = { repository = "ice1000/voile-rs", service = "github" }
+appveyor = { repository = "owo-lang/voile-rs", service = "github" }
 circle-ci = { repository = "owo-lang/voile-rs", branch = "master" }
 maintenance = { status = "experimental" }
 is-it-maintained-issue-resolution = { repository = "owo-lang/voile-rs" }

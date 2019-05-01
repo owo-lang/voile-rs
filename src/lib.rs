@@ -107,8 +107,10 @@ TODO Something needs to be written here.
 <br/>
 <details>
 <summary>About the name, Voile</summary>
+<span>
 This name is inspired from a friend whose username is [*Voile*][vo] (or [*Voileexperiments*][ve]).
 However, this is also the name of a library in the [*Scarlet Devil Mansion*][sdm].
+</span>
 
 <details>
 <summary>The librarian of Voile, the Magic Library</summary>
