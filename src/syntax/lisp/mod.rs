@@ -58,7 +58,8 @@ fn sym(the_rule: Tok) -> Lisp {
 }
 
 fn dbi(the_rule: Tok) -> Lisp {
-    Lisp::Num(the_rule.as_str().parse().unwrap())
+    let s = the_rule.as_str();
+    Lisp::Num(s.parse().unwrap_or_else(|_| panic!("Bad DBI: `{}`.", s)))
 }
 
 fn block(the_rule: Tok) -> Lisp {

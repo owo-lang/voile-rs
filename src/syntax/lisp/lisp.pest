@@ -5,8 +5,9 @@
 //
 
 ///Green
-dbi = { ASCII_DIGIT+ }
-sym = { ASCII_ALPHA+ }
+dbi = ${ ASCII_DIGIT+ }
+///Cyan
+sym = ${ ASCII_ALPHA+ }
 element =
  { sym
  | dbi

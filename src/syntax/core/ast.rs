@@ -128,6 +128,13 @@ impl Term {
     pub fn sig(visibility: ParamKind, closure: Closure) -> Self {
         Self::dependent_type(visibility, DtKind::Sigma, closure)
     }
+
+    pub fn into_neutral(self) -> Option<Neutral> {
+        match self {
+            Term::Neut(n) => Some(n),
+            _ => None,
+        }
+    }
 }
 
 /// A closure with parameter type explicitly specified.
