@@ -8,6 +8,9 @@ pub mod env;
 #[macro_use]
 pub mod pest_util;
 
+/// A Lisp parser as some testing utility.
+pub mod lisp;
+
 /// Core language, aka well-typed terms.
 pub mod core;
 

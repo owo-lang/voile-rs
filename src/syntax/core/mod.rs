@@ -30,3 +30,6 @@ impl TermInfo {
         self.ast.clone().reduce(env)
     }
 }
+
+#[cfg(test)]
+mod tests;

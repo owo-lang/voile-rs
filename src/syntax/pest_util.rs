@@ -42,5 +42,5 @@ macro_rules! define_parse_str {
 
 #[inline]
 pub fn end_of_rule<Rule: RuleType>(inner: &mut Pairs<Rule>) {
-    debug_assert_eq!(inner.next(), None)
+    debug_assert_eq!(inner.next(), None);
 }

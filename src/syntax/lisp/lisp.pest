@@ -5,9 +5,11 @@
 //
 
 ///Green
-sym = { ASCII_ALPHANUMERIC+ }
+dbi = { ASCII_DIGIT+ }
+sym = { ASCII_ALPHA+ }
 element =
  { sym
+ | dbi
  | block
  }
 
