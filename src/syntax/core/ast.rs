@@ -1,31 +1,10 @@
 use std::rc::Rc;
 
-use super::common::{DtKind, Level, ParamKind, SyntaxInfo, DBI};
-use super::env::{DbiEnv_, NamedEnv_};
+use crate::syntax::common::{DtKind, Level, ParamKind, DBI};
+use crate::syntax::env::{DbiEnv_, NamedEnv_};
 
 pub type DbiEnv = Rc<DbiEnv_<Term>>;
 pub type NamedEnv = NamedEnv_<Term>;
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct TermInfo {
-    pub ast: Term,
-    pub info: SyntaxInfo,
-}
-
-impl TermInfo {
-    pub fn new(ast: Term, info: SyntaxInfo) -> Self {
-        Self { ast, info }
-    }
-
-    pub fn reduce(self, env: DbiEnv) -> Term {
-        self.ast.reduce(env)
-    }
-
-    /// Because in `reduce`, what actually moved is `self.ast`, not whole `self`.
-    pub fn reduce_cloned(&self, env: DbiEnv) -> Term {
-        self.ast.clone().reduce(env)
-    }
-}
 
 impl Term {
     /// Just for evaluation during beta-reduction.
@@ -81,7 +60,7 @@ pub enum Neutral {
 
 impl Neutral {
     pub fn reduce(self, env: DbiEnv) -> Term {
-        use crate::syntax::core::Neutral::*;
+        use self::Neutral::*;
         match self {
             Gen(n) => n.map_or_else(Term::mock, |n| {
                 env.project(n).cloned().unwrap_or_else(|| Term::gen(n))
@@ -149,10 +128,6 @@ impl Term {
     pub fn sig(visibility: ParamKind, closure: Closure) -> Self {
         Self::dependent_type(visibility, DtKind::Sigma, closure)
     }
-
-    pub fn into_info(self, syntax_info: SyntaxInfo) -> TermInfo {
-        TermInfo::new(self, syntax_info)
-    }
 }
 
 /// A closure with parameter type explicitly specified.
@@ -174,7 +149,7 @@ impl Closure {
 /// The instantiatable part of a closure.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ClosureBody {
-    pub body: Box<TermInfo>,
+    pub body: Box<Term>,
     pub env: DbiEnv,
 }
 
@@ -183,7 +158,7 @@ impl ClosureBody {
         self.body.reduce(Rc::new(DbiEnv_::cons_rc(self.env, arg)))
     }
 
-    pub fn new(body: TermInfo, env: DbiEnv) -> Self {
+    pub fn new(body: Term, env: DbiEnv) -> Self {
         Self {
             body: Box::new(body),
             env,
