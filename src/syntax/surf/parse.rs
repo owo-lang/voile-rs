@@ -14,10 +14,6 @@ struct VoileParser;
 
 tik_tok!();
 
-/// Parse a string into an optional expr based on `file` rule:
-/// ```ignore
-/// file = { WHITESPACE* ~ expr }
-/// ```
 define_parse_str!(VoileParser, file, declarations, Vec<Decl>);
 
 macro_rules! expr_parser {

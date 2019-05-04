@@ -1,3 +1,6 @@
+use pest::iterators::Pairs;
+use pest::RuleType;
+
 // Tik♂Tok on the clock but the party don't stop!
 #[macro_export]
 macro_rules! tik_tok {
@@ -19,6 +22,7 @@ macro_rules! next_rule {
 #[macro_export]
 macro_rules! define_parse_str {
     ($parser:ident, $root_rule:ident, $root_trans:ident, $ret:ty) => {
+        /// Parse a string into an optional expr based on the `$root_rule` rule:
         pub fn parse_str(input: &str) -> Result<$ret, String> {
             let the_rule: Tok = $parser::parse(Rule::$root_rule, input)
                 .map_err(|err| format!("Parse failed at:{}", err))?
@@ -37,6 +41,6 @@ macro_rules! define_parse_str {
 }
 
 #[inline]
-pub fn end_of_rule(inner: &mut Tik) {
+pub fn end_of_rule<Rule: RuleType>(inner: &mut Pairs<Rule>) {
     debug_assert_eq!(inner.next(), None)
 }
