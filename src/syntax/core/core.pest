@@ -1,0 +1,12 @@
+//
+// Created by intellij-pest on 2019-05-03
+// core
+// Author: ice1000
+//
+
+element =
+ { SYMBOL
+ | block
+ }
+
+block = { "(" ~ element+ ~ ")" }
