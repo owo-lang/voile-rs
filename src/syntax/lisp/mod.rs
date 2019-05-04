@@ -1,5 +1,5 @@
-use crate::syntax::common::DBI;
-use crate::syntax::pest_util::end_of_rule;
+use super::common::DBI;
+use super::pest_util::end_of_rule;
 use pest::Parser;
 use pest_derive::Parser;
 

@@ -14,6 +14,6 @@ element =
  | block
  }
 
-block = { "(" ~ element+ ~ ")" }
+block = { "(" ~ element* ~ ")" }
 WHITESPACE = _{ ws+ }
 ws = { " " | "\n" | "\t" | "\r" }

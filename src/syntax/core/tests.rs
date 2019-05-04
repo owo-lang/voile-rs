@@ -72,6 +72,10 @@ fn test_pair_reduction() {
         from_str("(snd (pair 114 (type 514)))"),
         from_str("(type 514)")
     );
+    assert_eq!(
+        from_str("(snd (fst (pair (pair 114 (type 514)) ())))"),
+        from_str("(type 514)")
+    );
     assert_eq!(from_str("(snd 114514)"), from_str("(snd 114514)"));
     assert_eq!(from_str("(fst 114514)"), from_str("(fst 114514)"));
 }
