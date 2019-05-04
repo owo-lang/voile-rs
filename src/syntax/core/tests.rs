@@ -33,16 +33,19 @@ fn many_to_term(mut block: Vec<Lisp>) -> Term {
     match block.len() {
         0 => Term::mock(),
         2 => match vec_as_2(&mut block) {
-            (Sym(s), Num(level)) => match s.as_ref() {
-                "type" => Term::Type(level as _),
-                "bot" => Term::Bot(level as _),
+            (Sym(s), arg) => match s.as_ref() {
+                "fst" => lisp_to_term(arg).first(),
+                "snd" => lisp_to_term(arg).second(),
+                "type" => Term::Type(arg.into_dbi().unwrap() as _),
+                "bot" => Term::Bot(arg.into_dbi().unwrap() as _),
                 _ => panic!("Bad block: `{}`.", Many(block)),
             },
             _ => panic!("Bad block: `{}`.", Many(block)),
         },
         3 => match vec_as_3(&mut block) {
             (Sym(s), fst, snd) => match s.as_ref() {
-                "app" => Term::app(lisp_to_term(fst).into_neutral().unwrap(), lisp_to_term(snd)),
+                "app" => lisp_to_term(fst).apply(lisp_to_term(snd)),
+                "pair" => Term::pair(lisp_to_term(fst), lisp_to_term(snd)),
                 _ => panic!("Bad block: `{}`.", Many(block)),
             },
             _ => panic!("Bad block: `{}`.", Many(block)),
@@ -57,4 +60,17 @@ fn test_parsing() {
     let _ = from_str("(type 233)");
     let _ = from_str("(bot 233)");
     let _ = from_str("(app 233 666)");
+    let _ = from_str("(pair 114 514)");
+    let _ = from_str("(fst 1919810)");
+}
+
+#[test]
+fn test_pair_reduction() {
+    assert_eq!(from_str("(fst (pair 114 514))"), from_str("114"));
+    assert_eq!(from_str("(snd (pair 114 514))"), from_str("514"));
+    assert_eq!(
+        from_str("(snd (pair 114 (type 514)))"),
+        from_str("(type 514)")
+    );
+    assert_eq!(from_str("(snd 114514)"), from_str("(snd 114514)"));
 }

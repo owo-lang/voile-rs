@@ -14,6 +14,15 @@ pub enum Lisp {
     Many(Vec<Lisp>),
 }
 
+impl Lisp {
+    pub fn into_dbi(self) -> Option<DBI> {
+        match self {
+            Lisp::Num(dbi) => Some(dbi),
+            _ => None,
+        }
+    }
+}
+
 impl std::fmt::Display for Lisp {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         match self {
