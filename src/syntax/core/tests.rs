@@ -11,8 +11,16 @@ fn lisp_to_term(lisp: Lisp) -> Term {
     match lisp {
         Num(dbi) => Term::gen(dbi),
         Sym(sym) => panic!("Unexpected symbol: `{}`.", sym),
-        Many(block) => match block.len() {
+        Many(mut block) => match block.len() {
             0 => Term::mock(),
+            2 => match (block.pop(), block.pop()) {
+                (Some(Num(level)), Some(Sym(s))) => match s.as_ref() {
+                    "type" => Term::Type(level as _),
+                    "bot" => Term::Bot(level as _),
+                    _ => panic!("Bad block: `{}`.", Many(block)),
+                },
+                _ => panic!("Bad block: `{}`.", Many(block)),
+            },
             _ => panic!("Bad block: `{}`.", Many(block)),
         },
     }
@@ -21,4 +29,6 @@ fn lisp_to_term(lisp: Lisp) -> Term {
 #[test]
 fn test_parsing() {
     let _ = from_str("233");
+    let _ = from_str("(type 233)");
+    let _ = from_str("(bot 233)");
 }
