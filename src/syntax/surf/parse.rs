@@ -2,6 +2,7 @@ use pest::Parser;
 use pest_derive::Parser;
 
 use crate::syntax::common::{Level, ParamKind, SyntaxInfo};
+use crate::syntax::pest_util::end_of_rule;
 
 use super::ast::Param;
 use super::{Decl, DeclKind, Expr, Ident};
@@ -17,7 +18,7 @@ tik_tok!();
 /// ```ignore
 /// file = { WHITESPACE* ~ expr }
 /// ```
-define_parse_str!(VoileParser, file, declarations);
+define_parse_str!(VoileParser, file, declarations, Vec<Decl>);
 
 macro_rules! expr_parser {
     ($name:ident,$smaller:ident,$cons:ident) => {
@@ -45,11 +46,14 @@ macro_rules! many_prefix_parser {
                 match the_rule.as_rule() {
                     Rule::$prefix => prefixes.push($prefix(the_rule)),
                     Rule::$end => end = Some($end(the_rule)),
-                    e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
+                    e => panic!("Unexpected rule: {:?} with token {}.", e, the_rule.as_str()),
                 }
             }
             // According to the grammar, `end` cannot be `None` (otherwise it's a pest bug).
-            (prefixes, end.unwrap())
+            (
+                prefixes,
+                end.expect("Internal error: Pest produces unexpected pairs."),
+            )
         }
     };
 }
@@ -57,11 +61,6 @@ macro_rules! many_prefix_parser {
 #[inline]
 fn next_ident(inner: &mut Tik) -> Ident {
     next_rule!(inner, ident)
-}
-
-#[inline]
-fn end_of_rule(inner: &mut Tik) {
-    debug_assert_eq!(inner.next(), None)
 }
 
 fn declarations(the_rule: Tok) -> Vec<Decl> {

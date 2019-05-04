@@ -4,9 +4,13 @@
 // Author: ice1000
 //
 
+///Green
+sym = { ASCII_ALPHANUMERIC+ }
 element =
- { SYMBOL
+ { sym
  | block
  }
 
 block = { "(" ~ element+ ~ ")" }
+WHITESPACE = _{ ws+ }
+ws = { " " | "\n" | "\t" | "\r" }
