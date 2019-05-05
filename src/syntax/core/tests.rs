@@ -29,6 +29,7 @@ fn many_to_term(block: &[Lisp], lisp: &Lisp) -> Term {
         [Sym(s), fst, snd] => match *s {
             "app" => lisp_to_term(fst).apply(lisp_to_term(snd)),
             "pair" => Term::pair(lisp_to_term(fst), lisp_to_term(snd)),
+            "lam" => Term::lam(lisp_to_term(fst), lisp_to_term(snd)),
             _ => panic!("Bad block: `{}`.", lisp),
         },
         _ => panic!("Bad block: `{}`.", lisp),
@@ -43,6 +44,7 @@ fn test_parsing() {
     let _ = from_str("(app 233 666)");
     let _ = from_str("(pair 114 514)");
     let _ = from_str("(fst 1919810)");
+    let _ = from_str("(lam () 0)");
 }
 
 #[test]
@@ -64,4 +66,9 @@ fn test_pair_reduction() {
 #[test]
 fn test_app_reduction() {
     assert_eq!(from_str("(app 114 514)"), from_str("(app 114 514)"));
+    assert_eq!(from_str("(app (lam () 0) 514)"), from_str("514"));
+    assert_eq!(
+        from_str("(app (lam () 1) 514)"),
+        from_str("(app (lam () 1) 514)")
+    );
 }

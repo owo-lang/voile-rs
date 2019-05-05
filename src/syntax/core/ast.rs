@@ -111,11 +111,15 @@ impl Term {
         Term::Neut(Neutral::Var(index))
     }
 
+    pub fn lam(arg_type: Self, body: Self) -> Self {
+        Term::Lam(Closure::new(arg_type, body))
+    }
+
     pub fn axiom() -> Self {
         Term::Neut(Neutral::Axi)
     }
 
-    pub fn app(function: Neutral, arg: Term) -> Self {
+    pub fn app(function: Neutral, arg: Self) -> Self {
         Term::Neut(Neutral::App(Box::new(function), Box::new(arg)))
     }
 
