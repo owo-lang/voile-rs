@@ -8,22 +8,22 @@ use pest_derive::Parser;
 struct CoreParser;
 
 #[derive(Debug, Clone)]
-pub enum Lisp {
+pub enum Lisp<'a> {
     Num(DBI),
-    Sym(String),
-    Many(Vec<Lisp>),
+    Sym(&'a str),
+    Many(Vec<Self>),
 }
 
-impl Lisp {
-    pub fn into_dbi(self) -> Option<DBI> {
+impl<'a> Lisp<'a> {
+    pub fn as_dbi(&self) -> Option<DBI> {
         match self {
-            Lisp::Num(dbi) => Some(dbi),
+            Lisp::Num(dbi) => Some(*dbi),
             _ => None,
         }
     }
 }
 
-impl std::fmt::Display for Lisp {
+impl<'a> std::fmt::Display for Lisp<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         match self {
             Lisp::Many(many) => {
@@ -63,7 +63,7 @@ fn element(rules: Tok) -> Lisp {
 }
 
 fn sym(the_rule: Tok) -> Lisp {
-    Lisp::Sym(the_rule.as_str().to_string())
+    Lisp::Sym(the_rule.as_str())
 }
 
 fn dbi(the_rule: Tok) -> Lisp {
