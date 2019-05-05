@@ -6,15 +6,14 @@ use super::monad::{TermTCM, TCE, TCM, TCS};
 
 /// $$
 /// \newcommand\U{\textsf{Type}}
-/// \frac{i < j}{\Gamma \vdash \U\_i : \U\_j \rightsquigarrow \U\_i}
+/// \cfrac{i < j}{\Gamma \vdash \U\_i : \U\_j \rightsquigarrow \U\_i}
 /// \quad
-/// \frac{}{\Gamma \vdash\bot:\U\_i \rightsquigarrow \bot\_i}
-/// $$
-/// $$
-/// \frac{\Gamma \vdash a:A \quad \Gamma,a:A \vdash b:B(a)}
+/// \cfrac{}{\Gamma \vdash\bot:\U\_i \rightsquigarrow \bot\_i}
+/// \newline
+/// \cfrac{\Gamma \vdash a:A \quad \Gamma,a:A \vdash b:B(a)}
 ///      {\Gamma \vdash (a,b):\Sigma (a:A).B(a) \rightsquigarrow (a,b)}
 /// $$
-/// Abstract Term -> Core Term.
+/// Abstract Term -> Core Term under an expected type.
 pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
     match (expr, expected_type) {
         (Abs::Type(info, lower), Term::Type(upper)) => {
@@ -35,12 +34,23 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
     }
 }
 
-/// Check if an expression is a valid type expression
+/// Check if an expression is a valid type expression.
 pub fn check_type(_tcs: TCS, _expr: Abs) -> TermTCM {
     unimplemented!()
 }
 
-/// infer type of value
+/// $$
+/// \newcommand\U{\textsf{Type}}
+/// \newcommand\G[2]{\Gamma \vdash #1 : #2}
+/// \cfrac{}{\G{\U\_i}{\U\_{i+1}}}
+/// \quad
+/// \cfrac{}{\G{[n]}{\textsf{type}(\Gamma, n)}}
+/// \newline
+/// \cfrac{\G{a}{A} \quad \G{b}{B}}{\G{(a,b)}{\Sigma A.B}}
+/// \quad
+/// \cfrac{\G{a}{\Sigma A.B}}{\G{a\textsf{\.1}}{A}}
+/// $$
+/// Infer type of value.
 pub fn check_infer(tcs: TCS, value: Abs) -> TermTCM {
     use crate::syntax::abs::Abs::*;
     match value {
