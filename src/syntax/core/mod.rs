@@ -21,13 +21,13 @@ impl TermInfo {
         Self { ast, info }
     }
 
-    pub fn reduce(self, env: DbiEnv) -> Term {
-        self.ast.reduce(env)
+    pub fn reduce(self, arg: Term) -> Term {
+        self.ast.reduce(arg)
     }
 
     /// Because in `reduce`, what actually moved is `self.ast`, not whole `self`.
-    pub fn reduce_cloned(&self, env: DbiEnv) -> Term {
-        self.ast.clone().reduce(env)
+    pub fn reduce_cloned(&self, arg: Term) -> Term {
+        self.ast.clone().reduce(arg)
     }
 }
 

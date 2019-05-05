@@ -1,16 +1,14 @@
-use std::rc::Rc;
+use std::collections::btree_map::BTreeMap;
 
 use crate::syntax::common::{DtKind, Level, ParamKind, DBI};
-use crate::syntax::env::{DbiEnv_, NamedEnv_};
 
-pub type DbiEnv = Rc<DbiEnv_<Term>>;
-pub type NamedEnv = NamedEnv_<Term>;
+pub type NamedEnv = BTreeMap<String, Term>;
 
 impl Term {
     /// Just for evaluation during beta-reduction.
     pub fn apply(self, arg: Term) -> Term {
         match self {
-            Term::Lam(closure) => closure.body.instantiate(arg),
+            Term::Lam(closure) => closure.body.reduce(arg),
             Term::Neut(n) => Term::app(n, arg),
             e => panic!("Cannot apply on `{:?}`.", e),
         }
@@ -34,10 +32,11 @@ impl Term {
         }
     }
 
-    pub fn reduce(self, env: DbiEnv) -> Term {
+    /// Instantiate a closure (terms with neutral part) with a concrete argument.
+    pub fn reduce(self, arg: Term) -> Term {
         match self {
-            Term::Pair(a, b) => Term::pair(a.reduce(env.clone()), b.reduce(env)),
-            Term::Neut(neutral_value) => neutral_value.reduce(env),
+            Term::Pair(a, b) => Term::pair(a.reduce(arg.clone()), b.reduce(arg)),
+            Term::Neut(neutral_value) => neutral_value.reduce(arg),
             // Cannot reduce
             e => e,
         }
@@ -60,17 +59,19 @@ pub enum Neutral {
 }
 
 impl Neutral {
-    pub fn reduce(self, env: DbiEnv) -> Term {
+    /// Instantiate a closure with a concrete argument.
+    pub fn reduce(self, arg: Term) -> Term {
         use self::Neutral::*;
         match self {
-            Var(n) => env.project(n).cloned().unwrap_or_else(|| Term::var(n)),
+            Var(0) => arg,
+            Var(n) => Term::var(n - 1),
             Axi => Term::axiom(),
             App(function, argument) => {
-                let argument = argument.reduce(env.clone());
-                function.reduce(env).apply(argument)
+                let argument = argument.reduce(arg.clone());
+                function.reduce(arg).apply(argument)
             }
-            Fst(pair) => pair.reduce(env.clone()).first().reduce(env),
-            Snd(pair) => pair.reduce(env.clone()).second().reduce(env),
+            Fst(pair) => pair.reduce(arg.clone()).first().reduce(arg),
+            Snd(pair) => pair.reduce(arg.clone()).second().reduce(arg),
         }
     }
 }
@@ -147,34 +148,14 @@ impl Default for Term {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Closure {
     pub param_type: Box<Term>,
-    pub body: ClosureBody,
+    pub body: Box<Term>,
 }
 
 impl Closure {
-    pub fn new(param_type: Term, body: ClosureBody) -> Self {
+    pub fn new(param_type: Term, body: Term) -> Self {
         Self {
             param_type: Box::new(param_type),
-            body,
-        }
-    }
-}
-
-/// The instantiatable part of a closure.
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct ClosureBody {
-    pub body: Box<Term>,
-    pub env: DbiEnv,
-}
-
-impl ClosureBody {
-    pub fn instantiate(self, arg: Term) -> Term {
-        self.body.reduce(Rc::new(DbiEnv_::cons_rc(self.env, arg)))
-    }
-
-    pub fn new(body: Term, env: DbiEnv) -> Self {
-        Self {
             body: Box::new(body),
-            env,
         }
     }
 }

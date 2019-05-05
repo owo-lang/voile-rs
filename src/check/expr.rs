@@ -27,7 +27,7 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
         }
         (Abs::Pair(info, fst, snd), Term::Dt(Explicit, Sigma, snd_ty)) => {
             let (tcs, fst_term) = check(tcs, *fst, *snd_ty.param_type)?;
-            let snd_ty = snd_ty.body.instantiate(fst_term.ast.clone());
+            let snd_ty = snd_ty.body.reduce(fst_term.ast.clone());
             let (tcs, snd_term) = check(tcs, *snd, snd_ty)?;
             Ok((tcs, Term::pair(fst_term.ast, snd_term.ast).into_info(info)))
         }

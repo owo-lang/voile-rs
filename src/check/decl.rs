@@ -1,7 +1,8 @@
 use std::rc::Rc;
 
 use crate::syntax::abs::AbsDecl;
-use crate::syntax::core::{DbiEnv, Term};
+use crate::syntax::core::Term;
+use crate::syntax::env::DbiEnv;
 
 use super::expr::{check, check_type};
 use super::monad::{GammaItem, TCE, TCM, TCS};

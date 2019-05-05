@@ -1,9 +1,12 @@
+use std::collections::btree_map::BTreeMap;
+
 use crate::check::monad::{TCE, TCM};
 use crate::syntax::common::{ParamKind, DBI};
-use crate::syntax::env::NamedEnv_;
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
+
+type NamedEnv_<T> = BTreeMap<String, T>;
 
 pub fn trans_decls(decls: Vec<Decl>) -> TCM<Vec<AbsDecl>> {
     decls
