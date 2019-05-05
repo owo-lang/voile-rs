@@ -5,6 +5,7 @@
 + Introduce core term tests (#17)
 + Fix DBI-based lambda instantiation (#16)
 + Remove captured env in closure (#19)
++ Introduce `RedEx`
 
 # 0.0.4
 

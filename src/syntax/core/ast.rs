@@ -4,6 +4,18 @@ use crate::syntax::common::{DtKind, Level, ParamKind, DBI};
 
 pub type NamedEnv = BTreeMap<String, Term>;
 
+/// Reducible expressions.
+pub trait RedEx: Sized {
+    /// Instantiate `self` as a closure (possibly neutral terms) with
+    /// a concrete argument.
+    fn reduce(self, arg: Term) -> Term;
+
+    /// Try my best to simplify this term out of nothing.
+    fn bare_reduce(self) -> Term {
+        self.reduce(Term::var(0))
+    }
+}
+
 impl Term {
     /// Just for evaluation during beta-reduction.
     pub fn apply(self, arg: Term) -> Term {
@@ -31,9 +43,10 @@ impl Term {
             e => panic!("Cannot project on `{:?}`.", e),
         }
     }
+}
 
-    /// Instantiate a closure (terms with neutral part) with a concrete argument.
-    pub fn reduce(self, arg: Term) -> Term {
+impl RedEx for Term {
+    fn reduce(self, arg: Term) -> Term {
         match self {
             Term::Pair(a, b) => Term::pair(a.reduce(arg.clone()), b.reduce(arg)),
             Term::Neut(neutral_value) => neutral_value.reduce(arg),
@@ -58,18 +71,14 @@ pub enum Neutral {
     Snd(Box<Self>),
 }
 
-impl Neutral {
-    /// Instantiate a closure with a concrete argument.
-    pub fn reduce(self, arg: Term) -> Term {
+impl RedEx for Neutral {
+    fn reduce(self, arg: Term) -> Term {
         use self::Neutral::*;
         match self {
             Var(0) => arg,
             Var(n) => Term::var(n - 1),
             Axi => Term::axiom(),
-            App(function, argument) => {
-                let argument = argument.reduce(arg.clone());
-                function.reduce(arg).apply(argument)
-            }
+            App(function, argument) => function.reduce(arg.clone()).apply(argument.reduce(arg)),
             Fst(pair) => pair.reduce(arg.clone()).first().reduce(arg),
             Snd(pair) => pair.reduce(arg.clone()).second().reduce(arg),
         }
