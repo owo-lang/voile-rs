@@ -26,7 +26,7 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
                     r#type: val.ast.clone(),
                 },
             );
-            tcs = tcs.modify_env(|env| Rc::new(env.cons_rc(Term::mock())));
+            tcs = tcs.modify_env(|env| Rc::new(env.cons_rc(Term::axiom())));
 
             let (tcs, val) = check(tcs, impl_abs, val.ast)?;
 

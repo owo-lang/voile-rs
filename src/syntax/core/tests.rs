@@ -22,7 +22,7 @@ fn vec_as_3<T>(v: &mut Vec<T>) -> (T, T, T) {
 fn lisp_to_term(lisp: Lisp) -> Term {
     use crate::syntax::lisp::Lisp::*;
     match lisp {
-        Num(dbi) => Term::gen(dbi),
+        Num(dbi) => Term::var(dbi),
         Sym(sym) => panic!("Unexpected symbol: `{}`.", sym),
         Many(block) => many_to_term(block),
     }
@@ -31,7 +31,7 @@ fn lisp_to_term(lisp: Lisp) -> Term {
 fn many_to_term(mut block: Vec<Lisp>) -> Term {
     use crate::syntax::lisp::Lisp::*;
     match block.len() {
-        0 => Term::mock(),
+        0 => Term::axiom(),
         2 => match vec_as_2(&mut block) {
             (Sym(s), arg) => match s.as_ref() {
                 "fst" => lisp_to_term(arg).first(),

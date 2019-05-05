@@ -48,23 +48,23 @@ impl Term {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Neutral {
     /// Local variable, referred by de-bruijn index.
-    /// `None` indicates that this is a postulated value.
-    Gen(Option<DBI>),
+    Var(DBI),
+    /// Postulated value, aka axioms.
+    Axi,
     /// Function application.
-    App(Box<Neutral>, Box<Term>),
+    App(Box<Self>, Box<Term>),
     /// Projecting the first element of a pair.
-    Fst(Box<Neutral>),
+    Fst(Box<Self>),
     /// Projecting the second element of a pair.
-    Snd(Box<Neutral>),
+    Snd(Box<Self>),
 }
 
 impl Neutral {
     pub fn reduce(self, env: DbiEnv) -> Term {
         use self::Neutral::*;
         match self {
-            Gen(n) => n.map_or_else(Term::mock, |n| {
-                env.project(n).cloned().unwrap_or_else(|| Term::gen(n))
-            }),
+            Var(n) => env.project(n).cloned().unwrap_or_else(|| Term::var(n)),
+            Axi => Term::axiom(),
             App(function, argument) => {
                 let argument = argument.reduce(env.clone());
                 function.reduce(env).apply(argument)
@@ -97,12 +97,12 @@ impl Term {
         Term::Pair(Box::new(first), Box::new(second))
     }
 
-    pub fn gen(index: DBI) -> Self {
-        Term::Neut(Neutral::Gen(Some(index)))
+    pub fn var(index: DBI) -> Self {
+        Term::Neut(Neutral::Var(index))
     }
 
-    pub fn mock() -> Self {
-        Term::Neut(Neutral::Gen(None))
+    pub fn axiom() -> Self {
+        Term::Neut(Neutral::Axi)
     }
 
     pub fn app(function: Neutral, arg: Term) -> Self {
@@ -134,6 +134,12 @@ impl Term {
             Term::Neut(n) => Some(n),
             _ => None,
         }
+    }
+}
+
+impl Default for Term {
+    fn default() -> Self {
+        Self::axiom()
     }
 }
 
