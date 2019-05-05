@@ -19,19 +19,13 @@ fn many_to_term(block: &[Lisp], lisp: &Lisp) -> Term {
     use crate::syntax::lisp::Lisp::*;
     match block {
         [] => Term::axiom(),
-        [Sym(s), arg] => match *s {
-            "fst" => lisp_to_term(arg).first(),
-            "snd" => lisp_to_term(arg).second(),
-            "type" => Term::Type(arg.as_dbi().unwrap() as _),
-            "bot" => Term::Bot(arg.as_dbi().unwrap() as _),
-            _ => panic!("Bad block: `{}`.", lisp),
-        },
-        [Sym(s), fst, snd] => match *s {
-            "app" => lisp_to_term(fst).apply(lisp_to_term(snd)),
-            "pair" => Term::pair(lisp_to_term(fst), lisp_to_term(snd)),
-            "lam" => Term::lam(lisp_to_term(fst), lisp_to_term(snd)),
-            _ => panic!("Bad block: `{}`.", lisp),
-        },
+        [Sym("fst"), arg] => lisp_to_term(arg).first(),
+        [Sym("snd"), arg] => lisp_to_term(arg).second(),
+        [Sym("type"), arg] => Term::Type(arg.as_dbi().unwrap() as _),
+        [Sym("bot"), arg] => Term::Bot(arg.as_dbi().unwrap() as _),
+        [Sym("app"), fst, snd] => lisp_to_term(fst).apply(lisp_to_term(snd)),
+        [Sym("pair"), fst, snd] => Term::pair(lisp_to_term(fst), lisp_to_term(snd)),
+        [Sym("lam"), fst, snd] => Term::lam(lisp_to_term(fst), lisp_to_term(snd)),
         _ => panic!("Bad block: `{}`.", lisp),
     }
 }
