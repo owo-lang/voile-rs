@@ -1,6 +1,6 @@
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{DtKind::*, ParamKind::*};
-use crate::syntax::core::Term;
+use crate::syntax::core::{RedEx, Term};
 
 use super::monad::{TermTCM, TCE, TCM, TCS};
 
