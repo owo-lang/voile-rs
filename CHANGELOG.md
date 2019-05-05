@@ -2,7 +2,9 @@
 
 # 0.0.5
 
-+ Introduce core term tests
++ Introduce core term tests (#17)
++ Fix DBI-based lambda instantiation (#16)
++ Remove captured env in closure (#19)
 
 # 0.0.4
 
