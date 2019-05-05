@@ -1,15 +1,15 @@
-use std::collections::btree_map::BTreeMap;
 use std::ops::Index;
 use std::rc::Rc;
 
-use crate::syntax::common::DBI;
+use super::common::DBI;
+use super::core::Term;
 
-pub type NamedEnv_<T> = BTreeMap<String, T>;
+pub type DbiEnv<T = Term> = Rc<DbiEnv_<T>>;
 
 /// Local context, can be captured inside of a lambda.
 /// Represented as a list, projected by de-bruijn indices.
 #[derive(Debug, Clone)]
-pub enum DbiEnv_<T> {
+pub enum DbiEnv_<T = Term> {
     Nil,
     Cons(Rc<Self>, Box<T>),
 }

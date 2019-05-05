@@ -2,6 +2,8 @@
 
 # 0.0.5
 
++ Introduce core term tests
+
 # 0.0.4
 
 + Introduce Type-Checking Monad

@@ -1,6 +1,7 @@
 use crate::check::monad::TCM;
 use crate::syntax::common::{SyntaxInfo, DBI};
-use crate::syntax::core::{DbiEnv, Term};
+use crate::syntax::core::Term;
+use crate::syntax::env::DbiEnv;
 
 /// Gamma item.
 #[derive(Debug, PartialEq, Eq, Clone)]
