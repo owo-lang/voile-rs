@@ -1,7 +1,7 @@
 /// General definitions, like `Level`, `DBI`, etc.
 pub mod common;
 
-/// Environment, context, de Bruijn indices
+/// Environment, context, functional immutable list for storing declarations.
 pub mod env;
 
 /// Helper functions for pest.

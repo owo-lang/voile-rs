@@ -10,6 +10,8 @@ impl Term {
     }
 }
 
+/// A term with syntax info.
+/// This is what should be stored inside of the context.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TermInfo {
     pub ast: Term,
