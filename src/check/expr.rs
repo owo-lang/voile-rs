@@ -17,12 +17,11 @@ use super::monad::{TermTCM, TCE, TCM, TCS};
 /// Abstract Term -> Core Term.
 pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
     match (expr, expected_type) {
-        // TODO: error message with syntax info
         (Abs::Type(info, lower), Term::Type(upper)) => {
             if upper > lower {
                 Ok((tcs, Term::Type(lower).into_info(info)))
             } else {
-                Err(TCE::LevelMismatch(info.text, lower + 1, upper))
+                Err(TCE::LevelMismatch(info, lower + 1, upper))
             }
         }
         (Abs::Pair(info, fst, snd), Term::Dt(Explicit, Sigma, snd_ty)) => {
@@ -53,6 +52,20 @@ pub fn check_infer(tcs: TCS, value: Abs) -> TermTCM {
         Var(info, dbi) => {
             let ty = tcs.gamma[dbi].r#type.clone().into_info(info);
             Ok((tcs, ty))
+        }
+        Pair(info, fst, snd) => {
+            let (tcs0, fst_ty) = check_infer(tcs, *fst)?;
+            let (tcs1, snd_ty) = check_infer(tcs0, *snd)?;
+            Ok((tcs1, Term::pair(fst_ty.ast, snd_ty.ast).into_info(info)))
+        }
+        Fst(info, pair) => {
+            let (new_tcs, pair_ty) = check_infer(tcs, *pair)?;
+            match pair_ty.ast {
+                Term::Dt(Explicit, Sigma, closure) => {
+                    Ok((new_tcs, closure.param_type.into_info(info)))
+                }
+                ast => Err(TCE::NotSigma(pair_ty.info, ast)),
+            }
         }
         // ConsType(info) => Ok((
         //     tcs,

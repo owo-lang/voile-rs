@@ -1,4 +1,5 @@
 use crate::syntax::common::{Level, SyntaxInfo, DBI};
+use crate::syntax::core::Term;
 use crate::syntax::surf::Ident;
 use std::fmt::{Display, Error as FmtError, Formatter};
 
@@ -8,11 +9,12 @@ pub enum TCE {
     Textual(String),
     CouldNotInfer(SyntaxInfo),
     TypeNotInGamma(SyntaxInfo),
+    NotSigma(SyntaxInfo, Term),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
     /// Expected the first level to be smaller than second.
     /// The `String` represents the expression.
-    LevelMismatch(String, Level, Level),
+    LevelMismatch(SyntaxInfo, Level, Level),
     /// Cannot find the definition.
     LookUpFailed(Ident),
 }
@@ -23,6 +25,7 @@ impl Display for TCE {
             TCE::Textual(text) => f.write_str(text),
             TCE::CouldNotInfer(term) => write!(f, "Could not infer type of: {}.", term),
             TCE::TypeNotInGamma(id) => write!(f, "Type info not in Gamma for: {}.", id),
+            TCE::NotSigma(id, term) => write!(f, "Expected sigma, got: `{:?}` at {}.", term, id),
             TCE::DbiOverflow(expected, actual) => write!(
                 f,
                 "DBI overflow, maximum: `{}`, got: `{}`.",
