@@ -30,9 +30,9 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             Ok((tcs, Term::pair(fst_term.ast, snd_term.ast).into_info(info)))
         }
         (Abs::Var(info, dbi), anything) => {
-            let (tcs, inferred) = infer(tcs, Abs::Var(info.clone(), dbi))?;
+            let (tcs, inferred) = infer(tcs, Abs::Var(info, dbi))?;
             let tcs = check_subtype(tcs, &inferred.ast, &anything)?;
-            Ok((tcs, Term::var(dbi).into_info(info)))
+            Ok((tcs, Term::var(dbi).into_info(inferred.info)))
         }
         (Abs::Bot(info), Term::Type(level)) => Ok((tcs, Term::Bot(level - 1).into_info(info))),
         _ => unimplemented!(),

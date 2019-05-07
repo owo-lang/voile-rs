@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate voile;
 
 use voile::check::check_main;
