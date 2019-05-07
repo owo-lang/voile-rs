@@ -50,8 +50,8 @@ pub fn check_type(_tcs: TCS, _expr: Abs) -> TermTCM {
 /// \quad
 /// \cfrac{\G{a}{\Sigma A.B}}{\G{a\textsf{\.1}}{A}}
 /// $$
-/// Infer type of value.
-pub fn check_infer(tcs: TCS, value: Abs) -> TermTCM {
+/// Infer type of a value.
+pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
     use crate::syntax::abs::Abs::*;
     match value {
         Type(info, level) => Ok((tcs, Term::Type(level + 1).into_info(info))),
@@ -64,12 +64,12 @@ pub fn check_infer(tcs: TCS, value: Abs) -> TermTCM {
             Ok((tcs, ty))
         }
         Pair(info, fst, snd) => {
-            let (tcs0, fst_ty) = check_infer(tcs, *fst)?;
-            let (tcs1, snd_ty) = check_infer(tcs0, *snd)?;
+            let (tcs0, fst_ty) = infer(tcs, *fst)?;
+            let (tcs1, snd_ty) = infer(tcs0, *snd)?;
             Ok((tcs1, Term::pair(fst_ty.ast, snd_ty.ast).into_info(info)))
         }
         Fst(info, pair) => {
-            let (new_tcs, pair_ty) = check_infer(tcs, *pair)?;
+            let (new_tcs, pair_ty) = infer(tcs, *pair)?;
             match pair_ty.ast {
                 Term::Dt(Explicit, Sigma, closure) => {
                     Ok((new_tcs, closure.param_type.into_info(info)))
@@ -77,10 +77,19 @@ pub fn check_infer(tcs: TCS, value: Abs) -> TermTCM {
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
-        // ConsType(info) => Ok((
-        //     tcs,
-        //     Term::Lam(Closure::new(Term::gen(0), ClosureBody::new(sum))),
-        // )),
+        // TODO: special treatment for `ConsType` and `Cons`.
+        App(f, a) => match *f {
+            f => {
+                let (tcs0, f_ty) = infer(tcs, f)?;
+                match f_ty.ast {
+                    Term::Dt(Explicit, Pi, closure) => {
+                        let (tcs1, new_a) = check(tcs0, *a, *closure.param_type)?;
+                        Ok((tcs1, closure.body.reduce(new_a.ast).into_info(f_ty.info)))
+                    }
+                    other => Err(TCE::NotPi(f_ty.info, other)),
+                }
+            }
+        },
         _ => unimplemented!(),
     }
 }
