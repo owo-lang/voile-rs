@@ -19,6 +19,7 @@ pub enum Abs {
     App(SyntaxInfo, Box<Self>, Box<Self>),
     /// Dependent Type type, (a -> b -> c) as Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))
     Dt(SyntaxInfo, DtKind, Box<Self>, Box<Self>),
+    Lambda(String, Box<Self>),
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
     Snd(SyntaxInfo, Box<Self>),
@@ -80,4 +81,6 @@ pub enum AbsDecl {
     Impl(Abs),
     /// `Sign` and `Impl`
     Both(Abs, Abs),
+    /// No `Sign` or `Impl`, e.g. lambda parameter
+    None,
 }

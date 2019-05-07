@@ -37,6 +37,8 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         | (DeclKind::Sign, Some(AbsDecl::Both(_, impl_abs))) => AbsDecl::Both(abs, impl_abs),
         (DeclKind::Impl, Some(AbsDecl::Sign(sign_abs)))
         | (DeclKind::Impl, Some(AbsDecl::Both(sign_abs, _))) => AbsDecl::Both(sign_abs, abs),
+        // `AbsDecl::None` should not have other decls
+        (_, Some(AbsDecl::None)) => unreachable!(),
     };
     result.insert(dbi, modified);
     Ok((result, name_map))
@@ -141,8 +143,8 @@ fn trans_pi(
         // These two are actually our assumption. Hope they're correct.
         assert!(!pi_env.len() < param_dbi);
         assert!(!pi_map.contains_key(&param_name.text));
-        pi_map.insert(param_name.text, param_dbi);
-        pi_env.insert(param_dbi, AbsDecl::Sign(param_ty.clone()));
+        pi_map.insert(param_name.text.clone(), param_dbi);
+        pi_env.insert(param_dbi, AbsDecl::Sign(param_name, param_ty.clone()));
     }
     pi_vec.push(param_ty);
     Ok(pi_vec)
