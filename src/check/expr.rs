@@ -29,6 +29,11 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             let (tcs, snd_term) = check(tcs, *snd, snd_ty)?;
             Ok((tcs, Term::pair(fst_term.ast, snd_term.ast).into_info(info)))
         }
+        (Abs::Var(info, dbi), anything) => {
+            let (tcs, inferred) = infer(tcs, Abs::Var(info.clone(), dbi))?;
+            let tcs = check_subtype(tcs, &inferred.ast, &anything)?;
+            Ok((tcs, Term::var(dbi).into_info(info)))
+        }
         (Abs::Bot(info), Term::Type(level)) => Ok((tcs, Term::Bot(level - 1).into_info(info))),
         _ => unimplemented!(),
     }
@@ -64,9 +69,9 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
             Ok((tcs, ty))
         }
         Pair(info, fst, snd) => {
-            let (tcs0, fst_ty) = infer(tcs, *fst)?;
-            let (tcs1, snd_ty) = infer(tcs0, *snd)?;
-            Ok((tcs1, Term::pair(fst_ty.ast, snd_ty.ast).into_info(info)))
+            let (tcs, fst_ty) = infer(tcs, *fst)?;
+            let (tcs, snd_ty) = infer(tcs, *snd)?;
+            Ok((tcs, Term::pair(fst_ty.ast, snd_ty.ast).into_info(info)))
         }
         Fst(info, pair) => {
             let (new_tcs, pair_ty) = infer(tcs, *pair)?;
@@ -80,11 +85,11 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
         // TODO: special treatment for `ConsType` and `Cons`.
         App(f, a) => match *f {
             f => {
-                let (tcs0, f_ty) = infer(tcs, f)?;
+                let (tcs, f_ty) = infer(tcs, f)?;
                 match f_ty.ast {
                     Term::Dt(Explicit, Pi, closure) => {
-                        let (tcs1, new_a) = check(tcs0, *a, *closure.param_type)?;
-                        Ok((tcs1, closure.body.reduce(new_a.ast).into_info(f_ty.info)))
+                        let (tcs, new_a) = check(tcs, *a, *closure.param_type)?;
+                        Ok((tcs, closure.body.reduce(new_a.ast).into_info(f_ty.info)))
                     }
                     other => Err(TCE::NotPi(f_ty.info, other)),
                 }
