@@ -6,7 +6,7 @@ use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
 
-type NamedEnv_<T> = BTreeMap<String, T>;
+type NamedDbi = BTreeMap<String, DBI>;
 
 pub fn trans_decls(decls: Vec<Decl>) -> TCM<Vec<AbsDecl>> {
     decls
@@ -15,7 +15,7 @@ pub fn trans_decls(decls: Vec<Decl>) -> TCM<Vec<AbsDecl>> {
         .map(|res| res.0)
 }
 
-type DeclTCS = (Vec<AbsDecl>, NamedEnv_<DBI>);
+type DeclTCS = (Vec<AbsDecl>, NamedDbi);
 
 fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclTCS> {
     let name = &decl.name;
@@ -50,16 +50,16 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
     Ok((result, name_map))
 }
 
-pub fn trans_expr(expr: &Expr, env: &[AbsDecl], map: &NamedEnv_<DBI>) -> TCM<Abs> {
+pub fn trans_expr(expr: &Expr, env: &[AbsDecl], map: &NamedDbi) -> TCM<Abs> {
     trans_expr_inner(expr, env, map, &[], &Default::default())
 }
 
 fn trans_expr_inner(
     expr: &Expr,
     env: &[AbsDecl],
-    global_map: &NamedEnv_<DBI>,
+    global_map: &NamedDbi,
     local_env: &[AbsDecl],
-    local_map: &NamedEnv_<DBI>,
+    local_map: &NamedDbi,
 ) -> TCM<Abs> {
     match expr {
         Expr::Type(syntax, level) => Ok(Abs::Type(syntax.clone(), *level)),
@@ -120,9 +120,9 @@ fn trans_expr_inner(
 
 fn trans_pi(
     env: &[AbsDecl],
-    global_map: &NamedEnv_<DBI>,
+    global_map: &NamedDbi,
     pi_env: &mut Vec<AbsDecl>,
-    pi_map: &mut NamedEnv_<DBI>,
+    pi_map: &mut NamedDbi,
     mut pi_vec: Vec<Abs>,
     param: &Param,
 ) -> TCM<Vec<Abs>> {
