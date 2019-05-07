@@ -45,6 +45,8 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         | (DeclKind::Impl, Some(AbsDecl::Both(sign_info, sign_abs, _, _))) => {
             AbsDecl::Both(sign_info, sign_abs, decl_info, abs)
         }
+        // `AbsDecl::None` should not have other decls
+        (_, Some(AbsDecl::None(_))) => unreachable!(),
     };
     result.insert(dbi, modified);
     Ok((result, name_map))
@@ -114,7 +116,16 @@ fn trans_expr_inner(
         // TODO: implement these three
         Expr::Tup(_first, _tup_vec) => unimplemented!(),
         Expr::Sig(_, _) => unimplemented!(),
-        Expr::Lam(_, _) => unimplemented!(),
+        Expr::Lam(params, body) => {
+            let mut local_env = local_env.to_vec();
+            let mut local_map = local_map.clone();
+            for param in params {
+                local_env.insert(local_env.len(), AbsDecl::None(param.info.clone()));
+                // todo: fix this
+                local_map.insert(param.info.text.clone(), 0);
+            }
+            unimplemented!()
+        }
         Expr::Pi(params, result) => {
             let mut pi_env = local_env.to_vec();
             let mut pi_map = local_map.clone();
