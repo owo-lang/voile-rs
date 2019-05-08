@@ -1,5 +1,6 @@
 use super::{trans_decls, AbsDecl};
-use crate::syntax::abs::trans_expr;
+use crate::syntax::abs::{trans_expr, Abs};
+use crate::syntax::common::DtKind;
 use crate::syntax::surf::parse_str_err_printed;
 use std::collections::btree_map::BTreeMap;
 
@@ -52,7 +53,21 @@ fn trans_pi_env() {
         .unwrap()[0]
         .clone()
         .body;
-    // fixme: an assertion failed
     let pi_abs = trans_expr(&pi_expr, &[], &BTreeMap::new()).unwrap();
-    print!("{:?}", pi_abs);
+    match pi_abs {
+        Abs::Dt(_, DtKind::Pi, _, box_bc) => match *box_bc {
+            Abs::Dt(_, DtKind::Pi, box_b, box_c) => {
+                // the type of `b`, `c` should be _(0), _(0)
+                match (*box_b, *box_c) {
+                    (Abs::App(_, _, b), Abs::App(_, _, c)) => match (*b, *c) {
+                        (Abs::Local(_, 0), Abs::Local(_, 0)) => {}
+                        _ => panic!(),
+                    },
+                    _ => panic!(),
+                }
+            }
+            _ => panic!(),
+        },
+        _ => panic!(),
+    }
 }
