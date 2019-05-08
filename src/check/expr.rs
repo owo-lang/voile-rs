@@ -100,3 +100,22 @@ pub fn check_subtype(tcs: TCS, subtype: &Term, supertype: &Term) -> TCM {
         _ => unimplemented!(),
     }
 }
+
+/// So you can do some functional programming based on method call chains.
+impl TCS {
+    pub fn check(self, expr: Abs, expected_type: Term) -> TermTCM {
+        check(self, expr, expected_type)
+    }
+
+    pub fn infer(self, value: Abs) -> TermTCM {
+        infer(self, value)
+    }
+
+    pub fn check_subtype(self, subtype: &Term, supertype: &Term) -> TCM {
+        check_subtype(self, subtype, supertype)
+    }
+
+    pub fn check_type(self, expr: Abs) -> TermTCM {
+        check_type(self, expr)
+    }
+}

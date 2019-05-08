@@ -39,3 +39,13 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         _ => unreachable!(),
     }
 }
+
+impl TCS {
+    pub fn check_decls(self, decls: Vec<AbsDecl>) -> TCM {
+        check_decls(self, decls)
+    }
+
+    pub fn check_decl(self, decl: AbsDecl) -> TCM {
+        check_decl(self, decl)
+    }
+}
