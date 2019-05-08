@@ -15,18 +15,18 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
         Abs::Meta(info) => panic!("Cannot compile meta variable at {}.", info),
         Abs::Cons(info) => unimplemented!(),
         Abs::ConsType(_) => unimplemented!(),
-        Abs::App(f, a) => {
+        Abs::App(info, f, a) => {
             let (f, tcs) = unsafe_compile(tcs, *f);
             let (a, tcs) = unsafe_compile(tcs, *a);
-            (f.ast.apply(a.ast).into_info(f.info), tcs)
+            (f.ast.apply(a.ast).into_info(info), tcs)
         }
-        Abs::Dt(kind, param_ty, ret_ty) => {
+        Abs::Dt(info, kind, param_ty, ret_ty) => {
             let (param_ty, tcs) = unsafe_compile(tcs, *param_ty);
             let (ret_ty, tcs) = unsafe_compile(tcs, *ret_ty);
             // TODO: implicit arguments
             let closure = Closure::new(param_ty.ast, ret_ty.ast);
             let term = Term::dependent_type(ParamKind::Explicit, kind, closure);
-            (term.into_info(param_ty.info), tcs)
+            (term.into_info(info), tcs)
         }
         Abs::Pair(info, a, b) => {
             let (a, tcs) = unsafe_compile(tcs, *a);
@@ -41,7 +41,7 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             let (p, tcs) = unsafe_compile(tcs, *p);
             (p.ast.second().into_info(info), tcs)
         }
-        Abs::Sum(_) => unimplemented!(),
+        Abs::Sum(_, _) => unimplemented!(),
     }
 }
 
