@@ -1,9 +1,6 @@
 /// General definitions, like `Level`, `DBI`, etc.
 pub mod common;
 
-/// Environment, context, functional immutable list for storing declarations.
-pub mod env;
-
 /// Helper functions for pest.
 #[macro_use]
 pub mod pest_util;

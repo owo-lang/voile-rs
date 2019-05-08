@@ -60,8 +60,8 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
     use crate::syntax::abs::Abs::*;
     match value {
         Type(info, level) => Ok((Term::Type(level + 1).into_info(info), tcs)),
-        Local(info, dbi) => Ok((tcs.local_gamma[dbi].r#type.clone().into_info(info), tcs)),
-        Var(info, dbi) => Ok((tcs.gamma[dbi].r#type.clone().into_info(info), tcs)),
+        Local(info, dbi) => Ok((tcs.local_type(dbi).ast.clone().into_info(info), tcs)),
+        Var(info, dbi) => Ok((tcs.glob_type(dbi).ast.clone().into_info(info), tcs)),
         Pair(info, fst, snd) => {
             let (fst_ty, tcs) = infer(tcs, *fst)?;
             let (snd_ty, tcs) = infer(tcs, *snd)?;
