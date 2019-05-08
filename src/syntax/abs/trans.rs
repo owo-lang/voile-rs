@@ -31,22 +31,14 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         None
     };
     let modified = match (decl.kind, original) {
-        (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbsDecl::Sign(_, _))) => {
-            AbsDecl::Sign(decl_info, abs)
-        }
-        (DeclKind::Impl, None) | (DeclKind::Impl, Some(AbsDecl::Impl(_, _))) => {
-            AbsDecl::Impl(decl_info, abs)
-        }
-        (DeclKind::Sign, Some(AbsDecl::Impl(impl_info, impl_abs)))
-        | (DeclKind::Sign, Some(AbsDecl::Both(_, _, impl_info, impl_abs))) => {
-            AbsDecl::Both(decl_info, abs, impl_info, impl_abs)
-        }
-        (DeclKind::Impl, Some(AbsDecl::Sign(sign_info, sign_abs)))
-        | (DeclKind::Impl, Some(AbsDecl::Both(sign_info, sign_abs, _, _))) => {
-            AbsDecl::Both(sign_info, sign_abs, decl_info, abs)
-        }
+        (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbsDecl::Sign(_))) => AbsDecl::Sign(abs),
+        (DeclKind::Impl, None) | (DeclKind::Impl, Some(AbsDecl::Impl(_))) => AbsDecl::Impl(abs),
+        (DeclKind::Sign, Some(AbsDecl::Impl(impl_abs)))
+        | (DeclKind::Sign, Some(AbsDecl::Both(_, impl_abs))) => AbsDecl::Both(abs, impl_abs),
+        (DeclKind::Impl, Some(AbsDecl::Sign(sign_abs)))
+        | (DeclKind::Impl, Some(AbsDecl::Both(sign_abs, _))) => AbsDecl::Both(sign_abs, abs),
         // `AbsDecl::None` should not have other decls
-        (_, Some(AbsDecl::None(_))) => unimplemented!(),
+        (_, Some(AbsDecl::None)) => unimplemented!(),
     };
     result.insert(dbi, modified);
     Ok((result, name_map))
@@ -120,7 +112,7 @@ fn trans_expr_inner(
             let mut local_env = local_env.to_vec();
             let mut local_map = local_map.clone();
             for param in params {
-                local_env.insert(local_env.len(), AbsDecl::None(param.info.clone()));
+                local_env.insert(local_env.len(), AbsDecl::None);
                 // todo: fix this
                 local_map.insert(param.info.text.clone(), 0);
             }
@@ -161,7 +153,7 @@ fn trans_pi(
         assert!(!(pi_env.len() < param_dbi));
         assert!(!pi_map.contains_key(&param_name.text));
         pi_map.insert(param_name.text.clone(), param_dbi);
-        pi_env.insert(param_dbi, AbsDecl::Sign(param_name, param_ty.clone()));
+        pi_env.insert(param_dbi, AbsDecl::Sign(param_ty.clone()));
     }
     pi_vec.push(param_ty);
     Ok(pi_vec)

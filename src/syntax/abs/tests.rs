@@ -16,7 +16,7 @@ fn trans_bot() {
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
-        AbsDecl::Both(_ty_info, _ty_abs, _info, _abs) => {}
+        AbsDecl::Both(_ty_abs, _abs) => {}
         _ => panic!(),
     };
 }
@@ -35,13 +35,13 @@ fn many_decls() {
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
-        AbsDecl::Both(_ty_info, _ty_abs, _info, _abs) => {}
+        AbsDecl::Both(_ty_abs, _abs) => {}
         _ => panic!(),
     };
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
-        AbsDecl::Both(_ty_info, _ty_abs, _info, _abs) => {}
+        AbsDecl::Both(_ty_abs, _abs) => {}
         _ => panic!(),
     };
     assert!(ctx.is_empty());
