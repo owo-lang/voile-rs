@@ -11,4 +11,4 @@ use crate::syntax::core::TermInfo;
 pub type TCM<T = TCS> = Result<T, TCE>;
 
 /// Term-Producing Type-Checking Monad.
-pub type TermTCM = TCM<(TCS, TermInfo)>;
+pub type TermTCM = TCM<(TermInfo, TCS)>;
