@@ -143,9 +143,19 @@ fn trans_pi(
         // These two are actually our assumption. Hope they're correct.
         assert_eq!(pi_env.len(), pi_map.len());
         // todo: implement shadowing?
-        assert!(!pi_map.contains_key(&param_name.text));
+        let shadowing = pi_map.get(&param_name.text).map(|i| i.clone());
         for (_name, dbi) in pi_map.iter_mut() {
+            let dbi_value = dbi.clone();
             *dbi += 1;
+            match shadowing {
+                Some(old_dbi) if old_dbi == dbi_value => {
+                    // just remove the DBI map, for there still need to be a place holder in `Vec`
+                    pi_env.remove(dbi_value);
+                    // this is not necessary for pi_map will be updated below
+                    // *dbi = 0;
+                }
+                _ => {}
+            }
         }
         pi_map.insert(param_name.text.clone(), 0);
         pi_env.insert(0, AbsDecl::Sign(param_ty.clone()));
