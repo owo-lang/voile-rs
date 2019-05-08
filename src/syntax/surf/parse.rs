@@ -1,7 +1,7 @@
 use pest::Parser;
 use pest_derive::Parser;
 
-use crate::syntax::common::{Level, ParamKind, SyntaxInfo};
+use crate::syntax::common::{Level, SyntaxInfo};
 use crate::syntax::pest_util::end_of_rule;
 
 use super::ast::Param;
@@ -116,35 +116,26 @@ fn primary_expr(rules: Tok) -> Expr {
     expr
 }
 
-fn one_param(rules: Tok, kind: ParamKind) -> Param {
+fn one_param(rules: Tok) -> Param {
     let mut inner: Tik = rules.into_inner();
     let (names, expr) = next_rule!(inner, multi_param);
     end_of_rule(&mut inner);
-    Param {
-        kind,
-        names,
-        ty: expr,
-    }
+    Param { names, ty: expr }
 }
 
 fn param(rules: Tok) -> Param {
     let mut inner: Tik = rules.into_inner();
     let the_rule: Tok = inner.next().unwrap();
     let param = match the_rule.as_rule() {
-        Rule::explicit => one_param(the_rule, ParamKind::Explicit),
-        Rule::implicit => one_param(the_rule, ParamKind::Implicit),
-        rule_type => {
-            let ty = match rule_type {
+        Rule::explicit => one_param(the_rule),
+        rule_type => Param {
+            names: Vec::with_capacity(0),
+            ty: match rule_type {
                 Rule::dollar_expr => dollar_expr(the_rule),
                 Rule::pi_expr => pi_expr(the_rule),
                 e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
-            };
-            Param {
-                names: Vec::with_capacity(0),
-                kind: ParamKind::Explicit,
-                ty,
-            }
-        }
+            },
+        },
     };
     end_of_rule(&mut inner);
     param
