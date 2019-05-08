@@ -46,7 +46,7 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
             AbsDecl::Both(sign_info, sign_abs, decl_info, abs)
         }
         // `AbsDecl::None` should not have other decls
-        (_, Some(AbsDecl::None(_))) => unreachable!(),
+        (_, Some(AbsDecl::None(_))) => unimplemented!(),
     };
     result.insert(dbi, modified);
     Ok((result, name_map))
