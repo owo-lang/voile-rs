@@ -1,7 +1,7 @@
 use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::common::DBI;
+use crate::syntax::common::{ToSyntaxInfo, DBI};
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
@@ -59,9 +59,9 @@ fn trans_expr_inner(
         Expr::Var(ident) => {
             let name = &ident.info.text;
             if local_map.contains_key(name) {
-                Ok(Abs::Local(ident.info.clone(), local_map[name]))
+                Ok(Abs::Local(ident.to_info(), local_map[name]))
             } else if global_map.contains_key(name) {
-                Ok(Abs::Var(ident.info.clone(), global_map[name]))
+                Ok(Abs::Var(ident.to_info(), global_map[name]))
             } else {
                 Err(TCE::LookUpFailed(ident.clone()))
             }
@@ -70,10 +70,7 @@ fn trans_expr_inner(
             trans_expr_inner(applied, env, global_map, local_env, local_map)?,
             |result, each_expr| -> TCM<_> {
                 let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                let info = result
-                    .syntax_info()
-                    .clone()
-                    .merge(abs.syntax_info().clone(), " ");
+                let info = result.to_info().merge(abs.to_info(), " ");
                 Ok(Abs::app(info, result, abs))
             },
         ),
@@ -82,26 +79,23 @@ fn trans_expr_inner(
             trans_expr_inner(startup, env, global_map, local_env, local_map)?,
             |result, each_expr| -> TCM<_> {
                 let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                let info = result
-                    .syntax_info()
-                    .clone()
-                    .merge(abs.syntax_info().clone(), " ");
+                let info = result.to_info().merge(abs.to_info(), " ");
                 Ok(Abs::app(info, result, abs))
             },
         ),
-        Expr::Meta(ident) => Ok(Abs::Meta(ident.info.clone())),
-        Expr::Cons(ident) => Ok(Abs::Cons(ident.info.clone())),
-        Expr::ConsType(ident) => Ok(Abs::ConsType(ident.info.clone())),
-        Expr::Bot(ident) => Ok(Abs::Bot(ident.info.clone())),
+        Expr::Meta(ident) => Ok(Abs::Meta(ident.to_info())),
+        Expr::Cons(ident) => Ok(Abs::Cons(ident.to_info())),
+        Expr::ConsType(ident) => Ok(Abs::ConsType(ident.to_info())),
+        Expr::Bot(ident) => Ok(Abs::Bot(ident.to_info())),
         Expr::Sum(first, variants) => {
             let abs_vec: Vec<Abs> = variants
                 .iter()
                 .map(|expr| trans_expr_inner(expr, env, global_map, local_env, local_map))
                 .collect::<TCM<_>>()?;
             let first = trans_expr_inner(first, env, global_map, local_env, local_map)?;
-            let info = abs_vec.iter().fold(first.syntax_info().clone(), |l, r| {
-                l.merge(r.syntax_info().clone(), " | ")
-            });
+            let info = abs_vec
+                .iter()
+                .fold(first.to_info(), |l, r| l.merge(r.to_info(), " | "));
             Ok(Abs::Sum(info, abs_vec))
         }
         // TODO: implement these three
@@ -127,8 +121,7 @@ fn trans_expr_inner(
             Ok(pi_vec.into_iter().rev().fold(
                 trans_expr_inner(result, env, global_map, &pi_env, &pi_map)?,
                 |pi_abs, param| {
-                    let pi_abs_info = pi_abs.syntax_info().clone();
-                    let info = param.syntax_info().clone().merge(pi_abs_info, " -> ");
+                    let info = param.to_info().merge(pi_abs.to_info(), " -> ");
                     Abs::pi(info, param, pi_abs)
                 },
             ))

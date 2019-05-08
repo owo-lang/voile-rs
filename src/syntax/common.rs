@@ -48,6 +48,17 @@ impl SyntaxInfo {
     }
 }
 
+/// Something that holds a `SyntaxInfo`.
+pub trait ToSyntaxInfo {
+    /// Borrow the syntax info.
+    fn syntax_info(&self) -> &SyntaxInfo;
+
+    /// Create a cloned syntax info.
+    fn to_info(&self) -> SyntaxInfo {
+        self.syntax_info().clone()
+    }
+}
+
 impl Add for SyntaxInfo {
     type Output = Self;
 

@@ -1,4 +1,4 @@
-use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
+use crate::syntax::common::{DtKind, Level, SyntaxInfo, ToSyntaxInfo, DBI};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Abs {
@@ -17,7 +17,7 @@ pub enum Abs {
     ConsType(SyntaxInfo),
     /// Apply or Pipeline in surface
     App(SyntaxInfo, Box<Self>, Box<Self>),
-    /// Dependent Type type, (a -> b -> c) as Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))
+    /// Dependent Type, `(a -> b -> c)` as `Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))`
     Dt(SyntaxInfo, DtKind, Box<Self>, Box<Self>),
     Lam(SyntaxInfo, Box<Self>),
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
@@ -26,8 +26,8 @@ pub enum Abs {
     Sum(SyntaxInfo, Vec<Self>),
 }
 
-impl Abs {
-    pub fn syntax_info(&self) -> &SyntaxInfo {
+impl ToSyntaxInfo for Abs {
+    fn syntax_info(&self) -> &SyntaxInfo {
         match self {
             Abs::Type(info, _) => info,
             Abs::Bot(info) => info,
@@ -45,7 +45,9 @@ impl Abs {
             Abs::Lam(info, _) => info,
         }
     }
+}
 
+impl Abs {
     pub fn dependent_type(info: SyntaxInfo, kind: DtKind, a: Self, b: Self) -> Self {
         Abs::Dt(info, kind, Box::new(a), Box::new(b))
     }
@@ -75,7 +77,8 @@ impl Abs {
     }
 }
 
-/// type signature and value in abstract syntax
+/// Type signature and body implementation,
+/// with abstract syntax.
 #[derive(Debug, Clone)]
 pub enum AbsDecl {
     Sign(Abs),
