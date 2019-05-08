@@ -100,15 +100,19 @@ fn trans_expr_inner(
         Expr::Cons(ident) => Ok(Abs::Cons(ident.info.clone())),
         Expr::ConsType(ident) => Ok(Abs::ConsType(ident.info.clone())),
         Expr::Bot(ident) => Ok(Abs::Bot(ident.info.clone())),
-        Expr::Sum(variants) => {
+        Expr::Sum(first, variants) => {
             let abs_vec: Vec<Abs> = variants
                 .iter()
                 .map(|expr| trans_expr_inner(expr, env, global_map, local_env, local_map))
                 .collect::<TCM<_>>()?;
-            Ok(Abs::Sum(abs_vec))
+            let first = trans_expr_inner(first, env, global_map, local_env, local_map)?;
+            let info = abs_vec.iter().fold(first.syntax_info().clone(), |l, r| {
+                l.merge(r.syntax_info().clone(), " | ")
+            });
+            Ok(Abs::Sum(info, abs_vec))
         }
         // TODO: implement these three
-        Expr::Tup(_tup_vec) => unimplemented!(),
+        Expr::Tup(_first, _tup_vec) => unimplemented!(),
         Expr::Sig(_, _) => unimplemented!(),
         Expr::Lam(_, _) => unimplemented!(),
         Expr::Pi(params, result) => {
