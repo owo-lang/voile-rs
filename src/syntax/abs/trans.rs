@@ -37,6 +37,8 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         | (DeclKind::Sign, Some(AbsDecl::Both(_, impl_abs))) => AbsDecl::Both(abs, impl_abs),
         (DeclKind::Impl, Some(AbsDecl::Sign(sign_abs)))
         | (DeclKind::Impl, Some(AbsDecl::Both(sign_abs, _))) => AbsDecl::Both(sign_abs, abs),
+        // `AbsDecl::None` should not have other decls
+        (_, Some(AbsDecl::None)) => unimplemented!(),
     };
     result.insert(dbi, modified);
     Ok((result, name_map))
@@ -106,7 +108,16 @@ fn trans_expr_inner(
         // TODO: implement these three
         Expr::Tup(_first, _tup_vec) => unimplemented!(),
         Expr::Sig(_, _) => unimplemented!(),
-        Expr::Lam(_, _) => unimplemented!(),
+        Expr::Lam(params, body) => {
+            let mut local_env = local_env.to_vec();
+            let mut local_map = local_map.clone();
+            for param in params {
+                local_env.insert(local_env.len(), AbsDecl::None);
+                // todo: fix this
+                local_map.insert(param.info.text.clone(), 0);
+            }
+            unimplemented!()
+        }
         Expr::Pi(params, result) => {
             let mut pi_env = local_env.to_vec();
             let mut pi_map = local_map.clone();
@@ -137,12 +148,15 @@ fn trans_pi(
     let param_ty = trans_expr_inner(&param.ty, env, global_map, &pi_env, &pi_map)?;
     for name in param.names.clone() {
         let param_name = name.info.clone();
-        let param_dbi: DBI = pi_env.len();
         // These two are actually our assumption. Hope they're correct.
-        assert!(!pi_env.len() < param_dbi);
+        assert_eq!(pi_env.len(), pi_map.len());
+        // todo: implement shadowing?
         assert!(!pi_map.contains_key(&param_name.text));
-        pi_map.insert(param_name.text, param_dbi);
-        pi_env.insert(param_dbi, AbsDecl::Sign(param_ty.clone()));
+        for (_name, dbi) in pi_map.iter_mut() {
+            *dbi += 1;
+        }
+        pi_map.insert(param_name.text.clone(), 0);
+        pi_env.insert(0, AbsDecl::Sign(param_ty.clone()));
     }
     pi_vec.push(param_ty);
     Ok(pi_vec)

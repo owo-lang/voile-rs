@@ -1,5 +1,8 @@
 use super::{trans_decls, AbsDecl};
+use crate::syntax::abs::{trans_expr, Abs};
+use crate::syntax::common::DtKind;
 use crate::syntax::surf::parse_str_err_printed;
+use std::collections::btree_map::BTreeMap;
 
 #[test]
 fn trans_bot() {
@@ -42,4 +45,29 @@ fn many_decls() {
         _ => panic!(),
     };
     assert!(ctx.is_empty());
+}
+
+#[test]
+fn trans_pi_env() {
+    let pi_expr = parse_str_err_printed("val t : ((a : Type) -> (b : Type(a)) -> Type(b));")
+        .unwrap()[0]
+        .clone()
+        .body;
+    let pi_abs = trans_expr(&pi_expr, &[], &BTreeMap::new()).unwrap();
+    match pi_abs {
+        Abs::Dt(_, DtKind::Pi, _, box_bc) => match *box_bc {
+            Abs::Dt(_, DtKind::Pi, box_b, box_c) => {
+                // the type of `b`, `c` should be _(0), _(0)
+                match (*box_b, *box_c) {
+                    (Abs::App(_, _, b), Abs::App(_, _, c)) => match (*b, *c) {
+                        (Abs::Local(_, 0), Abs::Local(_, 0)) => {}
+                        _ => panic!(),
+                    },
+                    _ => panic!(),
+                }
+            }
+            _ => panic!(),
+        },
+        _ => panic!(),
+    }
 }

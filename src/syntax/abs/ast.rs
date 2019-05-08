@@ -19,6 +19,7 @@ pub enum Abs {
     App(SyntaxInfo, Box<Self>, Box<Self>),
     /// Dependent Type type, (a -> b -> c) as Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))
     Dt(SyntaxInfo, DtKind, Box<Self>, Box<Self>),
+    Lam(SyntaxInfo, Box<Self>),
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
     Snd(SyntaxInfo, Box<Self>),
@@ -41,6 +42,7 @@ impl Abs {
             Abs::Fst(info, _) => info,
             Abs::Snd(info, _) => info,
             Abs::Sum(info, _) => info,
+            Abs::Lam(info, _) => info,
         }
     }
 
@@ -80,4 +82,6 @@ pub enum AbsDecl {
     Impl(Abs),
     /// `Sign` and `Impl`
     Both(Abs, Abs),
+    /// Postulated value, like lambda parameters.
+    None,
 }
