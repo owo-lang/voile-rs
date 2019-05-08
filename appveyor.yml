@@ -34,8 +34,8 @@ environment:
       target: x86_64-pc-windows-msvc
       #cargoflags: --features "unstable"
     # Nightly 32-bit MSVC
-    - channel: nightly
-      target: i686-pc-windows-msvc
+    # - channel: nightly
+      # target: i686-pc-windows-msvc
       #cargoflags: --features "unstable"
 
     ### GNU Toolchains ###
@@ -53,12 +53,12 @@ environment:
     # - channel: beta
       # target: i686-pc-windows-gnu
     # Nightly 64-bit GNU
-    - channel: nightly
-      target: x86_64-pc-windows-gnu
+    # - channel: nightly
+      # target: x86_64-pc-windows-gnu
       #cargoflags: --features "unstable"
     # Nightly 32-bit GNU
-    - channel: nightly
-      target: i686-pc-windows-gnu
+    # - channel: nightly
+      # target: i686-pc-windows-gnu
       #cargoflags: --features "unstable"
 
 matrix:
