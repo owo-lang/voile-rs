@@ -138,12 +138,11 @@ fn trans_pi(
     param: &Param,
 ) -> TCM<Vec<Abs>> {
     let param_ty = trans_expr_inner(&param.ty, env, global_map, &pi_env, &pi_map)?;
-    for name in param.names.clone() {
-        let param_name = name.info.clone();
+    for name in &param.names {
+        let param_name = name.info.text.clone();
         // These two are actually our assumption. Hope they're correct.
         assert_eq!(pi_env.len(), pi_map.len());
-        // todo: implement shadowing?
-        let shadowing = pi_map.get(&param_name.text).cloned();
+        let shadowing = pi_map.get(&param_name).cloned();
         for (_name, dbi) in pi_map.iter_mut() {
             let dbi_value = *dbi;
             *dbi += 1;
@@ -154,7 +153,7 @@ fn trans_pi(
                 // *dbi = 0;
             }
         }
-        pi_map.insert(param_name.text.clone(), 0);
+        pi_map.insert(param_name, 0);
         pi_env.insert(0, AbsDecl::Sign(param_ty.clone()));
     }
     pi_vec.push(param_ty);
