@@ -135,12 +135,12 @@ impl Term {
         Term::Dt(visib, kind, closure)
     }
 
-    pub fn pi(visibility: ParamKind, closure: Closure) -> Self {
-        Self::dependent_type(visibility, DtKind::Pi, closure)
+    pub fn pi(visibility: ParamKind, param_type: Term, body: Term) -> Self {
+        Self::dependent_type(visibility, DtKind::Pi, Closure::new(param_type, body))
     }
 
-    pub fn sig(visibility: ParamKind, closure: Closure) -> Self {
-        Self::dependent_type(visibility, DtKind::Sigma, closure)
+    pub fn sig(visibility: ParamKind, param_type: Term, body: Term) -> Self {
+        Self::dependent_type(visibility, DtKind::Sigma, Closure::new(param_type, body))
     }
 
     pub fn into_neutral(self) -> Option<Neutral> {

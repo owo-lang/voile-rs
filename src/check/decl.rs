@@ -18,7 +18,7 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
     match decl {
         AbsDecl::Both(sign_info, sign_abs, _, impl_abs) => {
             let new_dbi = tcs.env_size;
-            let (mut tcs, val) = check_type(tcs, sign_abs)?;
+            let (val, mut tcs) = check_type(tcs, sign_abs)?;
             tcs.gamma.insert(
                 new_dbi,
                 GammaItem {
@@ -29,7 +29,7 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             );
             tcs = tcs.modify_env(|env| Rc::new(env.cons_rc(Term::axiom())));
 
-            let (tcs, val) = check(tcs, impl_abs, val.ast)?;
+            let (val, tcs) = check(tcs, impl_abs, val.ast)?;
 
             tcs.try_modify_env(|env: DbiEnv| match env.substitute_at(new_dbi, val.ast) {
                 Ok(env) => Ok(Rc::new(env)),

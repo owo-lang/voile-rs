@@ -18,23 +18,23 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
     match (expr, expected_type) {
         (Abs::Type(info, lower), Term::Type(upper)) => {
             if upper > lower {
-                Ok((tcs, Term::Type(lower).into_info(info)))
+                Ok((Term::Type(lower).into_info(info), tcs))
             } else {
                 Err(TCE::LevelMismatch(info, lower + 1, upper))
             }
         }
         (Abs::Pair(info, fst, snd), Term::Dt(Explicit, Sigma, snd_ty)) => {
-            let (tcs, fst_term) = check(tcs, *fst, *snd_ty.param_type)?;
+            let (fst_term, tcs) = check(tcs, *fst, *snd_ty.param_type)?;
             let snd_ty = snd_ty.body.reduce(fst_term.ast.clone());
-            let (tcs, snd_term) = check(tcs, *snd, snd_ty)?;
-            Ok((tcs, Term::pair(fst_term.ast, snd_term.ast).into_info(info)))
+            let (snd_term, tcs) = check(tcs, *snd, snd_ty)?;
+            Ok((Term::pair(fst_term.ast, snd_term.ast).into_info(info), tcs))
         }
         (Abs::Var(info, dbi), anything) => {
-            let (tcs, inferred) = infer(tcs, Abs::Var(info, dbi))?;
+            let (inferred, tcs) = infer(tcs, Abs::Var(info, dbi))?;
             let tcs = check_subtype(tcs, &inferred.ast, &anything)?;
-            Ok((tcs, Term::var(dbi).into_info(inferred.info)))
+            Ok((Term::var(dbi).into_info(inferred.info), tcs))
         }
-        (Abs::Bot(info), Term::Type(level)) => Ok((tcs, Term::Bot(level - 1).into_info(info))),
+        (Abs::Bot(info), Term::Type(level)) => Ok((Term::Bot(level - 1).into_info(info), tcs)),
         _ => unimplemented!(),
     }
 }
@@ -59,37 +59,30 @@ pub fn check_type(_tcs: TCS, _expr: Abs) -> TermTCM {
 pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
     use crate::syntax::abs::Abs::*;
     match value {
-        Type(info, level) => Ok((tcs, Term::Type(level + 1).into_info(info))),
-        Local(info, dbi) => {
-            let ty = tcs.local_gamma[dbi].r#type.clone().into_info(info);
-            Ok((tcs, ty))
-        }
-        Var(info, dbi) => {
-            let ty = tcs.gamma[dbi].r#type.clone().into_info(info);
-            Ok((tcs, ty))
-        }
+        Type(info, level) => Ok((Term::Type(level + 1).into_info(info), tcs)),
+        Local(info, dbi) => Ok((tcs.local_gamma[dbi].r#type.clone().into_info(info), tcs)),
+        Var(info, dbi) => Ok((tcs.gamma[dbi].r#type.clone().into_info(info), tcs)),
         Pair(info, fst, snd) => {
-            let (tcs, fst_ty) = infer(tcs, *fst)?;
-            let (tcs, snd_ty) = infer(tcs, *snd)?;
-            Ok((tcs, Term::pair(fst_ty.ast, snd_ty.ast).into_info(info)))
+            let (fst_ty, tcs) = infer(tcs, *fst)?;
+            let (snd_ty, tcs) = infer(tcs, *snd)?;
+            let sigma = Term::sig(Explicit, fst_ty.ast, snd_ty.ast).into_info(info);
+            Ok((sigma, tcs))
         }
         Fst(info, pair) => {
-            let (new_tcs, pair_ty) = infer(tcs, *pair)?;
+            let (pair_ty, tcs) = infer(tcs, *pair)?;
             match pair_ty.ast {
-                Term::Dt(Explicit, Sigma, closure) => {
-                    Ok((new_tcs, closure.param_type.into_info(info)))
-                }
+                Term::Dt(Explicit, Sigma, closure) => Ok((closure.param_type.into_info(info), tcs)),
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
         // TODO: special treatment for `ConsType` and `Cons`.
         App(info, f, a) => match *f {
             f => {
-                let (tcs, f_ty) = infer(tcs, f)?;
+                let (f_ty, tcs) = infer(tcs, f)?;
                 match f_ty.ast {
                     Term::Dt(Explicit, Pi, closure) => {
-                        let (tcs, new_a) = check(tcs, *a, *closure.param_type)?;
-                        Ok((tcs, closure.body.reduce(new_a.ast).into_info(info)))
+                        let (new_a, tcs) = check(tcs, *a, *closure.param_type)?;
+                        Ok((closure.body.reduce(new_a.ast).into_info(info), tcs))
                     }
                     other => Err(TCE::NotPi(info, other)),
                 }
