@@ -44,3 +44,10 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
         Abs::Sum(_) => unimplemented!(),
     }
 }
+
+/// So you can do some functional programming based on method call chains.
+impl TCS {
+    pub fn unsafe_compile(self, abs: Abs) -> (TermInfo, Self) {
+        unsafe_compile(self, abs)
+    }
+}
