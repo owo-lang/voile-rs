@@ -2,7 +2,6 @@ use super::{trans_decls, AbsDecl};
 use crate::syntax::abs::trans_expr;
 use crate::syntax::surf::parse_str_err_printed;
 use std::collections::btree_map::BTreeMap;
-use std::hint::unreachable_unchecked;
 
 #[test]
 fn trans_bot() {
@@ -56,5 +55,4 @@ fn trans_pi_env() {
     // fixme: an assertion failed
     let pi_abs = trans_expr(&pi_expr, &[], &BTreeMap::new()).unwrap();
     print!("{:?}", pi_abs);
-    unreachable!()
 }
