@@ -76,8 +76,8 @@ impl Abs {
 /// type signature and value in abstract syntax
 #[derive(Debug, Clone)]
 pub enum AbsDecl {
-    Sign(SyntaxInfo, Abs),
-    Impl(SyntaxInfo, Abs),
+    Sign(Abs),
+    Impl(Abs),
     /// `Sign` and `Impl`
-    Both(SyntaxInfo, Abs, SyntaxInfo, Abs),
+    Both(Abs, Abs),
 }
