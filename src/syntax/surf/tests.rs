@@ -21,10 +21,10 @@ fn primary_expr_parsing() {
 
 #[test]
 fn pi_type_parsing() {
-    parse_str_err_printed("val mayori : monika -> (a: A) -> {b : B} -> (c d e : CDE) -> F;")
+    parse_str_err_printed("val mayori : monika -> (a: A) -> (c d e : CDE) -> F;")
         .map(|ast| println!("{:?}", ast))
         .unwrap();
-    parse_str_err_printed("val star : platinum * (a: A) * {b : B} * F;")
+    parse_str_err_printed("val star : platinum * (a: A) * F;")
         .map(|ast| println!("{:?}", ast))
         .unwrap();
 }
