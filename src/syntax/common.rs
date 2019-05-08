@@ -1,4 +1,5 @@
 use pest::Span;
+use std::ops::Add;
 
 /// Indicates that whether a parameter is implicit or explicit.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
@@ -41,6 +42,25 @@ pub struct SyntaxInfo {
     pub start: usize,
     pub start_line: usize,
     pub end: usize,
+}
+
+impl SyntaxInfo {
+    pub fn merge(self, rhs: Self, middle: &str) -> Self {
+        Self {
+            text: format!("{}{}{}", self.text, middle, rhs.text),
+            start_line: self.start_line,
+            start: self.start,
+            end: rhs.end,
+        }
+    }
+}
+
+impl Add for SyntaxInfo {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        self.merge(rhs, "")
+    }
 }
 
 impl std::fmt::Display for SyntaxInfo {
