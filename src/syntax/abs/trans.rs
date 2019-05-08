@@ -150,7 +150,7 @@ fn trans_pi(
         let param_name = name.info.clone();
         let param_dbi: DBI = pi_env.len();
         // These two are actually our assumption. Hope they're correct.
-        assert!(!pi_env.len() < param_dbi);
+        assert!(!(pi_env.len() < param_dbi));
         assert!(!pi_map.contains_key(&param_name.text));
         pi_map.insert(param_name.text.clone(), param_dbi);
         pi_env.insert(param_dbi, AbsDecl::Sign(param_name, param_ty.clone()));

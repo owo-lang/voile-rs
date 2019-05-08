@@ -42,6 +42,7 @@ impl Abs {
             Abs::Fst(info, _) => info,
             Abs::Snd(info, _) => info,
             Abs::Sum(info, _) => info,
+            Abs::Lam(info, _) => info,
         }
     }
 
