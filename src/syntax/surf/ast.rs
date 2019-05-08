@@ -1,4 +1,4 @@
-use crate::syntax::common::{Level, ParamKind, SyntaxInfo};
+use crate::syntax::common::{Level, SyntaxInfo};
 
 /// Surface syntax tree node: Identifier.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -16,8 +16,6 @@ pub struct Param {
     pub names: Vec<Ident>,
     /// Parameter type.
     pub ty: Expr,
-    /// Indicates that whether this `Param` is implicit or explicit.
-    pub kind: ParamKind,
 }
 
 /// Surface syntax tree node: Expression.

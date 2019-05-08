@@ -1,7 +1,7 @@
 use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::common::{ParamKind, DBI};
+use crate::syntax::common::DBI;
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
@@ -142,10 +142,6 @@ fn trans_pi(
     mut pi_vec: Vec<Abs>,
     param: &Param,
 ) -> TCM<Vec<Abs>> {
-    // todo: handle implicit parameter
-    // reference implementation:
-    // https://github.com/owo-lang/OwO/blob/316e83cf532c447b03a7d210bbc3c4fc1409c861/src/type_check/elaborate.rs#L35-L64
-    assert_eq!(param.kind, ParamKind::Explicit);
     let param_ty = trans_expr_inner(&param.ty, env, global_map, &pi_env, &pi_map)?;
     for name in param.names.clone() {
         let param_name = name.info.clone();

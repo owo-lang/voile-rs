@@ -1,6 +1,6 @@
 use std::collections::btree_map::BTreeMap;
 
-use crate::syntax::common::{DtKind, Level, ParamKind, DBI};
+use crate::syntax::common::{DtKind, Level, DBI};
 
 pub type NamedEnv = BTreeMap<String, Term>;
 
@@ -94,9 +94,8 @@ pub enum Term {
     Bot(Level),
     /// Closure.
     Lam(Closure),
-    /// Pi-like types (dependent types). Since it affects type-checking translation, the visibility
-    /// of the parameter need to be specified.
-    Dt(ParamKind, DtKind, Closure),
+    /// Pi-like types (dependent types).
+    Dt(DtKind, Closure),
     /// Sigma instance.
     Pair(Box<Self>, Box<Self>),
     Neut(Neutral),
@@ -131,16 +130,16 @@ impl Term {
         Term::Neut(Neutral::Snd(Box::new(pair)))
     }
 
-    pub fn dependent_type(visib: ParamKind, kind: DtKind, closure: Closure) -> Self {
-        Term::Dt(visib, kind, closure)
+    pub fn dependent_type(kind: DtKind, closure: Closure) -> Self {
+        Term::Dt(kind, closure)
     }
 
-    pub fn pi(visibility: ParamKind, param_type: Term, body: Term) -> Self {
-        Self::dependent_type(visibility, DtKind::Pi, Closure::new(param_type, body))
+    pub fn pi(param_type: Term, body: Term) -> Self {
+        Self::dependent_type(DtKind::Pi, Closure::new(param_type, body))
     }
 
-    pub fn sig(visibility: ParamKind, param_type: Term, body: Term) -> Self {
-        Self::dependent_type(visibility, DtKind::Sigma, Closure::new(param_type, body))
+    pub fn sig(param_type: Term, body: Term) -> Self {
+        Self::dependent_type(DtKind::Sigma, Closure::new(param_type, body))
     }
 
     pub fn into_neutral(self) -> Option<Neutral> {

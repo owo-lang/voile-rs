@@ -1,5 +1,5 @@
 use crate::syntax::abs::Abs;
-use crate::syntax::common::{DtKind::*, ParamKind::*};
+use crate::syntax::common::DtKind::*;
 use crate::syntax::core::{RedEx, Term};
 
 use super::monad::{TermTCM, TCE, TCM, TCS};
@@ -23,7 +23,7 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
                 Err(TCE::LevelMismatch(info, lower + 1, upper))
             }
         }
-        (Abs::Pair(info, fst, snd), Term::Dt(Explicit, Sigma, snd_ty)) => {
+        (Abs::Pair(info, fst, snd), Term::Dt(Sigma, snd_ty)) => {
             let (fst_term, tcs) = check(tcs, *fst, *snd_ty.param_type)?;
             let snd_ty = snd_ty.body.reduce(fst_term.ast.clone());
             let (snd_term, tcs) = check(tcs, *snd, snd_ty)?;
@@ -65,13 +65,13 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
         Pair(info, fst, snd) => {
             let (fst_ty, tcs) = infer(tcs, *fst)?;
             let (snd_ty, tcs) = infer(tcs, *snd)?;
-            let sigma = Term::sig(Explicit, fst_ty.ast, snd_ty.ast).into_info(info);
+            let sigma = Term::sig(fst_ty.ast, snd_ty.ast).into_info(info);
             Ok((sigma, tcs))
         }
         Fst(info, pair) => {
             let (pair_ty, tcs) = infer(tcs, *pair)?;
             match pair_ty.ast {
-                Term::Dt(Explicit, Sigma, closure) => Ok((closure.param_type.into_info(info), tcs)),
+                Term::Dt(Sigma, closure) => Ok((closure.param_type.into_info(info), tcs)),
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
@@ -80,7 +80,7 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
             f => {
                 let (f_ty, tcs) = infer(tcs, f)?;
                 match f_ty.ast {
-                    Term::Dt(Explicit, Pi, closure) => {
+                    Term::Dt(Pi, closure) => {
                         let (new_a, tcs) = check(tcs, *a, *closure.param_type)?;
                         Ok((closure.body.reduce(new_a.ast).into_info(info), tcs))
                     }

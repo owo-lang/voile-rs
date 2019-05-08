@@ -1,6 +1,5 @@
 use crate::check::monad::TCS;
 use crate::syntax::abs::Abs;
-use crate::syntax::common::ParamKind;
 use crate::syntax::core::{Closure, Term, TermInfo};
 
 /// Ensure `abs` is well-typed before invoking this,
@@ -25,7 +24,7 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             let (ret_ty, tcs) = unsafe_compile(tcs, *ret_ty);
             // TODO: implicit arguments
             let closure = Closure::new(param_ty.ast, ret_ty.ast);
-            let term = Term::dependent_type(ParamKind::Explicit, kind, closure);
+            let term = Term::dependent_type(kind, closure);
             (term.into_info(info), tcs)
         }
         Abs::Pair(info, a, b) => {

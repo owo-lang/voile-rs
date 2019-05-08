@@ -1,13 +1,6 @@
 use pest::Span;
 use std::ops::Add;
 
-/// Indicates that whether a parameter is implicit or explicit.
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
-pub enum ParamKind {
-    Explicit,
-    Implicit,
-}
-
 /// Various kinds of dependent types
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum DtKind {
