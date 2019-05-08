@@ -24,7 +24,6 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
     let dbi = *name_map
         .entry(name.info.text.clone())
         .or_insert_with(|| result.len());
-    let decl_info = name.info.clone();
     let original = if result.len() > dbi {
         Some(result.remove(dbi))
     } else {
@@ -38,7 +37,7 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         (DeclKind::Impl, Some(AbsDecl::Sign(sign_abs)))
         | (DeclKind::Impl, Some(AbsDecl::Both(sign_abs, _))) => AbsDecl::Both(sign_abs, abs),
         // `AbsDecl::None` should not have other decls
-        (_, Some(AbsDecl::None)) => unimplemented!(),
+        (_, Some(AbsDecl::None)) => AbsDecl::None,
     };
     result.insert(dbi, modified);
     Ok((result, name_map))

@@ -2,6 +2,11 @@
 
 # 0.0.6
 
++ Give up implicit parameters (#32)
++ Cleanup (#23, #39, #41)
++ Improve abstract syntax (#21, #24)
++ Add documentation guidelines
+
 # 0.0.5
 
 + Introduce core term tests (#17)

@@ -2,7 +2,7 @@
     html_logo_url = "https://raw.githubusercontent.com/owo-lang/voile-rs/master/rustdoc/icon.svg?sanitize=true"
 )]
 /*
-Documentation disciplines
+Documentation guidelines
 
 Formatting:
 + Less than 80 characters/line if possible (exceptions: for instant a link that
@@ -27,13 +27,15 @@ It can solve the expression problem without using any design patterns (like
 visitor or object-algebra in Java, or finally-tagless or DTALC in Haskell).
 
 We're pretty much inspired by the coexistence of guarded recursion, coinductive
-data types, and inductive types in [Agda][agda],
+data types, sized types and inductive types in [Agda][agda],
 which is nice to have all of them but they do not work very well
-as we can see in a discussion [here][agda-bad-bad].
+as we can see in a discussion [here][agda-bad-bad] about guarded recursion checker
+or in [a GitHub issue][agda-bad] about the incompatibility between size and guarded recursion.
 We can observe that sums, records, and (dependent) pattern matching in Agda only
 work well when being top-level bindings.
 
  [agda-bad-bad]: https://github.com/agda/cubical/pull/57#discussion_r253974409
+ [agda-bad]: https://github.com/agda/agda/issues/1209
 
 ### Features
 
