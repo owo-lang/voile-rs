@@ -46,9 +46,9 @@ pub enum Expr {
     /// Tuple constructor.<br/>
     /// Comma operator, where `a, b, c` is represented as `Tup(vec![a, b, c])`
     /// instead of `Tup(Tup(a, b), c)`.
-    Tup(Vec<Self>),
+    Tup(Box<Self>, Vec<Self>),
     /// Type-sum operator.
-    Sum(Vec<Self>),
+    Sum(Box<Self>, Vec<Self>),
     /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`
     /// instead of `Pi(a, Pi(b, c))`.
     /// `a` and `b` here can introduce telescopes.
@@ -78,14 +78,12 @@ impl Expr {
         Expr::Pipe(Box::new(first), functions)
     }
 
-    pub fn sum(first: Self, mut rest: Vec<Self>) -> Self {
-        rest.push(first);
-        Expr::Sum(rest)
+    pub fn sum(first: Self, rest: Vec<Self>) -> Self {
+        Expr::Sum(Box::new(first), rest)
     }
 
-    pub fn tup(first: Self, mut rest: Vec<Self>) -> Self {
-        rest.push(first);
-        Expr::Tup(rest)
+    pub fn tup(first: Self, rest: Vec<Self>) -> Self {
+        Expr::Tup(Box::new(first), rest)
     }
 
     pub fn sig(params: Vec<Param>, expr: Self) -> Self {

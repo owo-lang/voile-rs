@@ -22,7 +22,7 @@ pub enum Abs {
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
     Snd(SyntaxInfo, Box<Self>),
-    Sum(Vec<Self>),
+    Sum(SyntaxInfo, Vec<Self>),
 }
 
 impl Abs {
@@ -40,7 +40,7 @@ impl Abs {
             Abs::Pair(info, _, _) => info,
             Abs::Fst(info, _) => info,
             Abs::Snd(info, _) => info,
-            Abs::Sum(_) => unimplemented!(),
+            Abs::Sum(info, _) => info,
         }
     }
 
