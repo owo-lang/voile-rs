@@ -70,3 +70,35 @@ fn trans_pi_env() {
         Err(err) => panic!("Unexpected error: `{}`", err),
     }
 }
+
+#[test]
+fn trans_pi_shadowing() {
+    let code = "val t : ((a : Type) -> (b : Type(a)) -> (b: Type(b)) -> Type(a));";
+    let pi_expr = parse_str_err_printed(code).unwrap().remove(0).body;
+    let pi_abs = trans_expr(&pi_expr, &[], &Default::default()).unwrap();
+    match pi_abs {
+        Abs::Dt(_, DtKind::Pi, _, box_bc) => match *box_bc {
+            Abs::Dt(_, DtKind::Pi, box_b1, box_bc) => {
+                match *box_bc {
+                    Abs::Dt(_, DtKind::Pi, box_b2, box_c) => {
+                        // the type of `b1`, `b2`, `c` should be _(0), _(0), _(2)
+                        match (*box_b1, *box_b2, *box_c) {
+                            (Abs::App(_, _, b1), Abs::App(_, _, b2), Abs::App(_, _, c)) => {
+                                if let (Abs::Local(_, 0), Abs::Local(_, 0), Abs::Local(_, 2)) =
+                                    (*b1, *b2, *c)
+                                {
+                                } else {
+                                    panic!();
+                                }
+                            }
+                            _ => panic!(),
+                        }
+                    }
+                    _ => panic!(),
+                }
+            }
+            _ => panic!(),
+        },
+        _ => panic!(),
+    }
+}
