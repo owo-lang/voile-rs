@@ -29,7 +29,7 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             let (snd_term, tcs) = check(tcs, *snd, snd_ty)?;
             Ok((Term::pair(fst_term.ast, snd_term.ast).into_info(info), tcs))
         }
-        (Abs::Var(info, dbi), anything) => {
+        (Abs::Local(info, dbi), anything) => {
             let (inferred, tcs) = infer(tcs, Abs::Var(info, dbi))?;
             let tcs = check_subtype(tcs, &inferred.ast, &anything)?;
             Ok((Term::var(dbi).into_info(inferred.info), tcs))
