@@ -2,6 +2,7 @@ use crate::syntax::abs::AbsDecl;
 
 use super::expr::{check, check_type};
 use super::monad::{TCM, TCS};
+use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::Term;
 
 pub fn check_decls(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
@@ -25,7 +26,7 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         }
         AbsDecl::Sign(sign_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let syntax_info = sign_abs.syntax_info().clone();
+            let syntax_info = sign_abs.to_info();
             let (val, mut tcs) = tcs.check_type(sign_abs)?;
             tcs.env.push(Term::axiom().into_info(syntax_info));
             tcs.gamma.push(val);
