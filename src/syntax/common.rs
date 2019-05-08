@@ -47,7 +47,7 @@ pub struct SyntaxInfo {
 impl SyntaxInfo {
     pub fn merge(self, rhs: Self, middle: &str) -> Self {
         Self {
-            text: format!("{}{}{}", self.text, middle, rhs.text),
+            text: format!("({}){}({})", self.text, middle, rhs.text),
             start_line: self.start_line,
             start: self.start,
             end: rhs.end,

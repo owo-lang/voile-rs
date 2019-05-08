@@ -77,15 +77,23 @@ fn trans_expr_inner(
             trans_expr_inner(applied, env, global_map, local_env, local_map)?,
             |result, each_expr| -> TCM<_> {
                 let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                Ok(Abs::app(result, abs))
+                let info = result
+                    .syntax_info()
+                    .clone()
+                    .merge(abs.syntax_info().clone(), " ");
+                Ok(Abs::app(info, result, abs))
             },
         ),
         // I really hope I can reuse the code with `App` here :(
-        Expr::Pipe(startup, pipe_vec) => pipe_vec.iter().try_fold(
+        Expr::Pipe(startup, pipe_vec) => pipe_vec.iter().rev().try_fold(
             trans_expr_inner(startup, env, global_map, local_env, local_map)?,
             |result, each_expr| -> TCM<_> {
                 let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                Ok(Abs::app(result, abs))
+                let info = result
+                    .syntax_info()
+                    .clone()
+                    .merge(abs.syntax_info().clone(), " ");
+                Ok(Abs::app(info, result, abs))
             },
         ),
         Expr::Meta(ident) => Ok(Abs::Meta(ident.info.clone())),
@@ -93,7 +101,7 @@ fn trans_expr_inner(
         Expr::ConsType(ident) => Ok(Abs::ConsType(ident.info.clone())),
         Expr::Bot(ident) => Ok(Abs::Bot(ident.info.clone())),
         Expr::Sum(variants) => {
-            let abs_vec = variants
+            let abs_vec: Vec<Abs> = variants
                 .iter()
                 .map(|expr| trans_expr_inner(expr, env, global_map, local_env, local_map))
                 .collect::<TCM<_>>()?;
@@ -110,9 +118,13 @@ fn trans_expr_inner(
                 trans_pi(env, global_map, &mut pi_env, &mut pi_map, pi_vec, param)
             })?;
 
-            Ok(pi_vec.iter().rev().fold(
+            Ok(pi_vec.into_iter().rev().fold(
                 trans_expr_inner(result, env, global_map, &pi_env, &pi_map)?,
-                |pi_abs, param| Abs::pi(param.clone(), pi_abs),
+                |pi_abs, param| {
+                    let pi_abs_info = pi_abs.syntax_info().clone();
+                    let info = param.syntax_info().clone().merge(pi_abs_info, " -> ");
+                    Abs::pi(info, param, pi_abs)
+                },
             ))
         }
     }
