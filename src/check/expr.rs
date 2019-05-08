@@ -83,15 +83,15 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
             }
         }
         // TODO: special treatment for `ConsType` and `Cons`.
-        App(f, a) => match *f {
+        App(info, f, a) => match *f {
             f => {
                 let (tcs, f_ty) = infer(tcs, f)?;
                 match f_ty.ast {
                     Term::Dt(Explicit, Pi, closure) => {
                         let (tcs, new_a) = check(tcs, *a, *closure.param_type)?;
-                        Ok((tcs, closure.body.reduce(new_a.ast).into_info(f_ty.info)))
+                        Ok((tcs, closure.body.reduce(new_a.ast).into_info(info)))
                     }
-                    other => Err(TCE::NotPi(f_ty.info, other)),
+                    other => Err(TCE::NotPi(info, other)),
                 }
             }
         },
