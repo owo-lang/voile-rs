@@ -8,8 +8,7 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
     match abs {
         Abs::Type(info, level) => (Term::Type(level).into_info(info), tcs),
         Abs::Bot(info) => (Term::Bot(0).into_info(info), tcs),
-        // TODO: where can I access global env? Is it `tcs.env`?
-        Abs::Var(info, dbi) => unimplemented!(),
+        Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(info), tcs),
         Abs::Local(info, dbi) => (Term::var(dbi).into_info(info), tcs),
         Abs::Meta(info) => panic!("Cannot compile meta variable at {}.", info),
         Abs::Cons(info) => unimplemented!(),
@@ -41,7 +40,7 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             (p.ast.second().into_info(info), tcs)
         }
         Abs::Sum(_, _) => unimplemented!(),
-        Abs::Lam(_, _) => unimplemented!(),
+        Abs::Lam(_, body) => unsafe_compile(tcs, *body),
     }
 }
 
