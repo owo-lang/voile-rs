@@ -39,6 +39,7 @@ type_level = @{ ASCII_DIGIT* }
 type_keyword = ${ "Type" ~ type_level }
 semicolon = _{ ";" }
 arrow = _{ "->" }
+dot = _{ "." }
 sum_op = _{ "+" }
 sig_op = _{ "*" }
 pipe_op = _{ "|>" }
@@ -57,7 +58,7 @@ param =
 lambda =
  { lambda_keyword
  ~ ident+
- ~ arrow
+ ~ dot
  ~ expr
  }
 
