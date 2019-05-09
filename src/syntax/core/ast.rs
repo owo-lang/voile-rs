@@ -6,13 +6,15 @@ pub type NamedEnv = BTreeMap<String, Term>;
 
 /// Reducible expressions.
 pub trait RedEx: Sized {
+    /// This is primarily a private implementation-related API.
+    /// Use at your own risk.
+    fn reduce_with_dbi(self, arg: Term, dbi: DBI) -> Term;
+
     /// Instantiate `self` as a closure (possibly neutral terms) with
     /// a concrete argument.
-    fn reduce(self, arg: Term, dbi: DBI) -> Term;
-
     #[inline]
     fn instantiate(self, arg: Term) -> Term {
-        self.reduce(arg, 0)
+        self.reduce_with_dbi(arg, 0)
     }
 }
 
@@ -46,13 +48,16 @@ impl Term {
 }
 
 impl RedEx for Term {
-    fn reduce(self, arg: Term, dbi: DBI) -> Term {
+    fn reduce_with_dbi(self, arg: Term, dbi: DBI) -> Term {
         match self {
-            Term::Pair(a, b) => Term::pair(a.reduce(arg.clone(), dbi), b.reduce(arg, dbi)),
-            Term::Neut(neutral_value) => neutral_value.reduce(arg, dbi),
+            Term::Pair(a, b) => Term::pair(
+                a.reduce_with_dbi(arg.clone(), dbi),
+                b.reduce_with_dbi(arg, dbi),
+            ),
+            Term::Neut(neutral_value) => neutral_value.reduce_with_dbi(arg, dbi),
             Term::Lam(Closure { param_type, body }) => Term::lam(
-                param_type.reduce(arg.clone(), dbi),
-                body.reduce(arg, dbi + 1),
+                param_type.reduce_with_dbi(arg.clone(), dbi),
+                body.reduce_with_dbi(arg, dbi + 1),
             ),
             // Cannot reduce
             e => e,
@@ -76,17 +81,23 @@ pub enum Neutral {
 }
 
 impl RedEx for Neutral {
-    fn reduce(self, arg: Term, dbi: DBI) -> Term {
+    fn reduce_with_dbi(self, arg: Term, dbi: DBI) -> Term {
         use self::Neutral::*;
         match self {
             Var(n) if dbi == n => arg,
             Var(n) => Term::var(n),
             Axi => Term::axiom(),
             App(function, argument) => function
-                .reduce(arg.clone(), dbi)
-                .apply(argument.reduce(arg, dbi)),
-            Fst(pair) => pair.reduce(arg.clone(), dbi).first().reduce(arg, dbi),
-            Snd(pair) => pair.reduce(arg.clone(), dbi).second().reduce(arg, dbi),
+                .reduce_with_dbi(arg.clone(), dbi)
+                .apply(argument.reduce_with_dbi(arg, dbi)),
+            Fst(pair) => pair
+                .reduce_with_dbi(arg.clone(), dbi)
+                .first()
+                .reduce_with_dbi(arg, dbi),
+            Snd(pair) => pair
+                .reduce_with_dbi(arg.clone(), dbi)
+                .second()
+                .reduce_with_dbi(arg, dbi),
         }
     }
 }
