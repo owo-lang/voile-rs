@@ -40,7 +40,10 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             (p.ast.second().into_info(info), tcs)
         }
         Abs::Sum(_, _) => unimplemented!(),
-        Abs::Lam(_, body) => unsafe_compile(tcs, *body),
+        Abs::Lam(info, _, body) => {
+            let (body, tcs) = unsafe_compile(tcs, *body);
+            (body.ast.into_info(info), tcs)
+        }
     }
 }
 

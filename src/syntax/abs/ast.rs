@@ -19,7 +19,9 @@ pub enum Abs {
     App(SyntaxInfo, Box<Self>, Box<Self>),
     /// Dependent Type, `(a -> b -> c)` as `Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))`
     Dt(SyntaxInfo, DtKind, Box<Self>, Box<Self>),
-    Lam(SyntaxInfo, Box<Self>),
+    /// The first `SyntaxInfo` is the syntax info of this whole lambda,
+    /// while the second is about its parameter
+    Lam(SyntaxInfo, SyntaxInfo, Box<Self>),
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
     Snd(SyntaxInfo, Box<Self>),
@@ -42,7 +44,7 @@ impl ToSyntaxInfo for Abs {
             Abs::Fst(info, _) => info,
             Abs::Snd(info, _) => info,
             Abs::Sum(info, _) => info,
-            Abs::Lam(info, _) => info,
+            Abs::Lam(info, _, _) => info,
         }
     }
 }

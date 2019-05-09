@@ -4,7 +4,7 @@
 
 + Give up implicit parameters (#32)
 + Cleanup (#23, #39, #41)
-+ Improve abstract syntax (#21, #24)
++ Improve abstract syntax (#21, #24, #43)
 + Add documentation guidelines
 + Improve type-checking state (#15, #39, #40)
 + Fix DBI-based lambda instantiation for real (#47, #48)
