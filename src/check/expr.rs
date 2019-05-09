@@ -25,7 +25,7 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
         }
         (Abs::Pair(info, fst, snd), Term::Dt(Sigma, snd_ty)) => {
             let (fst_term, tcs) = check(tcs, *fst, *snd_ty.param_type)?;
-            let snd_ty = snd_ty.body.reduce(fst_term.ast.clone());
+            let snd_ty = snd_ty.body.instantiate(fst_term.ast.clone());
             let (snd_term, tcs) = check(tcs, *snd, snd_ty)?;
             Ok((Term::pair(fst_term.ast, snd_term.ast).into_info(info), tcs))
         }
@@ -82,7 +82,7 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
                 match f_ty.ast {
                     Term::Dt(Pi, closure) => {
                         let (new_a, tcs) = check(tcs, *a, *closure.param_type)?;
-                        Ok((closure.body.reduce(new_a.ast).into_info(info), tcs))
+                        Ok((closure.body.instantiate(new_a.ast).into_info(info), tcs))
                     }
                     other => Err(TCE::NotPi(info, other)),
                 }

@@ -9,13 +9,18 @@ pub trait RedEx: Sized {
     /// Instantiate `self` as a closure (possibly neutral terms) with
     /// a concrete argument.
     fn reduce(self, arg: Term, dbi: DBI) -> Term;
+
+    #[inline]
+    fn instantiate(self, arg: Term) -> Term {
+        self.reduce(arg, 0)
+    }
 }
 
 impl Term {
     /// Just for evaluation during beta-reduction.
     pub fn apply(self, arg: Term) -> Term {
         match self {
-            Term::Lam(closure) => closure.body.reduce(arg, 0),
+            Term::Lam(closure) => closure.body.instantiate(arg),
             Term::Neut(n) => Term::app(n, arg),
             e => panic!("Cannot apply on `{:?}`.", e),
         }
