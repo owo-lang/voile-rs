@@ -8,19 +8,14 @@ pub type NamedEnv = BTreeMap<String, Term>;
 pub trait RedEx: Sized {
     /// Instantiate `self` as a closure (possibly neutral terms) with
     /// a concrete argument.
-    fn reduce(self, arg: Term) -> Term;
-
-    /// Try my best to simplify this term out of nothing.
-    fn bare_reduce(self) -> Term {
-        self.reduce(Term::var(0))
-    }
+    fn reduce(self, arg: Term, dbi: DBI) -> Term;
 }
 
 impl Term {
     /// Just for evaluation during beta-reduction.
     pub fn apply(self, arg: Term) -> Term {
         match self {
-            Term::Lam(closure) => closure.body.reduce(arg),
+            Term::Lam(closure) => closure.body.reduce(arg, 0),
             Term::Neut(n) => Term::app(n, arg),
             e => panic!("Cannot apply on `{:?}`.", e),
         }
@@ -46,10 +41,14 @@ impl Term {
 }
 
 impl RedEx for Term {
-    fn reduce(self, arg: Term) -> Term {
+    fn reduce(self, arg: Term, dbi: DBI) -> Term {
         match self {
-            Term::Pair(a, b) => Term::pair(a.reduce(arg.clone()), b.reduce(arg)),
-            Term::Neut(neutral_value) => neutral_value.reduce(arg),
+            Term::Pair(a, b) => Term::pair(a.reduce(arg.clone(), dbi), b.reduce(arg, dbi)),
+            Term::Neut(neutral_value) => neutral_value.reduce(arg, dbi),
+            Term::Lam(Closure { param_type, body }) => Term::lam(
+                param_type.reduce(arg.clone(), dbi),
+                body.reduce(arg, dbi + 1),
+            ),
             // Cannot reduce
             e => e,
         }
@@ -72,15 +71,17 @@ pub enum Neutral {
 }
 
 impl RedEx for Neutral {
-    fn reduce(self, arg: Term) -> Term {
+    fn reduce(self, arg: Term, dbi: DBI) -> Term {
         use self::Neutral::*;
         match self {
-            Var(0) => arg,
-            Var(n) => Term::var(n - 1),
+            Var(n) if dbi == n => arg,
+            Var(n) => Term::var(n),
             Axi => Term::axiom(),
-            App(function, argument) => function.reduce(arg.clone()).apply(argument.reduce(arg)),
-            Fst(pair) => pair.reduce(arg.clone()).first().reduce(arg),
-            Snd(pair) => pair.reduce(arg.clone()).second().reduce(arg),
+            App(function, argument) => function
+                .reduce(arg.clone(), dbi)
+                .apply(argument.reduce(arg, dbi)),
+            Fst(pair) => pair.reduce(arg.clone(), dbi).first().reduce(arg, dbi),
+            Snd(pair) => pair.reduce(arg.clone(), dbi).second().reduce(arg, dbi),
         }
     }
 }
