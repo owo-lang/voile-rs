@@ -40,7 +40,7 @@ fn simple_expr_parsing() {
     parse_str_err_printed("let madoka = homura sayaka kyoko;")
         .map(|ast| println!("{:?}", ast))
         .unwrap();
-    parse_str_err_printed("let touma = \\kazusa Setsuna -> Ogiso;")
+    parse_str_err_printed("let touma = \\kazusa Setsuna. Ogiso;")
         .map(|ast| println!("{:?}", ast))
         .unwrap();
     parse_str_err_printed("let komeji = satori$koishi orin$okku;")

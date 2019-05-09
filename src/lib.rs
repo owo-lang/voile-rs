@@ -8,6 +8,7 @@ Formatting:
 + Less than 80 characters/line if possible (exceptions: for instant a link that
   is too long, where you can't cut it)
 + Use link-url separated markdown syntax
++ Colorize "TO DO"s
 
 Phrasing:
 + Only capitalize terms when used the first time
@@ -19,7 +20,7 @@ Voile is a dependently-typed programming language evolved from [minitt][minitt].
 
 # Design
 
-### Goal
+## Goal
 
 The focus of Voile is *extensible algebraic data types* on top of
 *dependent types*.
@@ -37,7 +38,9 @@ work well when being top-level bindings.
  [agda-bad-bad]: https://github.com/agda/cubical/pull/57#discussion_r253974409
  [agda-bad]: https://github.com/agda/agda/issues/1209
 
-### Features
+## Features
+
+### Extensible ADTs
 
 Voile is supporting sum-types (coproduct), record-types (product) as first-class
 language components.
@@ -52,10 +55,6 @@ In other words, the "record type" itself is a kind of expression.
 
 The study on extensible records has a long history.
 
-<p style="color: yellowgreen;">
-TODO Something needs to be written here.
-</p>
-
 However, there isn't much research and implementations on extensible sums yet.
 Extensible sums are quite complicated because it probably requires:
 
@@ -68,6 +67,17 @@ a PhD thesis [type-safe extensible programming][tse] and an
 [IntelliJ plugin][ij-dtlc]), whose pattern matching is first-class
 (in the papers it's called "first-class cases").
 
+It is quite obvious that sums and records are dual to each other -- destructing
+a sum requires listing all the cases and so does constructing a record;
+constructing a sum only need one element to be mentioned and so does projecting a
+record element as well.
+The name, product and coproduct also expresses such duality.
+Duality is a very nice property to have because the implementations are similar.
+
+<p style="color: yellowgreen;">
+TODO This chapter is not finished.
+</p>
+
  [rec-calc]: https://dl.acm.org/citation.cfm?id=218572
  [ext-rec]: https://wiki.haskell.org/Extensible_record
  [row-poly]: https://en.wikipedia.org/wiki/Row_polymorphism
@@ -77,23 +87,12 @@ a PhD thesis [type-safe extensible programming][tse] and an
  [spec]: https://people.cs.uchicago.edu/~blume/classes/spr2005/cmsc22620/docs/langspec.pdf
  [ij-dtlc]: https://github.com/owo-lang/intellij-dtlc
 
-# Implementation
+### Induction and Coinduction
 
-Voile's implementation is inspired from [Agda][agda], [mlang][mlang] and its
-prototype, [minitt][minitt].
-
-<p style="color: yellowgreen;">
-TODO Something needs to be written here.
-</p>
-
- [agda]: http://www.cse.chalmers.se/~ulfn/papers/thesis.pdf
- [mlang]: https://github.com/molikto/mlang
- [minitt]: https://lib.rs/crates/minitt
-
-## Bottlenecks
-
-Recursion on sum types is a huge problem against the design of first-class
-sum types.
+According to elementary-school descrete math, induction has something
+to do with recursion.
+However, recursion on sum types is a huge problem against the design of
+first-class sum types.
 
 In the cliché programming languages with non-first-class sums (where the
 sum types need to be declared globally before usage), type-checking against
@@ -117,8 +116,21 @@ but recursion on sum-types *have* to be supported because we have been using
 it for a long time -- we shouldn't sacrifice this fundamental language feature.
 
 <p style="color: yellowgreen;">
+TODO This chapter is not finished.
+</p>
+
+# Implementation
+
+Voile's implementation is inspired from [Agda][agda], [mlang][mlang] and its
+prototype, [minitt][minitt].
+
+<p style="color: yellowgreen;">
 TODO Something needs to be written here.
 </p>
+
+ [agda]: http://www.cse.chalmers.se/~ulfn/papers/thesis.pdf
+ [mlang]: https://github.com/molikto/mlang
+ [minitt]: https://lib.rs/crates/minitt
 
 <br/>
 <p>
