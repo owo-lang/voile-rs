@@ -30,8 +30,10 @@ visitor or object-algebra in Java, or finally-tagless or DTALC in Haskell).
 We're pretty much inspired by the coexistence of guarded recursion, coinductive
 data types, sized types and inductive types in [Agda][agda],
 which is nice to have all of them but they do not work very well
-as we can see in a discussion [here][agda-bad-bad] about guarded recursion checker
-or in [a GitHub issue][agda-bad] about the incompatibility between size and guarded recursion.
+as we can see in a discussion [here][agda-bad-bad]
+about guarded recursion checker
+or in [a GitHub issue][agda-bad] about the
+incompatibility between size and guarded recursion.
 We can observe that sums, records, and (dependent) pattern matching in Agda only
 work well when being top-level bindings.
 
@@ -40,9 +42,15 @@ work well when being top-level bindings.
 
 ## Features
 
++ First-class language components
+  + Sum
+  + Record
++ Dependent type goodies
+  + Pi/Sigma
+
 ### Extensible ADTs
 
-Voile is supporting sum-types (coproduct), record-types (product) as first-class
+Voile supports sum-types (coproduct), record-types (product) as first-class
 language components.
 
 First-class record support is known as [Record Calculus][rec-calc], or
@@ -69,10 +77,11 @@ a PhD thesis [type-safe extensible programming][tse] and an
 
 It is quite obvious that sums and records are dual to each other -- destructing
 a sum requires listing all the cases and so does constructing a record;
-constructing a sum only need one element to be mentioned and so does projecting a
-record element as well.
-The name, product and coproduct also expresses such duality.
-Duality is a very nice property to have because the implementations are similar.
+constructing a sum only need one element to be mentioned and so does projecting
+a record element as well.
+The name, *product* and *coproduct* also expresses such duality.
+Duality is a very nice property to have because it implies
+similar implementations.
 
 <p style="color: yellowgreen;">
 TODO This chapter is not finished.
