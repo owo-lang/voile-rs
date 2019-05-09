@@ -101,7 +101,7 @@ fn trans_expr_inner(
         // TODO: implement these three
         Expr::Tup(_first, _tup_vec) => unimplemented!(),
         Expr::Sig(_, _) => unimplemented!(),
-        Expr::Lam(params, body) => {
+        Expr::Lam(info, params, body) => {
             let mut local_env = local_env.to_vec();
             let mut local_map = local_map.clone();
             for param in params {

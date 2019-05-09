@@ -165,8 +165,9 @@ fn sig_expr(rules: Tok) -> Expr {
 }
 
 fn lambda(rules: Tok) -> Expr {
+    let syntax_info = SyntaxInfo::from(rules.as_span());
     let (params, ret) = lambda_internal(rules);
-    Expr::lam(params, ret)
+    Expr::lam(syntax_info, params, ret)
 }
 
 fn type_keyword(rules: Tok) -> Expr {

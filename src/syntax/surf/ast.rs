@@ -62,7 +62,7 @@ pub enum Expr {
     /// `a` and `b` here can introduce telescopes.
     Sig(Vec<Param>, Box<Self>),
     /// Anonymous function, aka lambda expression.
-    Lam(Vec<Ident>, Box<Self>),
+    Lam(SyntaxInfo, Vec<Ident>, Box<Self>),
 }
 
 impl Expr {
@@ -70,8 +70,8 @@ impl Expr {
         Expr::Pi(params, Box::new(expr))
     }
 
-    pub fn lam(params: Vec<Ident>, expr: Self) -> Self {
-        Expr::Lam(params, Box::new(expr))
+    pub fn lam(info: SyntaxInfo, params: Vec<Ident>, expr: Self) -> Self {
+        Expr::Lam(info, params, Box::new(expr))
     }
 
     pub fn app(applied: Self, arguments: Vec<Self>) -> Self {
