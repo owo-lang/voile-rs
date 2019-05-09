@@ -98,7 +98,7 @@ TODO This chapter is not finished.
 
 ### Induction and Coinduction
 
-According to elementary-school descrete math, induction has something
+According to elementary-school discrete math, induction has something
 to do with recursion.
 However, recursion on sum types is a huge problem against the design of
 first-class sum types.

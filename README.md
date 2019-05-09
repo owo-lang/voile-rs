@@ -18,6 +18,9 @@
  [av-url]: https://ci.appveyor.com/project/ice1000/voile-rs/branch/master
  [av-svg]: https://ci.appveyor.com/api/projects/status/8rehm08ncp6whxwt/branch/master?svg=true
 
+Voile is a dependently-typed programming language features in first-class
+sums and records.
+
 ## Resources
 
 + [Doc.rs][doc-rs] documentation (a tutorial is included)

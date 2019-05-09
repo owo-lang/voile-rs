@@ -6,6 +6,10 @@
 + Cleanup (#23, #39, #41)
 + Improve abstract syntax (#21, #24)
 + Add documentation guidelines
++ Improve type-checking state (#15, #39, #40)
++ Fix DBI-based lambda instantiation for real (#47, #48)
++ Implement shadowing (#45)
++ Redesign lambda syntax (#46, #49)
 
 # 0.0.5
 
