@@ -1,7 +1,7 @@
 use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::common::{ToSyntaxInfo, DBI};
+use crate::syntax::common::{DtKind, ToSyntaxInfo, DBI};
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
@@ -100,7 +100,15 @@ fn trans_expr_inner(
         }
         // TODO: implement these three
         Expr::Tup(_first, _tup_vec) => unimplemented!(),
-        Expr::Sig(_, _) => unimplemented!(),
+        Expr::Sig(initial, last) => trans_dependent_type(
+            env,
+            global_map,
+            local_env,
+            local_map,
+            initial,
+            &*last,
+            DtKind::Sigma,
+        ),
         Expr::Lam(info, params, body) => {
             let mut local_env = local_env.to_vec();
             let mut local_map = local_map.clone();
@@ -111,51 +119,69 @@ fn trans_expr_inner(
             }
             unimplemented!()
         }
-        Expr::Pi(params, result) => {
-            let mut pi_env = local_env.to_vec();
-            let mut pi_map = local_map.clone();
-            let pi_vec: Vec<Abs> = params.iter().try_fold(Vec::new(), |pi_vec, param| {
-                trans_pi(env, global_map, &mut pi_env, &mut pi_map, pi_vec, param)
-            })?;
-
-            Ok(pi_vec.into_iter().rev().fold(
-                trans_expr_inner(result, env, global_map, &pi_env, &pi_map)?,
-                |pi_abs, param| {
-                    let info = param.to_info().merge(pi_abs.to_info(), " -> ");
-                    Abs::pi(info, param, pi_abs)
-                },
-            ))
-        }
+        Expr::Pi(params, result) => trans_dependent_type(
+            env,
+            global_map,
+            local_env,
+            local_map,
+            params,
+            &*result,
+            DtKind::Pi,
+        ),
     }
 }
 
-fn trans_pi(
+fn trans_dependent_type(
     env: &[AbsDecl],
     global_map: &NamedDbi,
-    pi_env: &mut Vec<AbsDecl>,
-    pi_map: &mut NamedDbi,
-    mut pi_vec: Vec<Abs>,
+    local_env: &[AbsDecl],
+    local_map: &NamedDbi,
+    params: &[Param],
+    result: &Expr,
+    kind: DtKind,
+) -> TCM<Abs> {
+    let mut pi_env = local_env.to_vec();
+    let mut pi_map = local_map.clone();
+    let pi_vec: Vec<Abs> = params.iter().try_fold(Vec::new(), |pi_vec, param| {
+        trans_telescope(env, global_map, &mut pi_env, &mut pi_map, pi_vec, param)
+    })?;
+
+    Ok(pi_vec.into_iter().rev().fold(
+        trans_expr_inner(result, env, global_map, &pi_env, &pi_map)?,
+        |pi_abs, param| {
+            let info = param.to_info().merge(pi_abs.to_info(), " -> ");
+            Abs::dependent_type(info, kind, param, pi_abs)
+        },
+    ))
+}
+
+fn trans_telescope(
+    env: &[AbsDecl],
+    global_map: &NamedDbi,
+    dt_env: &mut Vec<AbsDecl>,
+    dt_map: &mut NamedDbi,
+    mut dt_vec: Vec<Abs>,
     param: &Param,
 ) -> TCM<Vec<Abs>> {
-    let param_ty = trans_expr_inner(&param.ty, env, global_map, &pi_env, &pi_map)?;
+    let param_ty = trans_expr_inner(&param.ty, env, global_map, &dt_env, &dt_map)?;
     for name in &param.names {
         let param_name = name.info.text.clone();
         // These two are actually our assumption. Hope they're correct.
-        assert_eq!(pi_env.len(), pi_map.len());
-        let shadowing = pi_map.get(&param_name).cloned();
-        for (_name, dbi) in pi_map.iter_mut() {
+        assert_eq!(dt_env.len(), dt_map.len());
+        let shadowing = dt_map.get(&param_name).cloned();
+        for (_name, dbi) in dt_map.iter_mut() {
             let dbi_value = *dbi;
             *dbi += 1;
             if shadowing == Some(dbi_value) {
                 // just remove the DBI map, for there still need to be a place holder in `Vec`
-                pi_env.remove(dbi_value);
-                // this is not necessary for pi_map will be updated below
+                dt_env.remove(dbi_value);
+                // this is not necessary for dt_map will be updated below
                 // *dbi = 0;
             }
         }
-        pi_map.insert(param_name, 0);
-        pi_env.insert(0, AbsDecl::Sign(param_ty.clone()));
+        dt_map.insert(param_name, 0);
+        dt_env.insert(0, AbsDecl::Sign(param_ty.clone()));
     }
-    pi_vec.push(param_ty);
-    Ok(pi_vec)
+    dt_vec.push(param_ty);
+    Ok(dt_vec)
 }
