@@ -48,7 +48,7 @@ pub enum Expr {
     /// instead of `App(App(App(f, a), b), c)App(App(App(f, a), b), c)`.
     Pipe(Box<Self>, Vec<Self>),
     /// Tuple constructor.<br/>
-    /// Comma operator, where `a, b, c` is represented as `Tup(vec![a, b, c])`
+    /// Comma operator, where `a, b, c` is represented as `Tup(a, vec![b, c])`
     /// instead of `Tup(Tup(a, b), c)`.
     Tup(Box<Self>, Vec<Self>),
     /// Type-sum operator.

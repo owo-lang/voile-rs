@@ -2,6 +2,8 @@
 
 # 0.0.7
 
++ Tuple desugar (#51)
+
 # 0.0.6
 
 + Give up implicit parameters (#32)

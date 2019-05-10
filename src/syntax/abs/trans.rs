@@ -98,15 +98,11 @@ fn trans_expr_inner(
                 .fold(first.to_info(), |l, r| l.merge(r.to_info(), " | "));
             Ok(Abs::Sum(info, abs_vec))
         }
-        Expr::Tup(first, tup_vec) => tup_vec.into_iter().fold(
-            trans_expr_inner(first, env, global_map, local_env, local_map),
+        Expr::Tup(first, tup_vec) => tup_vec.iter().try_fold(
+            trans_expr_inner(first, env, global_map, local_env, local_map)?,
             |pair, expr| {
                 let abs = trans_expr_inner(expr, env, global_map, local_env, local_map)?;
-                Ok(Abs::Pair(
-                    abs.syntax_info().clone(),
-                    Box::new(pair?),
-                    Box::new(abs),
-                ))
+                Ok(Abs::pair(abs.to_info(), pair, abs))
             },
         ),
         Expr::Sig(initial, last) => trans_dependent_type(
@@ -122,7 +118,7 @@ fn trans_expr_inner(
             let mut local_env = local_env.to_vec();
             let mut local_map = local_map.clone();
             for param in params {
-                let shadowing = local_map.get(&param.info.text.clone()).cloned();
+                let shadowing = local_map.get(&param.info.text).cloned();
                 for (name, dbi) in local_map.iter_mut() {
                     let dbi_value = *dbi;
                     *dbi += 1;
