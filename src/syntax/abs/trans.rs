@@ -98,8 +98,17 @@ fn trans_expr_inner(
                 .fold(first.to_info(), |l, r| l.merge(r.to_info(), " | "));
             Ok(Abs::Sum(info, abs_vec))
         }
-        // TODO: implement these three
-        Expr::Tup(_first, _tup_vec) => unimplemented!(),
+        Expr::Tup(first, tup_vec) => tup_vec.into_iter().fold(
+            trans_expr_inner(first, env, global_map, local_env, local_map),
+            |pair, expr| {
+                let abs = trans_expr_inner(expr, env, global_map, local_env, local_map)?;
+                Ok(Abs::Pair(
+                    abs.syntax_info().clone(),
+                    Box::new(pair?),
+                    Box::new(abs),
+                ))
+            },
+        ),
         Expr::Sig(initial, last) => trans_dependent_type(
             env,
             global_map,
