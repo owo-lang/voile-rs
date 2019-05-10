@@ -113,11 +113,15 @@ fn trans_expr_inner(
             let mut local_env = local_env.to_vec();
             let mut local_map = local_map.clone();
             for param in params {
-                local_env.insert(local_env.len(), AbsDecl::None);
-                // todo: fix this
+                // todo: add shadowing
+                assert!(!local_map.contains_key(&param.info.text));
+                local_env.insert(0, AbsDecl::None);
+                for (name, dbi) in local_map.iter_mut() {
+                    *dbi += 1;
+                }
                 local_map.insert(param.info.text.clone(), 0);
             }
-            unimplemented!()
+            trans_expr_inner(body, env, global_map, &local_env, &local_map)
         }
         Expr::Pi(params, result) => trans_dependent_type(
             env,
