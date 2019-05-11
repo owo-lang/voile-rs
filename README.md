@@ -4,9 +4,9 @@
 [![Crates.io](https://img.shields.io/crates/v/voile.svg)][crates]
 [![Crates.io](https://img.shields.io/crates/l/voile.svg)][crates]
 [![docs.rs](https://docs.rs/voile/badge.svg)][doc-rs]
-[![CircleCI][cc-svg]][cc-url]
-[![AppVeyor][av-svg]][av-url]
-[![dependency status][dep-svg]][dep-rs]
+[![cc-svg]][cc-url]
+[![av-svg]][av-url]
+[![dep-svg]][dep-rs]
 
  [crates]: https://crates.io/crates/voile/
  [cc-svg]: https://circleci.com/gh/owo-lang/voile-rs/tree/master.svg?style=svg

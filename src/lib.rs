@@ -16,7 +16,7 @@ Phrasing:
 */
 
 /*!
-Voile is a dependently-typed programming language evolved from [minitt][minitt].
+Voile is a dependently-typed programming language evolved from [minitt].
 
 # Design
 
@@ -28,7 +28,7 @@ It can solve the expression problem without using any design patterns (like
 visitor or object-algebra in Java, or finally-tagless or DTALC in Haskell).
 
 We're pretty much inspired by the coexistence of guarded recursion, coinductive
-data types, sized types and inductive types in [Agda][agda],
+data types, sized types and inductive types in [Agda],
 which is nice to have all of them but they do not work very well
 as we can see in a discussion [here][agda-bad-bad]
 about guarded recursion checker
@@ -69,7 +69,7 @@ Extensible sums are quite complicated because it probably requires:
 + First-class pattern matching
 + Subtyping on Sums
 
-While currently, I can only find one programming language, [MLPolyR][mlpolyr]
+While currently, I can only find one programming language, [MLPolyR]
 (there's a [language spec][spec], a paper [first-class cases][fc-c],
 a PhD thesis [type-safe extensible programming][tse] and an
 [IntelliJ plugin][ij-dtlc]), whose pattern matching is first-class
@@ -90,7 +90,7 @@ TODO This chapter is not finished.
  [rec-calc]: https://dl.acm.org/citation.cfm?id=218572
  [ext-rec]: https://wiki.haskell.org/Extensible_record
  [row-poly]: https://en.wikipedia.org/wiki/Row_polymorphism
- [mlpolyr]: https://github.com/owo-lang/mlpolyr
+ [MLPolyR]: https://github.com/owo-lang/mlpolyr
  [fc-c]: https://people.cs.uchicago.edu/~blume/papers/icfp06.pdf
  [tse]: https://arxiv.org/abs/0910.2654
  [spec]: https://people.cs.uchicago.edu/~blume/classes/spr2005/cmsc22620/docs/langspec.pdf
@@ -130,14 +130,14 @@ TODO This chapter is not finished.
 
 # Implementation
 
-Voile's implementation is inspired from [Agda][agda], [mlang][mlang] and its
-prototype, [minitt][minitt].
+Voile's implementation is inspired from [Agda], [mlang] and its
+prototype, [minitt].
 
 <p style="color: yellowgreen;">
 TODO Something needs to be written here.
 </p>
 
- [agda]: http://www.cse.chalmers.se/~ulfn/papers/thesis.pdf
+ [Agda]: http://www.cse.chalmers.se/~ulfn/papers/thesis.pdf
  [mlang]: https://github.com/molikto/mlang
  [minitt]: https://lib.rs/crates/minitt
 
