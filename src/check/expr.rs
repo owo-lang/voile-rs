@@ -29,6 +29,9 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             let (snd_term, tcs) = check(tcs, *snd, snd_ty)?;
             Ok((Term::pair(fst_term.ast, snd_term.ast).into_info(info), tcs))
         }
+        (Abs::Lam(_full_info, _param_info, body), Term::Dt(Pi, ret_ty)) => {
+            check(tcs, *body, *ret_ty.body)
+        }
         (Abs::Local(info, dbi), anything) => {
             let (inferred, tcs) = infer(tcs, Abs::Var(info, dbi))?;
             let tcs = check_subtype(tcs, &inferred.ast, &anything)?;
