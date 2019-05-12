@@ -3,6 +3,7 @@ use crate::syntax::common::DtKind::*;
 use crate::syntax::core::{RedEx, Term};
 
 use super::monad::{TermTCM, TCE, TCM, TCS};
+use crate::syntax::common::ToSyntaxInfo;
 
 /// $$
 /// \newcommand\U{\textsf{Type}}
@@ -14,7 +15,7 @@ use super::monad::{TermTCM, TCE, TCM, TCS};
 ///      {\Gamma \vdash (a,b):\Sigma (a:A).B(a) \rightsquigarrow (a,b)}
 /// $$
 /// Abstract Term -> Core Term under an expected type.
-pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
+pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
     match (expr, expected_type) {
         (Abs::Type(info, lower), Term::Type(upper)) => {
             if upper > lower {
@@ -23,14 +24,31 @@ pub fn check(tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
                 Err(TCE::LevelMismatch(info, lower + 1, upper))
             }
         }
-        (Abs::Pair(info, fst, snd), Term::Dt(Sigma, snd_ty)) => {
-            let (fst_term, tcs) = check(tcs, *fst, *snd_ty.param_type)?;
-            let snd_ty = snd_ty.body.instantiate(fst_term.ast.clone());
-            let (snd_term, tcs) = check(tcs, *snd, snd_ty)?;
-            Ok((Term::pair(fst_term.ast, snd_term.ast).into_info(info), tcs))
+        (Abs::Pair(info, fst, snd), Term::Dt(Sigma, closure)) => {
+            let (fst_term, mut tcs) = check(tcs, *fst, *closure.param_type.clone())?;
+            let fst_term_ast = fst_term.ast.clone();
+            let snd_ty = closure.body.instantiate(fst_term_ast.clone());
+            // This `fst_term.to_info()` is probably wrong, but I'm not sure how to fix
+            let param_type = closure.param_type.into_info(fst_term.to_info());
+            tcs.local_gamma.push(param_type);
+            tcs.local_env.push(fst_term);
+            let (snd_term, mut tcs) = check(tcs, *snd, snd_ty)?;
+            // Yes, this deserves a panic.
+            tcs.local_gamma.pop().expect("Unexpected empty local gamma");
+            tcs.local_env.pop().expect("Unexpected empty local env");
+            Ok((Term::pair(fst_term_ast, snd_term.ast).into_info(info), tcs))
         }
-        (Abs::Lam(_full_info, _param_info, body), Term::Dt(Pi, ret_ty)) => {
-            check(tcs, *body, *ret_ty.body)
+        (Abs::Lam(_full_info, param_info, body), Term::Dt(Pi, ret_ty)) => {
+            let param_type = ret_ty.param_type.into_info(param_info.clone());
+            tcs.local_gamma.push(param_type);
+            tcs.local_env.push(Term::axiom().into_info(param_info));
+            let (lam_term, mut tcs) = check(tcs, *body, *ret_ty.body)?;
+            // Yes, this deserves a panic.
+            tcs.local_gamma
+                .pop()
+                .expect("Unexpected empty local gamma.");
+            tcs.local_env.pop().expect("Unexpected empty local env");
+            Ok((lam_term, tcs))
         }
         (Abs::Local(info, dbi), anything) => {
             let (inferred, tcs) = infer(tcs, Abs::Var(info, dbi))?;
