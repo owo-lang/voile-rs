@@ -101,3 +101,27 @@ fn trans_pi_shadowing() {
         _ => panic!(),
     }
 }
+
+#[test]
+fn trans_lam() {
+    let code = r"let l = \a . \b . \a . b a;";
+    let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
+    let lam_abs = trans_expr(&lam_expr, &[], &Default::default()).unwrap();
+    match lam_abs {
+        Abs::Lam(_, _, abs_lam_ba) => match *abs_lam_ba {
+            Abs::Lam(_, _, abs_lam_a) => match *abs_lam_a {
+                Abs::Lam(_, _, app) => match *app {
+                    Abs::App(_, b, a) => match (*b, *a) {
+                        // lam body should be App(_info, Local(_info, 1), Local(_info, 0))
+                        (Abs::Local(_, 1), Abs::Local(_, 0)) => {}
+                        _ => panic!(),
+                    },
+                    _ => panic!(),
+                },
+                _ => panic!(),
+            },
+            _ => panic!(),
+        },
+        _ => panic!(),
+    }
+}
