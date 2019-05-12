@@ -53,26 +53,27 @@ fn must_be_app(abs: Abs) -> Abs {
     }
 }
 
+fn must_be_pi(abs: Abs) -> (Abs, Abs) {
+    match abs {
+        Abs::Dt(_, DtKind::Pi, param, abs) => (*param, *abs),
+        e => panic!("`{:?}` is not an `Abs::Dt(_, Pi, _, _)`.", e),
+    }
+}
+
 #[test]
 fn trans_pi_env() {
     let pi_expr = parse_str_err_printed("val t : ((a : Type) -> (b : Type(a)) -> Type(b));")
         .unwrap()
         .remove(0)
         .body;
-    match trans_expr(&pi_expr, &[], &Default::default()) {
-        Ok(Abs::Dt(_, DtKind::Pi, _, box_bc)) => match *box_bc {
-            Abs::Dt(_, DtKind::Pi, box_b, box_c) => {
-                // the type of `b`, `c` should be _(0), _(0)
-                let b = must_be_app(*box_b);
-                let c = must_be_app(*box_c);
-                assert_eq!(Abs::Local(b.to_info(), 0), b);
-                assert_eq!(Abs::Local(c.to_info(), 0), c);
-            }
-            _ => panic!(),
-        },
-        Ok(abs) => panic!("Unexpected ok: `{:?}`", abs),
-        Err(err) => panic!("Unexpected error: `{}`", err),
-    }
+    let pi_expr = trans_expr(&pi_expr, &[], &Default::default()).expect("Parse failed.");
+    let (_, bc) = must_be_pi(pi_expr);
+    let (b, c) = must_be_pi(bc);
+    // the type of `b`, `c` should be _(0), _(0)
+    let b = must_be_app(b);
+    let c = must_be_app(c);
+    assert_eq!(Abs::Local(b.to_info(), 0), b);
+    assert_eq!(Abs::Local(c.to_info(), 0), c);
 }
 
 #[test]
@@ -80,26 +81,16 @@ fn trans_pi_shadowing() {
     let code = "val t : ((a : Type) -> (b : Type(a)) -> (b: Type(b)) -> Type(a));";
     let pi_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let pi_abs = trans_expr(&pi_expr, &[], &Default::default()).unwrap();
-    match pi_abs {
-        Abs::Dt(_, DtKind::Pi, _, box_bc) => match *box_bc {
-            Abs::Dt(_, DtKind::Pi, box_b1, box_bc) => {
-                match *box_bc {
-                    Abs::Dt(_, DtKind::Pi, box_b2, box_c) => {
-                        // the type of `b1`, `b2`, `c` should be _(0), _(0), _(2)
-                        let b1 = must_be_app(*box_b1);
-                        let b2 = must_be_app(*box_b2);
-                        let c = must_be_app(*box_c);
-                        assert_eq!(Abs::Local(b1.to_info(), 0), b1);
-                        assert_eq!(Abs::Local(b2.to_info(), 0), b2);
-                        assert_eq!(Abs::Local(c.to_info(), 2), c);
-                    }
-                    _ => panic!(),
-                }
-            }
-            _ => panic!(),
-        },
-        _ => panic!(),
-    }
+    let (_, bc) = must_be_pi(pi_abs);
+    let (b1, bc) = must_be_pi(bc);
+    let (b2, c) = must_be_pi(bc);
+    // the type of `b1`, `b2`, `c` should be _(0), _(0), _(2)
+    let b1 = must_be_app(b1);
+    let b2 = must_be_app(b2);
+    let c = must_be_app(c);
+    assert_eq!(Abs::Local(b1.to_info(), 0), b1);
+    assert_eq!(Abs::Local(b2.to_info(), 0), b2);
+    assert_eq!(Abs::Local(c.to_info(), 2), c);
 }
 
 #[test]
