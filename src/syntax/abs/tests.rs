@@ -60,6 +60,13 @@ fn must_be_pi(abs: Abs) -> (Abs, Abs) {
     }
 }
 
+fn must_be_lam(abs: Abs) -> Abs {
+    match abs {
+        Abs::Lam(_, _, abs) => *abs,
+        e => panic!("`{:?}` is not an `Abs::Lam(_, _, _)`.", e),
+    }
+}
+
 #[test]
 fn trans_pi_env() {
     let pi_expr = parse_str_err_printed("val t : ((a : Type) -> (b : Type(a)) -> Type(b));")
@@ -98,21 +105,14 @@ fn trans_lam() {
     let code = r"let l = \a . \b . \a . b a;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let lam_abs = trans_expr(&lam_expr, &[], &Default::default()).unwrap();
-    match lam_abs {
-        Abs::Lam(_, _, abs_lam_ba) => match *abs_lam_ba {
-            Abs::Lam(_, _, abs_lam_a) => match *abs_lam_a {
-                Abs::Lam(_, _, app) => match *app {
-                    Abs::App(_, b, a) => match (*b, *a) {
-                        // lam body should be App(_info, Local(_info, 1), Local(_info, 0))
-                        (Abs::Local(_, 1), Abs::Local(_, 0)) => {}
-                        _ => panic!(),
-                    },
-                    _ => panic!(),
-                },
-                _ => panic!(),
-            },
-            _ => panic!(),
-        },
+    let abs_lam_ba = must_be_lam(lam_abs);
+    let abs_lam_a = must_be_lam(abs_lam_ba);
+    match must_be_lam(abs_lam_a) {
+        Abs::App(_, b, a) => {
+            // lam body should be App(_info, Local(_info, 1), Local(_info, 0))
+            assert_eq!(Abs::Local(b.to_info(), 1), *b);
+            assert_eq!(Abs::Local(a.to_info(), 0), *a);
+        }
         _ => panic!(),
     }
 }
