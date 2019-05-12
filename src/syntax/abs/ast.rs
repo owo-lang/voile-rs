@@ -66,6 +66,10 @@ impl Abs {
         Abs::Snd(info, Box::new(of))
     }
 
+    pub fn lam(whole_info: SyntaxInfo, param_info: SyntaxInfo, body: Self) -> Self {
+        Abs::Lam(whole_info, param_info, Box::new(body))
+    }
+
     pub fn pair(info: SyntaxInfo, first: Self, second: Self) -> Self {
         Abs::Pair(info, Box::new(first), Box::new(second))
     }

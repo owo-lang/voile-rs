@@ -3,6 +3,7 @@
 # 0.0.7
 
 + Tuple desugar (#51)
++ Lambda desugar (#59, #62)
 
 # 0.0.6
 

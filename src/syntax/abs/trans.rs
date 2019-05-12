@@ -129,9 +129,9 @@ fn trans_expr_inner(
                 local_map.insert(param.info.text.clone(), 0);
                 local_env.insert(0, AbsDecl::None);
             }
-            Ok(params.into_iter().rev().fold(
+            Ok(params.iter().rev().fold(
                 trans_expr_inner(body, env, global_map, &local_env, &local_map)?,
-                |lam_abs, param| Abs::Lam(info.clone(), param.info.clone(), Box::new(lam_abs)),
+                |lam_abs, param| Abs::lam(info.clone(), param.to_info(), lam_abs),
             ))
         }
         Expr::Pi(params, result) => trans_dependent_type(
