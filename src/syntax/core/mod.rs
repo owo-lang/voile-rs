@@ -2,7 +2,7 @@ mod ast;
 
 pub use self::ast::*;
 
-use super::common::SyntaxInfo;
+use super::common::{SyntaxInfo, ToSyntaxInfo};
 
 impl Term {
     pub fn into_info(self, syntax_info: SyntaxInfo) -> TermInfo {
@@ -21,6 +21,12 @@ pub struct TermInfo {
 impl TermInfo {
     pub fn new(ast: Term, info: SyntaxInfo) -> Self {
         Self { ast, info }
+    }
+}
+
+impl ToSyntaxInfo for TermInfo {
+    fn syntax_info(&self) -> &SyntaxInfo {
+        &self.info
     }
 }
 
