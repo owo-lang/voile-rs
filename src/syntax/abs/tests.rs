@@ -1,6 +1,7 @@
 use super::{trans_decls, AbsDecl};
+use crate::check::monad::TCE;
 use crate::syntax::abs::{trans_expr, Abs};
-use crate::syntax::common::{DtKind, ToSyntaxInfo};
+use crate::syntax::common::{DtKind, ToSyntaxInfo, DBI};
 use crate::syntax::surf::parse_str_err_printed;
 
 #[test]
@@ -113,6 +114,36 @@ fn trans_lam() {
             assert_eq!(Abs::Local(b.to_info(), 1), *b);
             assert_eq!(Abs::Local(a.to_info(), 0), *a);
         }
+        _ => panic!(),
+    }
+}
+
+#[test]
+fn trans_lam_lookup_failed() {
+    let code = r"let l = \a . b;";
+    let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
+    let lam_abs = trans_expr(&lam_expr, &[], &Default::default()).unwrap_err();
+    match lam_abs {
+        TCE::LookUpFailed(ident) => assert_eq!(ident.info.text, "b"),
+        _ => panic!(),
+    }
+}
+
+#[test]
+fn trans_lam_global() {
+    let code = r"let l = \a . b;";
+    let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
+    let lam_abs = trans_expr(
+        &lam_expr,
+        &[AbsDecl::None],
+        &[("b".to_string(), 0)].iter().cloned().collect(),
+    )
+    .unwrap();
+    match lam_abs {
+        Abs::Lam(_, _, global_b) => match *global_b {
+            Abs::Var(_, b_index) => assert_eq!(b_index, 0),
+            _ => panic!(),
+        },
         _ => panic!(),
     }
 }
