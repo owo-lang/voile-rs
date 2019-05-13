@@ -1,6 +1,6 @@
 use crate::syntax::abs::Abs;
 use crate::syntax::common::DtKind::*;
-use crate::syntax::core::{RedEx, Term};
+use crate::syntax::core::{Closure, RedEx, Term};
 
 use super::monad::{TermTCM, TCE, TCM, TCS};
 use crate::syntax::common::ToSyntaxInfo;
@@ -33,9 +33,7 @@ pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             tcs.local_gamma.push(param_type);
             tcs.local_env.push(fst_term);
             let (snd_term, mut tcs) = check(tcs, *snd, snd_ty)?;
-            // Yes, this deserves a panic.
-            tcs.local_gamma.pop().expect("Unexpected empty local gamma");
-            tcs.local_env.pop().expect("Unexpected empty local env");
+            tcs.pop_local();
             Ok((Term::pair(fst_term_ast, snd_term.ast).into_info(info), tcs))
         }
         (Abs::Lam(_full_info, param_info, body), Term::Dt(Pi, ret_ty)) => {
@@ -43,11 +41,7 @@ pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             tcs.local_gamma.push(param_type);
             tcs.local_env.push(Term::axiom().into_info(param_info));
             let (lam_term, mut tcs) = check(tcs, *body, *ret_ty.body)?;
-            // Yes, this deserves a panic.
-            tcs.local_gamma
-                .pop()
-                .expect("Unexpected empty local gamma.");
-            tcs.local_env.pop().expect("Unexpected empty local env");
+            tcs.pop_local();
             Ok((lam_term, tcs))
         }
         (Abs::Local(info, dbi), anything) => {
@@ -56,6 +50,15 @@ pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             Ok((Term::var(dbi).into_info(inferred.info), tcs))
         }
         (Abs::Bot(info), Term::Type(level)) => Ok((Term::Bot(level - 1).into_info(info), tcs)),
+        (Abs::Dt(info, kind, param, ret), Term::Type(l)) => {
+            let (param, mut tcs) = check_type(tcs, *param)?;
+            tcs.local_gamma.push(param.clone());
+            tcs.local_env.push(Term::axiom().into_info(param.to_info()));
+            let (ret, mut tcs) = check_type(tcs, *ret)?;
+            tcs.pop_local();
+            let dt = Term::dependent_type(kind, Closure::new(param.ast, ret.ast)).into_info(info);
+            Ok((dt, tcs))
+        }
         _ => unimplemented!(),
     }
 }
