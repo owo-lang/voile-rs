@@ -32,4 +32,12 @@ impl TCS {
     pub fn glob_val(&self, dbi: DBI) -> &TermInfo {
         &self.env[dbi]
     }
+
+    pub fn pop_local(&mut self) {
+        // Yes, this deserves a panic.
+        self.local_gamma
+            .pop()
+            .expect("Unexpected empty local gamma");
+        self.local_env.pop().expect("Unexpected empty local env");
+    }
 }
