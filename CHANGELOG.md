@@ -4,6 +4,7 @@
 
 + Tuple desugar (#51)
 + Lambda desugar (#59, #62)
++ Upgrade KaTeX to 0.10.2
 
 # 0.0.6
 
