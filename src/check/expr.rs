@@ -64,8 +64,12 @@ pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
 }
 
 /// Check if an expression is a valid type expression.
-pub fn check_type(_tcs: TCS, _expr: Abs) -> TermTCM {
-    unimplemented!()
+pub fn check_type(tcs: TCS, expr: Abs) -> TermTCM {
+    match expr {
+        Abs::Type(info, level) => Ok((Term::Type(level).into_info(info), tcs)),
+        Abs::Bot(info) => Ok((Term::Bot(0).into_info(info), tcs)),
+        _ => unimplemented!(),
+    }
 }
 
 /// $$
@@ -116,7 +120,7 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
     }
 }
 
-/// check if type1 is subtype of type2
+/// Check if `subtype` is a subtype of `supertype`.
 pub fn check_subtype(tcs: TCS, subtype: &Term, supertype: &Term) -> TCM {
     use crate::syntax::core::Term::*;
     match (subtype, supertype) {
@@ -127,18 +131,22 @@ pub fn check_subtype(tcs: TCS, subtype: &Term, supertype: &Term) -> TCM {
 
 /// So you can do some functional programming based on method call chains.
 impl TCS {
+    #[inline]
     pub fn check(self, expr: Abs, expected_type: Term) -> TermTCM {
         check(self, expr, expected_type)
     }
 
+    #[inline]
     pub fn infer(self, value: Abs) -> TermTCM {
         infer(self, value)
     }
 
+    #[inline]
     pub fn check_subtype(self, subtype: &Term, supertype: &Term) -> TCM {
         check_subtype(self, subtype, supertype)
     }
 
+    #[inline]
     pub fn check_type(self, expr: Abs) -> TermTCM {
         check_type(self, expr)
     }

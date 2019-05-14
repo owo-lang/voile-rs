@@ -49,6 +49,7 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
 
 /// So you can do some functional programming based on method call chains.
 impl TCS {
+    #[inline]
     pub fn unsafe_compile(self, abs: Abs) -> (TermInfo, Self) {
         unsafe_compile(self, abs)
     }

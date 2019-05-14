@@ -46,10 +46,12 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
 }
 
 impl TCS {
+    #[inline]
     pub fn check_decls(self, decls: Vec<AbsDecl>) -> TCM {
         check_decls(self, decls)
     }
 
+    #[inline]
     pub fn check_decl(self, decl: AbsDecl) -> TCM {
         check_decl(self, decl)
     }
