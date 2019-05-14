@@ -11,6 +11,7 @@ pub enum TCE {
     TypeNotInGamma(SyntaxInfo),
     NotSigma(SyntaxInfo, Term),
     NotPi(SyntaxInfo, Term),
+    NotType(SyntaxInfo, Option<Term>),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
     /// Expected the first level to be smaller than second.
@@ -26,10 +27,26 @@ impl Display for TCE {
             TCE::Textual(text) => f.write_str(text),
             TCE::CouldNotInfer(term) => write!(f, "Could not infer type of: {}.", term),
             TCE::TypeNotInGamma(id) => write!(f, "Type info not in Gamma for: {}.", id),
-            TCE::NotSigma(id, term) => write!(f, "Expected sigma, got: `{:?}` at {}.", term, id),
-            TCE::NotPi(id, term) => {
-                write!(f, "Expected pi (function), got: `{:?}` at {}.", term, id)
-            }
+            TCE::NotSigma(id, term) => write!(
+                f,
+                "Expected a sigma type expression, got: `{:?}` at {}.",
+                term, id
+            ),
+            TCE::NotPi(id, term) => write!(
+                f,
+                "Expected a pi type expression (function), got: `{:?}` at {}.",
+                term, id
+            ),
+            TCE::NotType(id, Some(term)) => write!(
+                f,
+                "Expected a type expression, got: `{:?}` at {}.",
+                term, id
+            ),
+            TCE::NotType(id, None) => write!(
+                f,
+                "Expected a type expression, got: something else at {}.",
+                id
+            ),
             TCE::DbiOverflow(expected, actual) => write!(
                 f,
                 "DBI overflow, maximum: `{}`, got: `{}`.",

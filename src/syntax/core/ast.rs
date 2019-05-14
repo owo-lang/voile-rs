@@ -119,6 +119,18 @@ pub enum Term {
 }
 
 impl Term {
+    pub fn is_type(&self) -> bool {
+        match self {
+            Term::Type(_) => true,
+            Term::Bot(_) => true,
+            Term::Lam(_) => false,
+            Term::Dt(_, _) => true,
+            Term::Pair(_, _) => false,
+            // TODO: not sure
+            Term::Neut(_) => false,
+        }
+    }
+
     pub fn pair(first: Self, second: Self) -> Self {
         Term::Pair(Box::new(first), Box::new(second))
     }

@@ -68,6 +68,22 @@ pub fn check_type(tcs: TCS, expr: Abs) -> TermTCM {
     match expr {
         Abs::Type(info, level) => Ok((Term::Type(level).into_info(info), tcs)),
         Abs::Bot(info) => Ok((Term::Bot(0).into_info(info), tcs)),
+        Abs::Local(info, dbi) => {
+            if tcs.local_val(dbi).ast.is_type() {
+                Ok((Term::var(dbi).into_info(info), tcs))
+            } else {
+                Err(TCE::NotType(info, Some(Term::var(dbi))))
+            }
+        }
+        Abs::Var(info, dbi) => {
+            if tcs.glob_val(dbi).ast.is_type() {
+                Ok((Term::var(dbi).into_info(info), tcs))
+            } else {
+                Err(TCE::NotType(info, Some(Term::var(dbi))))
+            }
+        }
+        Abs::Cons(info) => Err(TCE::NotType(info, None)),
+        Abs::Pair(info, _, _) => Err(TCE::NotType(info, None)),
         _ => unimplemented!(),
     }
 }
