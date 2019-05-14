@@ -38,16 +38,9 @@ impl Display for TCE {
                 "Expected a pi type expression (function), got: `{:?}` at {}.",
                 term, id
             ),
-            TCE::NotType(id, Some(term)) => write!(
-                f,
-                "Expected a type expression, got: `{:?}` at {}.",
-                term, id
-            ),
-            TCE::NotType(id, None) => write!(
-                f,
-                "Expected a type expression, got: something else at {}.",
-                id
-            ),
+            TCE::NotType(id, abs) => {
+                write!(f, "Expected a type expression, got: `{:?}` at {}.", abs, id)
+            }
             TCE::DbiOverflow(expected, actual) => write!(
                 f,
                 "DBI overflow, maximum: `{}`, got: `{}`.",
