@@ -1,3 +1,4 @@
+use crate::syntax::abs::Abs;
 use crate::syntax::common::{Level, SyntaxInfo, DBI};
 use crate::syntax::core::Term;
 use crate::syntax::surf::Ident;
@@ -11,7 +12,7 @@ pub enum TCE {
     TypeNotInGamma(SyntaxInfo),
     NotSigma(SyntaxInfo, Term),
     NotPi(SyntaxInfo, Term),
-    NotType(SyntaxInfo, Option<Term>),
+    NotType(SyntaxInfo, Abs),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
     /// Expected the first level to be smaller than second.

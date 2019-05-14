@@ -11,9 +11,9 @@ pub enum Abs {
     Local(SyntaxInfo, DBI),
     /// Meta variable
     Meta(SyntaxInfo),
-    /// Construct call
+    /// Constructor call
     Cons(SyntaxInfo),
-    /// Construct call
+    /// One element inside of a sum type
     ConsType(SyntaxInfo),
     /// Apply or Pipeline in surface
     App(SyntaxInfo, Box<Self>, Box<Self>),

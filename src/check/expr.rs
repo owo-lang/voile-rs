@@ -51,6 +51,7 @@ pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
         }
         (Abs::Bot(info), Term::Type(level)) => Ok((Term::Bot(level - 1).into_info(info), tcs)),
         (Abs::Dt(info, kind, param, ret), Term::Type(l)) => {
+            // TODO: level checking
             let (param, mut tcs) = check_type(tcs, *param)?;
             tcs.local_gamma.push(param.clone());
             tcs.local_env.push(Term::axiom().into_info(param.to_info()));
@@ -68,23 +69,24 @@ pub fn check_type(tcs: TCS, expr: Abs) -> TermTCM {
     match expr {
         Abs::Type(info, level) => Ok((Term::Type(level).into_info(info), tcs)),
         Abs::Bot(info) => Ok((Term::Bot(0).into_info(info), tcs)),
-        Abs::Local(info, dbi) => {
-            if tcs.local_val(dbi).ast.is_type() {
-                Ok((Term::var(dbi).into_info(info), tcs))
-            } else {
-                Err(TCE::NotType(info, Some(Term::var(dbi))))
-            }
+        Abs::Local(_, dbi) if tcs.local_val(dbi).ast.is_type() => {
+            // Rust does not allow matching `info` out :(
+            Ok((Term::var(dbi).into_info(expr.to_info()), tcs))
         }
-        Abs::Var(info, dbi) => {
-            if tcs.glob_val(dbi).ast.is_type() {
-                Ok((Term::var(dbi).into_info(info), tcs))
-            } else {
-                Err(TCE::NotType(info, Some(Term::var(dbi))))
-            }
+        Abs::Var(_, dbi) if tcs.glob_val(dbi).ast.is_type() => {
+            Ok((Term::var(dbi).into_info(expr.to_info()), tcs))
         }
-        Abs::Cons(info) => Err(TCE::NotType(info, None)),
-        Abs::Pair(info, _, _) => Err(TCE::NotType(info, None)),
-        _ => unimplemented!(),
+        Abs::Dt(info, kind, param, ret) => {
+            let (param, mut tcs) = check_type(tcs, *param)?;
+            tcs.local_gamma.push(param.clone());
+            tcs.local_env.push(Term::axiom().into_info(param.to_info()));
+            let (ret, mut tcs) = check_type(tcs, *ret)?;
+            tcs.pop_local();
+            let dt = Term::dependent_type(kind, Closure::new(param.ast, ret.ast)).into_info(info);
+            Ok((dt, tcs))
+        }
+        Abs::ConsType(info) => unimplemented!(),
+        e => Err(TCE::NotType(e.to_info(), e)),
     }
 }
 
