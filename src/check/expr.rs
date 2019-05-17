@@ -1,9 +1,10 @@
 use crate::syntax::abs::Abs;
 use crate::syntax::common::DtKind::*;
+use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::{Closure, RedEx, Term};
 
 use super::monad::{TermTCM, TCE, TCM, TCS};
-use crate::syntax::common::ToSyntaxInfo;
+use super::util::unsafe_compile;
 
 /// $$
 /// \newcommand\U{\textsf{Type}}
@@ -118,6 +119,18 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
             let (pair_ty, tcs) = infer(tcs, *pair)?;
             match pair_ty.ast {
                 Term::Dt(Sigma, closure) => Ok((closure.param_type.into_info(info), tcs)),
+                ast => Err(TCE::NotSigma(pair_ty.info, ast)),
+            }
+        }
+        Snd(info, pair) => {
+            let (pair_ty, tcs) = infer(tcs, *pair.clone())?;
+            match pair_ty.ast {
+                Term::Dt(Sigma, closure) => {
+                    // Since we can infer the type of `pair`, it has to be well-typed
+                    let (pair_compiled, tcs) = unsafe_compile(tcs, *pair);
+                    let fst = pair_compiled.ast.first();
+                    Ok((closure.body.instantiate(fst).into_info(info), tcs))
+                }
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
