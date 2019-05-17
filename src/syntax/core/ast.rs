@@ -126,8 +126,15 @@ impl Term {
             Term::Lam(_) => false,
             Term::Dt(_, _) => true,
             Term::Pair(_, _) => false,
-            // TODO: not sure
+            // In case it's neutral, we use `is_universe` on its type.
             Term::Neut(_) => false,
+        }
+    }
+
+    pub fn is_universe(&self) -> bool {
+        match self {
+            Term::Type(_) => true,
+            _ => false,
         }
     }
 

@@ -70,11 +70,11 @@ pub fn check_type(tcs: TCS, expr: Abs) -> TermTCM {
     match expr {
         Abs::Type(info, level) => Ok((Term::Type(level).into_info(info), tcs)),
         Abs::Bot(info) => Ok((Term::Bot(0).into_info(info), tcs)),
-        Abs::Local(_, dbi) if tcs.local_val(dbi).ast.is_type() => {
+        Abs::Local(_, dbi) if tcs.local_is_type(dbi) => {
             // Rust does not allow matching `info` out :(
             Ok((Term::var(dbi).into_info(expr.to_info()), tcs))
         }
-        Abs::Var(_, dbi) if tcs.glob_val(dbi).ast.is_type() => {
+        Abs::Var(_, dbi) if tcs.glob_is_type(dbi) => {
             Ok((Term::var(dbi).into_info(expr.to_info()), tcs))
         }
         Abs::Dt(info, kind, param, ret) => {

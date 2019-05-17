@@ -1,7 +1,8 @@
---
--- Created by Dependently-Typed Lambda Calculus on 2019-05-17
--- dtlc
--- Author: ice1000
---
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-05-17
+// dtlc
+// Author: ice1000
+//
 
-
+val id: (A : Type) -> A -> A;
+let id = \A a. a;

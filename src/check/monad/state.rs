@@ -29,6 +29,14 @@ impl TCS {
         &self.local_env[self.local_env.len() - dbi - 1]
     }
 
+    pub fn local_is_type(&self, dbi: DBI) -> bool {
+        self.local_val(dbi).ast.is_type() || self.local_type(dbi).ast.is_universe()
+    }
+
+    pub fn glob_is_type(&self, dbi: DBI) -> bool {
+        self.glob_val(dbi).ast.is_type() || self.glob_type(dbi).ast.is_universe()
+    }
+
     pub fn glob_val(&self, dbi: DBI) -> &TermInfo {
         &self.env[dbi]
     }

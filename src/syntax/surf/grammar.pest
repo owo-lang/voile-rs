@@ -104,4 +104,4 @@ declaration =
  }
 
 // File
-file = { WHITESPACE* ~ declaration* }
+file = { WHITESPACE* ~ declaration* ~ WHITESPACE* }
