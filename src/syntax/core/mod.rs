@@ -22,6 +22,10 @@ impl TermInfo {
     pub fn new(ast: Term, info: SyntaxInfo) -> Self {
         Self { ast, info }
     }
+
+    pub fn map_ast(self, f: impl FnOnce(Term) -> Term) -> Self {
+        Self::new(f(self.ast), self.info)
+    }
 }
 
 impl ToSyntaxInfo for TermInfo {

@@ -41,14 +41,19 @@ pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             let param_type = ret_ty.param_type.into_info(param_info.clone());
             tcs.local_gamma.push(param_type);
             tcs.local_env.push(Term::axiom().into_info(param_info));
-            let (lam_term, mut tcs) = check(tcs, *body, *ret_ty.body)?;
+            let (lam_term, mut tcs) = check(tcs, *body, ret_ty.body.instantiate(Term::axiom()))?;
             tcs.pop_local();
             Ok((lam_term, tcs))
         }
         (Abs::Local(info, dbi), anything) => {
-            let (inferred, tcs) = infer(tcs, Abs::Var(info, dbi))?;
-            let tcs = check_subtype(tcs, &inferred.ast, &anything)?;
+            let (inferred, tcs) = infer(tcs, Abs::Local(info, dbi))?;
+            let tcs: TCS = check_subtype(tcs, &inferred.ast, &anything)?;
             Ok((Term::var(dbi).into_info(inferred.info), tcs))
+        }
+        (Abs::Var(info, dbi), anything) => {
+            let (inferred, tcs) = infer(tcs, Abs::Var(info, dbi))?;
+            let tcs: TCS = check_subtype(tcs, &inferred.ast, &anything)?;
+            Ok((tcs.glob_val(dbi).ast.clone().into_info(inferred.info), tcs))
         }
         (Abs::Bot(info), Term::Type(level)) => Ok((Term::Bot(level - 1).into_info(info), tcs)),
         (Abs::Dt(info, kind, param, ret), Term::Type(l)) => {
@@ -153,9 +158,11 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
 
 /// Check if `subtype` is a subtype of `supertype`.
 pub fn check_subtype(tcs: TCS, subtype: &Term, supertype: &Term) -> TCM {
+    use crate::syntax::core::Neutral::*;
     use crate::syntax::core::Term::*;
     match (subtype, supertype) {
         (Type(sub_level), Type(super_level)) if sub_level <= super_level => Ok(tcs),
+        (Neut(Var(dbi0)), Neut(Var(dbi1))) if dbi0 == dbi1 => Ok(tcs),
         _ => unimplemented!(),
     }
 }

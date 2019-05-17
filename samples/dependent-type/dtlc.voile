@@ -4,5 +4,5 @@
 // Author: ice1000
 //
 
-val id: (A : Type) -> A -> A;
+val id: (A : Type) -> (a : A) -> A;
 let id = \A a. a;

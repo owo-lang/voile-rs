@@ -80,6 +80,15 @@ pub enum Neutral {
     Snd(Box<Self>),
 }
 
+impl Neutral {
+    pub fn map_var(self, f: impl FnOnce(DBI) -> DBI) -> Self {
+        match self {
+            Neutral::Var(dbi) => Neutral::Var(f(dbi)),
+            e => e,
+        }
+    }
+}
+
 impl RedEx for Neutral {
     fn reduce_with_dbi(self, arg: Term, dbi: DBI) -> Term {
         use self::Neutral::*;
@@ -178,10 +187,17 @@ impl Term {
         Self::dependent_type(DtKind::Sigma, Closure::new(param_type, body))
     }
 
-    pub fn into_neutral(self) -> Option<Neutral> {
+    pub fn into_neutral(self) -> Result<Neutral, Self> {
         match self {
-            Term::Neut(n) => Some(n),
-            _ => None,
+            Term::Neut(n) => Ok(n),
+            e => Err(e),
+        }
+    }
+
+    pub fn map_neutral(self, f: impl FnOnce(Neutral) -> Neutral) -> Self {
+        match self {
+            Term::Neut(n) => Term::Neut(f(n)),
+            e => e,
         }
     }
 }
