@@ -2,7 +2,7 @@ mod ast;
 
 pub use self::ast::*;
 
-use super::common::{SyntaxInfo, ToSyntaxInfo};
+use super::common::{SyntaxInfo, ToSyntaxInfo, DBI};
 
 impl Term {
     pub fn into_info(self, syntax_info: SyntaxInfo) -> TermInfo {

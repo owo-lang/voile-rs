@@ -6,3 +6,6 @@
 
 val id: (A : Type) -> (a : A) -> A;
 let id = \A a. a;
+
+// val flip : (A : Type) -> (A -> A -> A) -> (A -> A -> A);
+// let flip = \A f a b. f b a;
