@@ -53,7 +53,7 @@ pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
         (Abs::Var(info, dbi), anything) => {
             let (inferred, tcs) = infer(tcs, Abs::Var(info, dbi))?;
             let tcs: TCS = check_subtype(tcs, &inferred.ast, &anything)?;
-            Ok((tcs.glob_val(dbi).ast.clone().into_info(inferred.info), tcs))
+            Ok((tcs.glob_val(dbi).ast.into_info(inferred.info), tcs))
         }
         (Abs::Bot(info), Term::Type(level)) => Ok((Term::Bot(level - 1).into_info(info), tcs)),
         (Abs::Dt(info, kind, param, ret), Term::Type(l)) => {

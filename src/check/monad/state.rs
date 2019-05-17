@@ -18,26 +18,23 @@ pub struct TCS {
 
 impl TCS {
     pub fn local_type(&self, dbi: DBI) -> TermInfo {
-        Self::increase_dbi(
-            self.local_gamma[self.local_gamma.len() - dbi - 1].clone(),
-            dbi,
-        )
+        self.local_gamma[self.local_gamma.len() - dbi - 1]
+            .clone()
+            .increase_dbi(dbi)
     }
 
     pub fn glob_type(&self, dbi: DBI) -> TermInfo {
-        Self::increase_dbi(self.gamma[dbi].clone(), dbi)
+        self.gamma[dbi].clone().increase_dbi(dbi)
     }
 
     pub fn local_val(&self, dbi: DBI) -> TermInfo {
-        Self::increase_dbi(self.local_env[self.local_env.len() - dbi - 1].clone(), dbi)
+        self.local_env[self.local_env.len() - dbi - 1]
+            .clone()
+            .increase_dbi(dbi)
     }
 
     pub fn glob_val(&self, dbi: DBI) -> TermInfo {
-        Self::increase_dbi(self.env[dbi].clone(), dbi)
-    }
-
-    fn increase_dbi(info: TermInfo, dbi: DBI) -> TermInfo {
-        info.map_ast(|ast| ast.map_neutral(|n| n.map_var(|x| x + 1 + dbi)))
+        self.env[dbi].clone().increase_dbi(dbi)
     }
 
     pub fn local_is_type(&self, dbi: DBI) -> bool {
