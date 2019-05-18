@@ -16,6 +16,15 @@ pub type Level = u32;
 /// have no idea about this and you are curious about it.
 pub type DBI = usize;
 
+pub type UID = usize;
+static mut UID_COUNT: UID = 0;
+
+pub unsafe fn next_uid() -> UID {
+    let val = UID_COUNT;
+    UID_COUNT += 1;
+    val
+}
+
 impl<'a> From<Span<'a>> for SyntaxInfo {
     fn from(span: Span) -> Self {
         SyntaxInfo {

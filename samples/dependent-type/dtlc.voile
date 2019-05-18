@@ -11,4 +11,4 @@ val flip : (A : Type)
          -> (f : (a : A) -> (b : A) -> A)
          -> ((b : A) -> (a : A) -> A);
 // This does not check. Why?
-// let flip = \A f a b. f b a;
+let flip = \A f a b. f b a;

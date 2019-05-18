@@ -12,6 +12,7 @@ pub enum TCE {
     TypeNotInGamma(SyntaxInfo),
     NotSigma(SyntaxInfo, Term),
     NotPi(SyntaxInfo, Term),
+    NotSameType(Term, Term),
     NotType(SyntaxInfo, Abs),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
@@ -37,6 +38,11 @@ impl Display for TCE {
                 f,
                 "Expected a pi type expression (function), got: `{:?}` at {}.",
                 term, id
+            ),
+            TCE::NotSameType(term1, term2) => write!(
+                f,
+                "Expected `{:?}` and `{:?}` to be the same type.",
+                term1, term2
             ),
             TCE::NotType(id, abs) => {
                 write!(f, "Expected a type expression, got: `{:?}` at {}.", abs, id)

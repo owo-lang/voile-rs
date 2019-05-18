@@ -48,12 +48,17 @@ pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
         (Abs::Local(info, dbi), anything) => {
             let (inferred, tcs) = infer(tcs, Abs::Local(info, dbi))?;
             let tcs: TCS = check_subtype(tcs, &inferred.ast, &anything)?;
-            Ok((Term::var(dbi).into_info(inferred.info), tcs))
+            Ok((tcs.local_val(dbi).ast.into_info(inferred.info), tcs))
         }
         (Abs::Var(info, dbi), anything) => {
             let (inferred, tcs) = infer(tcs, Abs::Var(info, dbi))?;
             let tcs: TCS = check_subtype(tcs, &inferred.ast, &anything)?;
             Ok((tcs.glob_val(dbi).ast.into_info(inferred.info), tcs))
+        }
+        (Abs::App(info, f, a), anything) => {
+            let (inferred, tcs) = infer(tcs, Abs::App(info.clone(), f.clone(), a.clone()))?;
+            let tcs: TCS = check_subtype(tcs, &inferred.ast, &anything)?;
+            Ok(unsafe_compile(tcs, Abs::App(info, f, a)))
         }
         (Abs::Bot(info), Term::Type(level)) => Ok((Term::Bot(level - 1).into_info(info), tcs)),
         (Abs::Dt(info, kind, param, ret), Term::Type(l)) => {
@@ -80,7 +85,7 @@ pub fn check_type(tcs: TCS, expr: Abs) -> TermTCM {
             Ok((Term::var(dbi).into_info(expr.to_info()), tcs))
         }
         Abs::Var(_, dbi) if tcs.glob_is_type(dbi) => {
-            Ok((Term::var(dbi).into_info(expr.to_info()), tcs))
+            Ok((tcs.glob_val(dbi).ast.into_info(expr.to_info()), tcs))
         }
         Abs::Dt(info, kind, param, ret) => {
             let (param, mut tcs) = check_type(tcs, *param)?;
@@ -162,7 +167,13 @@ pub fn check_subtype(tcs: TCS, subtype: &Term, supertype: &Term) -> TCM {
     use crate::syntax::core::Term::*;
     match (subtype, supertype) {
         (Type(sub_level), Type(super_level)) if sub_level <= super_level => Ok(tcs),
-        (Neut(Var(dbi0)), Neut(Var(dbi1))) if dbi0 == dbi1 => Ok(tcs),
+        (Neut(Var(dbi0)), Neut(Var(dbi1))) => {
+            if dbi0 == dbi1 {
+                Ok(tcs)
+            } else {
+                Err(TCE::NotSameType(Neut(Var(*dbi0)), Neut(Var(*dbi1))))
+            }
+        }
         _ => unimplemented!(),
     }
 }

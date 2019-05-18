@@ -1,6 +1,6 @@
 use std::collections::btree_map::BTreeMap;
 
-use crate::syntax::common::{DtKind, Level, DBI};
+use crate::syntax::common::{next_uid, DtKind, Level, DBI, UID};
 
 pub type NamedEnv = BTreeMap<String, Term>;
 
@@ -71,7 +71,7 @@ pub enum Neutral {
     /// Local variable, referred by de-bruijn index.
     Var(DBI),
     /// Postulated value, aka axioms.
-    Axi,
+    Axi(UID),
     /// Function application.
     App(Box<Self>, Box<Term>),
     /// Projecting the first element of a pair.
@@ -95,7 +95,7 @@ impl RedEx for Neutral {
         match self {
             Var(n) if dbi == n => arg,
             Var(n) => Term::var(n),
-            Axi => Term::axiom(),
+            Axi(i) => Term::axiom_with_value(i),
             App(function, argument) => function
                 .reduce_with_dbi(arg.clone(), dbi)
                 .apply(argument.reduce_with_dbi(arg, dbi)),
@@ -160,7 +160,11 @@ impl Term {
     }
 
     pub fn axiom() -> Self {
-        Term::Neut(Neutral::Axi)
+        Self::axiom_with_value(unsafe { next_uid() })
+    }
+
+    pub(crate) fn axiom_with_value(uid: UID) -> Self {
+        Term::Neut(Neutral::Axi(uid))
     }
 
     pub fn app(function: Neutral, arg: Self) -> Self {
