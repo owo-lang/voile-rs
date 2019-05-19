@@ -1,14 +1,48 @@
-use crate::syntax::common::{DtKind, Level, SyntaxInfo, ToSyntaxInfo, DBI};
+use crate::syntax::common::*;
+use std::cmp::Ordering;
+
+/// Unique identifier.
+#[derive(Debug, Clone, Copy, Eq, Ord)]
+pub struct Name {
+    pub uid: UID,
+}
+
+impl Name {
+    pub fn from(uid: UID) -> Self {
+        Self { uid }
+    }
+
+    pub fn new() -> Self {
+        Self::from(unsafe { next_uid() })
+    }
+}
+
+impl PartialEq for Name {
+    fn eq(&self, other: &Self) -> bool {
+        self.uid == other.uid
+    }
+}
+
+impl PartialOrd for Name {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.uid.partial_cmp(&other.uid)
+    }
+}
+
+/// Typed `Name`.
+#[derive(Debug, Clone)]
+pub struct TypedBound {
+    pub name: Name,
+    pub ty: Abs,
+}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Abs {
     Type(SyntaxInfo, Level),
     /// Bottom type
     Bot(SyntaxInfo),
-    /// Global variable
-    Var(SyntaxInfo, DBI),
     /// Local variable
-    Local(SyntaxInfo, DBI),
+    Local(SyntaxInfo, Name, DBI),
     /// Meta variable
     Meta(SyntaxInfo),
     /// Constructor call
@@ -18,10 +52,10 @@ pub enum Abs {
     /// Apply or Pipeline in surface
     App(SyntaxInfo, Box<Self>, Box<Self>),
     /// Dependent Type, `(a -> b -> c)` as `Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))`
-    Dt(SyntaxInfo, DtKind, Box<Self>, Box<Self>),
+    Dt(SyntaxInfo, DtKind, Name, Box<Self>, Box<Self>),
     /// The first `SyntaxInfo` is the syntax info of this whole lambda,
     /// while the second is about its parameter
-    Lam(SyntaxInfo, SyntaxInfo, Box<Self>),
+    Lam(SyntaxInfo, SyntaxInfo, Name, Box<Self>),
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
     Snd(SyntaxInfo, Box<Self>),
@@ -33,25 +67,24 @@ impl ToSyntaxInfo for Abs {
         match self {
             Abs::Type(info, _) => info,
             Abs::Bot(info) => info,
-            Abs::Var(info, _) => info,
-            Abs::Local(info, _) => info,
+            Abs::Local(info, _, _) => info,
             Abs::Meta(info) => info,
             Abs::Cons(info) => info,
             Abs::ConsType(info) => info,
             Abs::App(info, _, _) => info,
-            Abs::Dt(info, _, _, _) => info,
+            Abs::Dt(info, _, _, _, _) => info,
             Abs::Pair(info, _, _) => info,
             Abs::Fst(info, _) => info,
             Abs::Snd(info, _) => info,
             Abs::Sum(info, _) => info,
-            Abs::Lam(info, _, _) => info,
+            Abs::Lam(info, _, _, _) => info,
         }
     }
 }
 
 impl Abs {
-    pub fn dependent_type(info: SyntaxInfo, kind: DtKind, a: Self, b: Self) -> Self {
-        Abs::Dt(info, kind, Box::new(a), Box::new(b))
+    pub fn dependent_type(info: SyntaxInfo, kind: DtKind, name: Name, a: Self, b: Self) -> Self {
+        Abs::Dt(info, kind, name, Box::new(a), Box::new(b))
     }
 
     pub fn app(info: SyntaxInfo, function: Self, argument: Self) -> Self {
@@ -66,8 +99,8 @@ impl Abs {
         Abs::Snd(info, Box::new(of))
     }
 
-    pub fn lam(whole_info: SyntaxInfo, param_info: SyntaxInfo, body: Self) -> Self {
-        Abs::Lam(whole_info, param_info, Box::new(body))
+    pub fn lam(whole_info: SyntaxInfo, param_info: SyntaxInfo, name: Name, body: Self) -> Self {
+        Abs::Lam(whole_info, param_info, name, Box::new(body))
     }
 
     pub fn pair(info: SyntaxInfo, first: Self, second: Self) -> Self {

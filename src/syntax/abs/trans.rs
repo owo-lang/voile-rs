@@ -2,10 +2,11 @@ use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{TCE, TCM};
 use crate::syntax::common::{DtKind, ToSyntaxInfo, DBI};
-use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
+use crate::syntax::surf::{Decl, DeclKind, Expr, Ident, Param};
 
 use super::ast::*;
 
+/// Key: global declaration name; Value: global declaration index.
 type NamedDbi = BTreeMap<String, DBI>;
 
 pub fn trans_decls(decls: Vec<Decl>) -> TCM<Vec<AbsDecl>> {
@@ -51,7 +52,7 @@ fn trans_expr_inner(
     expr: &Expr,
     env: &[AbsDecl],
     global_map: &NamedDbi,
-    local_env: &[AbsDecl],
+    local_env: &[Name],
     local_map: &NamedDbi,
 ) -> TCM<Abs> {
     match expr {
@@ -59,9 +60,17 @@ fn trans_expr_inner(
         Expr::Var(ident) => {
             let name = &ident.info.text;
             if local_map.contains_key(name) {
-                Ok(Abs::Local(ident.to_info(), local_map[name]))
+                let dbi = local_map[name];
+                Ok(Abs::Local(ident.to_info(), local_env[dbi].clone(), dbi))
             } else if global_map.contains_key(name) {
-                Ok(Abs::Var(ident.to_info(), global_map[name]))
+                match env[global_map[name]].clone() {
+                    AbsDecl::Impl(abs) => Ok(abs),
+                    AbsDecl::Both(_, abs) => Ok(abs),
+                    _ => Err(TCE::Textual(format!(
+                        "{} does not have an implementation.",
+                        name
+                    ))),
+                }
             } else {
                 Err(TCE::LookUpFailed(ident.clone()))
             }
@@ -116,22 +125,17 @@ fn trans_expr_inner(
         ),
         Expr::Lam(info, params, body) => {
             let mut local_env = local_env.to_vec();
+            local_env.reserve_exact(local_env.len() + params.len() + 1);
             let mut local_map = local_map.clone();
-            for param in params {
-                let shadowing = local_map.get(&param.info.text).cloned();
-                for (name, dbi) in local_map.iter_mut() {
-                    let dbi_value = *dbi;
-                    *dbi += 1;
-                    if shadowing == Some(dbi_value) {
-                        local_env.remove(dbi_value);
-                    }
-                }
-                local_map.insert(param.info.text.clone(), 0);
-                local_env.insert(0, AbsDecl::None);
-            }
+            let mut names = Vec::with_capacity(params.len());
+            introduce_abstractions(params, &mut local_env, &mut local_map, &mut names);
             Ok(params.iter().rev().fold(
                 trans_expr_inner(body, env, global_map, &local_env, &local_map)?,
-                |lam_abs, param| Abs::lam(info.clone(), param.to_info(), lam_abs),
+                |lam_abs, param| {
+                    let pop_empty = "The stack `names` is empty. Please report this as a bug.";
+                    let name = names.pop().expect(pop_empty);
+                    Abs::lam(info.clone(), param.to_info(), name, lam_abs)
+                },
             ))
         }
         Expr::Pi(params, result) => trans_dependent_type(
@@ -146,35 +150,60 @@ fn trans_expr_inner(
     }
 }
 
+fn introduce_abstractions(
+    params: &Vec<Ident>,
+    local_env: &mut Vec<Name>,
+    local_map: &mut NamedDbi,
+    names: &mut Vec<Name>,
+) {
+    for param in params {
+        let shadowing = local_map.get(&param.info.text).cloned();
+        for (name, dbi) in local_map.iter_mut() {
+            let dbi_value = *dbi;
+            *dbi += 1;
+            if shadowing == Some(dbi_value) {
+                local_env.remove(dbi_value);
+            }
+        }
+        local_map.insert(param.info.text.clone(), 0);
+        let new_name = Name::new();
+        local_env.insert(0, new_name);
+        names.push(new_name);
+    }
+}
+
 fn trans_dependent_type(
     env: &[AbsDecl],
-    global_map: &NamedDbi,
-    local_env: &[AbsDecl],
+    glob: &NamedDbi,
+    local_env: &[Name],
     local_map: &NamedDbi,
     params: &[Param],
     result: &Expr,
     kind: DtKind,
 ) -> TCM<Abs> {
-    let mut pi_env = local_env.to_vec();
+    let mut pi = local_env.to_vec();
     let mut pi_map = local_map.clone();
+    let mut names = Vec::with_capacity(params.len());
     let pi_vec: Vec<Abs> = params.iter().try_fold(Vec::new(), |pi_vec, param| {
-        trans_telescope(env, global_map, &mut pi_env, &mut pi_map, pi_vec, param)
+        introduce_telescope(env, glob, &mut pi, &mut pi_map, &mut names, pi_vec, param)
     })?;
 
     Ok(pi_vec.into_iter().rev().fold(
-        trans_expr_inner(result, env, global_map, &pi_env, &pi_map)?,
+        trans_expr_inner(result, env, glob, &pi, &pi_map)?,
         |pi_abs, param| {
             let info = param.to_info().merge(pi_abs.to_info(), " -> ");
-            Abs::dependent_type(info, kind, param, pi_abs)
+            let pop_empty = "The stack `names` is empty. Please report this as a bug.";
+            Abs::dependent_type(info, kind, names.pop().expect(pop_empty), param, pi_abs)
         },
     ))
 }
 
-fn trans_telescope(
+fn introduce_telescope(
     env: &[AbsDecl],
     global_map: &NamedDbi,
-    dt_env: &mut Vec<AbsDecl>,
+    dt_env: &mut Vec<Name>,
     dt_map: &mut NamedDbi,
+    names: &mut Vec<Name>,
     mut dt_vec: Vec<Abs>,
     param: &Param,
 ) -> TCM<Vec<Abs>> {
@@ -195,7 +224,9 @@ fn trans_telescope(
             }
         }
         dt_map.insert(param_name, 0);
-        dt_env.insert(0, AbsDecl::Sign(param_ty.clone()));
+        let new_name = Name::new();
+        dt_env.insert(0, new_name);
+        names.push(new_name);
     }
     dt_vec.push(param_ty);
     Ok(dt_vec)
