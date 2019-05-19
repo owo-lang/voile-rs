@@ -21,6 +21,13 @@ pub enum TCE {
     LevelMismatch(SyntaxInfo, Level, Level),
     /// Cannot find the definition.
     LookUpFailed(Ident),
+    Wrapped(Box<Self>, SyntaxInfo),
+}
+
+impl TCE {
+    pub fn wrap(self, info: SyntaxInfo) -> Self {
+        TCE::Wrapped(Box::new(self), info)
+    }
 }
 
 impl Display for TCE {
@@ -63,6 +70,7 @@ impl Display for TCE {
                 "Expression `{}` has level {:?}, which is not smaller than {:?}.",
                 expr, expected_to_be_small, big
             ),
+            TCE::Wrapped(inner, info) => write!(f, "{}\nAt: {}.", inner, info),
         }
     }
 }

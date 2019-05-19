@@ -107,12 +107,12 @@ impl Abs {
         Abs::Pair(info, Box::new(first), Box::new(second))
     }
 
-    pub fn pi(info: SyntaxInfo, input: Self, output: Self) -> Self {
-        Self::dependent_type(info, DtKind::Pi, input, output)
+    pub fn pi(info: SyntaxInfo, name: Name, input: Self, output: Self) -> Self {
+        Self::dependent_type(info, DtKind::Pi, name, input, output)
     }
 
-    pub fn sig(info: SyntaxInfo, first: Self, second: Self) -> Self {
-        Self::dependent_type(info, DtKind::Sigma, first, second)
+    pub fn sig(info: SyntaxInfo, name: Name, first: Self, second: Self) -> Self {
+        Self::dependent_type(info, DtKind::Sigma, name, first, second)
     }
 }
 

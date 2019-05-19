@@ -8,8 +8,7 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
     match abs {
         Abs::Type(info, level) => (Term::Type(level).into_info(info), tcs),
         Abs::Bot(info) => (Term::Bot(0).into_info(info), tcs),
-        Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info), tcs),
-        Abs::Local(info, dbi) => (Term::var(dbi).into_info(info), tcs),
+        Abs::Local(info, _, dbi) => (Term::var(dbi).into_info(info), tcs),
         Abs::Meta(info) => panic!("Cannot compile meta variable at {}.", info),
         Abs::Cons(info) => unimplemented!(),
         Abs::ConsType(_) => unimplemented!(),
@@ -18,7 +17,7 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             let (a, tcs) = unsafe_compile(tcs, *a);
             (f.ast.apply(a.ast).into_info(info), tcs)
         }
-        Abs::Dt(info, kind, param_ty, ret_ty) => {
+        Abs::Dt(info, kind, _, param_ty, ret_ty) => {
             let (param_ty, tcs) = unsafe_compile(tcs, *param_ty);
             let (ret_ty, tcs) = unsafe_compile(tcs, *ret_ty);
             // TODO: implicit arguments
@@ -40,7 +39,7 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             (p.ast.second().into_info(info), tcs)
         }
         Abs::Sum(_, _) => unimplemented!(),
-        Abs::Lam(info, _, body) => {
+        Abs::Lam(info, _, _, body) => {
             let (body, tcs) = unsafe_compile(tcs, *body);
             (body.ast.into_info(info), tcs)
         }

@@ -37,35 +37,34 @@ pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             tcs.pop_local();
             Ok((Term::pair(fst_term_ast, snd_term.ast).into_info(info), tcs))
         }
-        (Abs::Lam(_full_info, param_info, body), Term::Dt(Pi, ret_ty)) => {
+        (Abs::Lam(_full_info, param_info, name, body), Term::Dt(Pi, ret_ty)) => {
             let param_type = ret_ty.param_type.into_info(param_info.clone());
             tcs.local_gamma.push(param_type);
-            tcs.local_env.push(Term::axiom().into_info(param_info));
-            let (lam_term, mut tcs) = check(tcs, *body, ret_ty.body.instantiate(Term::axiom()))?;
+            let mocked = Term::axiom_with_value(name.uid);
+            tcs.local_env.push(mocked.clone().into_info(param_info));
+            let (lam_term, mut tcs) = check(tcs, *body, ret_ty.body.instantiate(mocked))?;
             tcs.pop_local();
             Ok((lam_term, tcs))
         }
-        (Abs::Local(info, dbi), anything) => {
-            let (inferred, tcs) = infer(tcs, Abs::Local(info, dbi))?;
-            let tcs: TCS = check_subtype(tcs, &inferred.ast, &anything)?;
+        (Abs::Local(info, name, dbi), anything) => {
+            let (inferred, tcs) = infer(tcs, Abs::Local(info, name, dbi))?;
+            let tcs: TCS = check_subtype(tcs, &inferred.ast, &anything)
+                .map_err(|e| e.wrap(inferred.info.clone()))?;
             Ok((tcs.local_val(dbi).ast.into_info(inferred.info), tcs))
-        }
-        (Abs::Var(info, dbi), anything) => {
-            let (inferred, tcs) = infer(tcs, Abs::Var(info, dbi))?;
-            let tcs: TCS = check_subtype(tcs, &inferred.ast, &anything)?;
-            Ok((tcs.glob_val(dbi).ast.into_info(inferred.info), tcs))
         }
         (Abs::App(info, f, a), anything) => {
             let (inferred, tcs) = infer(tcs, Abs::App(info.clone(), f.clone(), a.clone()))?;
-            let tcs: TCS = check_subtype(tcs, &inferred.ast, &anything)?;
+            let tcs: TCS =
+                check_subtype(tcs, &inferred.ast, &anything).map_err(|e| e.wrap(inferred.info))?;
             Ok(unsafe_compile(tcs, Abs::App(info, f, a)))
         }
         (Abs::Bot(info), Term::Type(level)) => Ok((Term::Bot(level - 1).into_info(info), tcs)),
-        (Abs::Dt(info, kind, param, ret), Term::Type(l)) => {
+        (Abs::Dt(info, kind, name, param, ret), Term::Type(l)) => {
             // TODO: level checking
             let (param, mut tcs) = check_type(tcs, *param)?;
             tcs.local_gamma.push(param.clone());
-            tcs.local_env.push(Term::axiom().into_info(param.to_info()));
+            tcs.local_env
+                .push(Term::axiom_with_value(name.uid).into_info(param.to_info()));
             let (ret, mut tcs) = check_type(tcs, *ret)?;
             tcs.pop_local();
             let dt = Term::dependent_type(kind, Closure::new(param.ast, ret.ast)).into_info(info);
@@ -80,14 +79,14 @@ pub fn check_type(tcs: TCS, expr: Abs) -> TermTCM {
     match expr {
         Abs::Type(info, level) => Ok((Term::Type(level).into_info(info), tcs)),
         Abs::Bot(info) => Ok((Term::Bot(0).into_info(info), tcs)),
-        Abs::Local(_, dbi) if tcs.local_is_type(dbi) => {
+        Abs::Local(_, name, dbi) if tcs.local_is_type(dbi) => {
             // Rust does not allow matching `info` out :(
-            Ok((Term::var(dbi).into_info(expr.to_info()), tcs))
+            Ok((
+                Term::axiom_with_value(name.uid).into_info(expr.to_info()),
+                tcs,
+            ))
         }
-        Abs::Var(_, dbi) if tcs.glob_is_type(dbi) => {
-            Ok((tcs.glob_val(dbi).ast.into_info(expr.to_info()), tcs))
-        }
-        Abs::Dt(info, kind, param, ret) => {
+        Abs::Dt(info, kind, name, param, ret) => {
             let (param, mut tcs) = check_type(tcs, *param)?;
             tcs.local_gamma.push(param.clone());
             tcs.local_env.push(Term::axiom().into_info(param.to_info()));
@@ -117,8 +116,7 @@ pub fn infer(tcs: TCS, value: Abs) -> TermTCM {
     use crate::syntax::abs::Abs::*;
     match value {
         Type(info, level) => Ok((Term::Type(level + 1).into_info(info), tcs)),
-        Local(info, dbi) => Ok((tcs.local_type(dbi).ast.clone().into_info(info), tcs)),
-        Var(info, dbi) => Ok((tcs.glob_type(dbi).ast.clone().into_info(info), tcs)),
+        Local(info, name, dbi) => Ok((tcs.local_type(dbi).ast.clone().into_info(info), tcs)),
         Pair(info, fst, snd) => {
             let (fst_ty, tcs) = infer(tcs, *fst)?;
             let (snd_ty, tcs) = infer(tcs, *snd)?;
@@ -167,6 +165,13 @@ pub fn check_subtype(tcs: TCS, subtype: &Term, supertype: &Term) -> TCM {
     use crate::syntax::core::Term::*;
     match (subtype, supertype) {
         (Type(sub_level), Type(super_level)) if sub_level <= super_level => Ok(tcs),
+        (Neut(Axi(uid0)), Neut(Axi(uid1))) => {
+            if uid0 == uid1 {
+                Ok(tcs)
+            } else {
+                Err(TCE::NotSameType(Neut(Axi(*uid0)), Neut(Axi(*uid1))))
+            }
+        }
         (Neut(Var(dbi0)), Neut(Var(dbi1))) => {
             if dbi0 == dbi1 {
                 Ok(tcs)
