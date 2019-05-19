@@ -157,13 +157,13 @@ fn trans_lam_lookup_failed() {
 fn trans_lam_global() {
     let code = r"let l = \a . b;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
+    /*
     let lam_abs = trans_expr(
         &lam_expr,
         &[AbsDecl::None],
         &[("b".to_string(), 0)].iter().cloned().collect(),
     )
     .unwrap();
-    /*
         match lam_abs {
             Abs::Lam(_, _, _, global_b) => match *global_b {
                 Abs::Var(_, b_index) => assert_eq!(b_index, 0),

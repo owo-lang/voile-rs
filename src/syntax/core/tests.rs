@@ -18,7 +18,8 @@ fn lisp_to_term(lisp: &Lisp) -> Term {
 fn many_to_term(block: &[Lisp], lisp: &Lisp) -> Term {
     use crate::syntax::lisp::Lisp::*;
     match block {
-        [] => Term::axiom(),
+        // So `()` == `()`.
+        [] => Term::axiom_with_value(0),
         [Sym("fst"), arg] => lisp_to_term(arg).first(),
         [Sym("snd"), arg] => lisp_to_term(arg).second(),
         [Sym("type"), arg] => Term::Type(arg.as_dbi().unwrap() as _),

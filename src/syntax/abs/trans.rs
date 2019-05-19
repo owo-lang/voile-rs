@@ -61,7 +61,7 @@ fn trans_expr_inner(
             let name = &ident.info.text;
             if local_map.contains_key(name) {
                 let dbi = local_map[name];
-                Ok(Abs::Local(ident.to_info(), local_env[dbi].clone(), dbi))
+                Ok(Abs::Local(ident.to_info(), local_env[dbi], dbi))
             } else if global_map.contains_key(name) {
                 match env[global_map[name]].clone() {
                     AbsDecl::Impl(abs) => Ok(abs),
@@ -151,7 +151,7 @@ fn trans_expr_inner(
 }
 
 fn introduce_abstractions(
-    params: &Vec<Ident>,
+    params: &[Ident],
     local_env: &mut Vec<Name>,
     local_map: &mut NamedDbi,
     names: &mut Vec<Name>,
