@@ -205,17 +205,17 @@ fn introduce_telescope(
         let param_name = name.info.text.clone();
         // These two are actually our assumption. Hope they're correct.
         assert_eq!(dt_env.len(), dt_map.len());
-        let shadowing = dt_map.get(&param_name).cloned();
-        for (_name, dbi) in dt_map.iter_mut() {
-            let dbi_value = *dbi;
-            *dbi += 1;
-            if shadowing == Some(dbi_value) {
-                // just remove the DBI map, for there still need to be a place holder in `Vec`
-                dt_env.remove(dbi_value);
-                // this is not necessary for dt_map will be updated below
-                // *dbi = 0;
-            }
+        // let shadowing = dt_map.get(&param_name).cloned();
+        dt_map.iter_mut().for_each(|(_name, dbi)| *dbi += 1);
+        /*
+        let dbi_value = *dbi;
+        if shadowing == Some(dbi_value) {
+            // just remove the DBI map, for there still need to be a place holder in `Vec`
+            dt_env.remove(dbi_value);
+            // this is not necessary for dt_map will be updated below
+            // *dbi = 0;
         }
+        */
         dt_map.insert(param_name, 0);
         let new_name = Name::default();
         dt_env.insert(0, new_name);
