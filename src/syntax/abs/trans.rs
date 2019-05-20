@@ -63,14 +63,7 @@ fn trans_expr_inner(
                 let dbi = local_map[name];
                 Ok(Abs::Local(ident.to_info(), local_env[dbi], dbi))
             } else if global_map.contains_key(name) {
-                match env[global_map[name]].clone() {
-                    AbsDecl::Impl(abs) => Ok(abs),
-                    AbsDecl::Both(_, abs) => Ok(abs),
-                    _ => Err(TCE::Textual(format!(
-                        "{} does not have an implementation.",
-                        name
-                    ))),
-                }
+                Ok(Abs::Var(ident.to_info(), global_map[name]))
             } else {
                 Err(TCE::LookUpFailed(ident.clone()))
             }
@@ -166,7 +159,7 @@ fn introduce_abstractions(
             }
         }
         local_map.insert(param.info.text.clone(), 0);
-        let new_name = Name::new();
+        let new_name = Name::default();
         local_env.insert(0, new_name);
         names.push(new_name);
     }
@@ -224,7 +217,7 @@ fn introduce_telescope(
             }
         }
         dt_map.insert(param_name, 0);
-        let new_name = Name::new();
+        let new_name = Name::default();
         dt_env.insert(0, new_name);
         names.push(new_name);
     }

@@ -11,8 +11,10 @@ impl Name {
     pub fn from(uid: UID) -> Self {
         Self { uid }
     }
+}
 
-    pub fn new() -> Self {
+impl Default for Name {
+    fn default() -> Self {
         Self::from(unsafe { next_uid() })
     }
 }
@@ -43,6 +45,8 @@ pub enum Abs {
     Bot(SyntaxInfo),
     /// Local variable
     Local(SyntaxInfo, Name, DBI),
+    /// Global variable
+    Var(SyntaxInfo, DBI),
     /// Meta variable
     Meta(SyntaxInfo),
     /// Constructor call
@@ -68,6 +72,7 @@ impl ToSyntaxInfo for Abs {
             Abs::Type(info, _) => info,
             Abs::Bot(info) => info,
             Abs::Local(info, _, _) => info,
+            Abs::Var(info, _) => info,
             Abs::Meta(info) => info,
             Abs::Cons(info) => info,
             Abs::ConsType(info) => info,

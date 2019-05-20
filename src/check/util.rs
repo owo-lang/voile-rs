@@ -9,6 +9,7 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
         Abs::Type(info, level) => (Term::Type(level).into_info(info), tcs),
         Abs::Bot(info) => (Term::Bot(0).into_info(info), tcs),
         Abs::Local(info, _, dbi) => (Term::var(dbi).into_info(info), tcs),
+        Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info), tcs),
         Abs::Meta(info) => panic!("Cannot compile meta variable at {}.", info),
         Abs::Cons(info) => unimplemented!(),
         Abs::ConsType(_) => unimplemented!(),
