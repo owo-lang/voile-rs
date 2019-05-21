@@ -13,6 +13,7 @@ pub fn check_decls(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
 }
 
 pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
+    println!("check_decl: {}.", decl);
     match decl {
         AbsDecl::Both(sign_abs, impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());

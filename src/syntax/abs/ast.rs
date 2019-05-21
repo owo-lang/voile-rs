@@ -31,13 +31,6 @@ impl PartialOrd for Name {
     }
 }
 
-/// Typed `Name`.
-#[derive(Debug, Clone)]
-pub struct TypedBound {
-    pub name: Name,
-    pub ty: Abs,
-}
-
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Abs {
     Type(SyntaxInfo, Level),

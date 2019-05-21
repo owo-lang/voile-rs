@@ -1,4 +1,4 @@
-use super::Abs;
+use super::{Abs, AbsDecl};
 use crate::syntax::common::DtKind::*;
 use std::fmt::{Display, Error, Formatter};
 
@@ -7,7 +7,7 @@ impl Display for Abs {
         match self {
             Abs::Type(_, level) => write!(f, "Type{:?}", level),
             Abs::Bot(_) => write!(f, "Bot"),
-            Abs::Local(_, name, dbi) => write!(f, "[{:?},{:?}]", name.uid, dbi),
+            Abs::Local(info, name, dbi) => write!(f, "{}[{:?},{:?}]", info.text, name.uid, dbi),
             Abs::Var(_, dbi) => write!(f, "<{:?}>", dbi),
             Abs::Meta(_) => unimplemented!(),
             Abs::Cons(_) => unimplemented!(),
@@ -19,11 +19,24 @@ impl Display for Abs {
             Abs::Dt(_, Sigma, name, fst, snd) => {
                 write!(f, "(<{:?}> : {}) * {}", name.uid, fst, snd)
             }
-            Abs::Lam(_, _, name, body) => write!(f, "\\{:?}. {}", name.uid, body),
+            Abs::Lam(_, param_info, name, body) => {
+                write!(f, "(\\{}[{:?}]. {})", param_info.text, name.uid, body)
+            }
             Abs::Pair(_, a, b) => write!(f, "({}, {})", a, b),
             Abs::Fst(_, p) => write!(f, "({}.1)", p),
             Abs::Snd(_, p) => write!(f, "({}.2)", p),
             Abs::Sum(_, _) => unimplemented!(),
+        }
+    }
+}
+
+impl Display for AbsDecl {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        match self {
+            AbsDecl::Sign(abs) => write!(f, "{}", abs),
+            AbsDecl::Impl(abs) => write!(f, "_ : {}", abs),
+            AbsDecl::Both(ty, val) => write!(f, "{} : {}", val, ty),
+            AbsDecl::None => write!(f, "// Empty definition."),
         }
     }
 }
