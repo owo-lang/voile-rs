@@ -7,8 +7,12 @@ mod ast;
 /// Desugaring the surface syntax tree to an abstract syntax tree.
 mod trans;
 
+/// Pretty-print AST.
+mod pretty;
+
 pub use self::ast::*;
 pub use self::trans::*;
+pub use self::pretty::*;
 
 #[cfg(test)]
 mod tests;

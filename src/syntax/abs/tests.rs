@@ -16,7 +16,10 @@ fn trans_bot() {
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
-        AbsDecl::Both(_ty_abs, _abs) => {}
+        AbsDecl::Both(ty_abs, abs) => {
+            println!("val {};", ty_abs);
+            println!("let {};", abs);
+        }
         _ => panic!(),
     };
 }
@@ -35,13 +38,19 @@ fn many_decls() {
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
-        AbsDecl::Both(_ty_abs, _abs) => {}
+        AbsDecl::Both(ty_abs, abs) => {
+            println!("val {};", ty_abs);
+            println!("let {};", abs);
+        }
         _ => panic!(),
     };
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
-        AbsDecl::Both(_ty_abs, _abs) => {}
+        AbsDecl::Both(ty_abs, abs) => {
+            println!("val {};", ty_abs);
+            println!("let {};", abs);
+        }
         _ => panic!(),
     };
     assert!(ctx.is_empty());
@@ -82,6 +91,7 @@ fn trans_pi_env() {
         .remove(0)
         .body;
     let pi_expr = trans_expr(&pi_expr, &[], &Default::default()).expect("Parse failed.");
+    println!("{}", pi_expr);
     let (_, bc) = must_be_pi(pi_expr);
     let (b, c) = must_be_pi(bc);
     // the type of `b`, `c` should be _(0), _(0)
@@ -96,6 +106,7 @@ fn trans_pi_shadowing() {
     let code = "val t : ((a : Type) -> (b : Type(a)) -> (b: Type(b)) -> Type(a));";
     let pi_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let pi_abs = trans_expr(&pi_expr, &[], &Default::default()).unwrap();
+    println!("{}", pi_abs);
     let (_, bc) = must_be_pi(pi_abs);
     let (b1, bc) = must_be_pi(bc);
     let (b2, c) = must_be_pi(bc);
@@ -113,6 +124,7 @@ fn trans_lam() {
     let code = r"let l = \a . \b . \a . b a;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let lam_abs = trans_expr(&lam_expr, &[], &Default::default()).unwrap();
+    println!("{}", lam_abs);
     let abs_lam_ba = must_be_lam(lam_abs);
     let abs_lam_a = must_be_lam(abs_lam_ba);
     match must_be_lam(abs_lam_a) {
@@ -130,6 +142,7 @@ fn trans_multi_param_lam() {
     let code = r"let l = \a b a . b a;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let lam_abs = trans_expr(&lam_expr, &[], &Default::default()).unwrap();
+    println!("{}", lam_abs);
     let abs_lam_ba = must_be_lam(lam_abs);
     let abs_lam_a = must_be_lam(abs_lam_ba);
     match must_be_lam(abs_lam_a) {
@@ -146,8 +159,8 @@ fn trans_multi_param_lam() {
 fn trans_lam_lookup_failed() {
     let code = r"let l = \a . b;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
-    let lam_abs = trans_expr(&lam_expr, &[], &Default::default()).unwrap_err();
-    match lam_abs {
+    let tce = trans_expr(&lam_expr, &[], &Default::default()).unwrap_err();
+    match tce {
         TCE::LookUpFailed(ident) => assert_eq!(ident.info.text, "b"),
         _ => panic!(),
     }
@@ -163,6 +176,7 @@ fn trans_lam_global() {
         &[("b".to_string(), 0)].iter().cloned().collect(),
     )
     .unwrap();
+    println!("{}", lam_abs);
     match lam_abs {
         Abs::Lam(_, _, _, global_b) => match *global_b {
             Abs::Var(_, b_index) => assert_eq!(b_index, 0),
