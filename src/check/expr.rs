@@ -59,10 +59,11 @@ pub fn check(mut tcs: TCS, expr: Abs, expected_type: Term) -> TermTCM {
             Ok((tcs.glob_val(dbi).ast.into_info(inferred.info), tcs))
         }
         (Abs::App(info, f, a), anything) => {
-            let (inferred, tcs) = infer(tcs, Abs::App(info.clone(), f.clone(), a.clone()))?;
+            let app = Abs::App(info, f, a);
+            let (inferred, tcs) = infer(tcs, app.clone())?;
             let tcs: TCS =
                 check_subtype(tcs, &inferred.ast, &anything).map_err(|e| e.wrap(inferred.info))?;
-            Ok(unsafe_compile(tcs, Abs::App(info, f, a)))
+            Ok(unsafe_compile(tcs, app))
         }
         (Abs::Bot(info), Term::Type(level)) => Ok((Term::Bot(level - 1).into_info(info), tcs)),
         (Abs::Dt(info, kind, name, param, ret), Term::Type(l)) => {

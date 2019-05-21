@@ -13,7 +13,7 @@ pub enum DtKind {
 pub type Level = u32;
 
 /// De Bruijn Indices. Checkout [Wikipedia](https://en.wikipedia.org/wiki/De_Bruijn_index) if you
-/// have no idea about this and you are curious about it.
+/// are curious but have no idea about it.
 pub type DBI = usize;
 
 pub type UID = usize;
