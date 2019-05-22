@@ -83,9 +83,11 @@ The name, *product* and *coproduct* also expresses such duality.
 Duality is a very nice property to have because it implies
 similar implementations.
 
-<p style="color: yellowgreen;">
-TODO This chapter is not finished.
-</p>
+Since first-class pattern matching solves the expression for free,
+we can split our feature into several libraries -- one core with many
+extensions. Library users can combine the extensions they want like a Jigsaw
+and exclude everything else (to avoid unwanted dependencies) or create their
+own extensions without touching the original codebase.
 
  [rec-calc]: https://dl.acm.org/citation.cfm?id=218572
  [ext-rec]: https://wiki.haskell.org/Extensible_record
@@ -95,6 +97,24 @@ TODO This chapter is not finished.
  [tse]: https://arxiv.org/abs/0910.2654
  [spec]: https://people.cs.uchicago.edu/~blume/classes/spr2005/cmsc22620/docs/langspec.pdf
  [ij-dtlc]: https://github.com/owo-lang/intellij-dtlc
+
+### Exceptions (undecided yet)
+
+MLPolyR exploits first-class sums in error-handling -- exceptions
+are treated as first-class sums while `try`-`catch` clauses are pattern
+matching on them ("consumes" a variant in a sum).
+This is like Java's `checked exceptions`, but with full type-inference.
+However, without the help of dependent types, there can be false positives
+such as conditional exceptions -- consider a function `f` like this:
+
+```mlpolyr
+fun f a = if a then throw bla else 0
+```
+
+Invoking it with `f false` will still enrage the compiler, treating this
+expression as exception-throwing.
+In the industry of dependent types, there isn't much development on
+exceptions. We might have a try here.
 
 ### Induction and Coinduction
 
@@ -114,7 +134,7 @@ which means reduction is still needed before checking some other terms against
 this sum-type-term.
 If there's recursion on a sum-type-term, like the natural number definition:
 
-```ignore
+```agda
 Nat = 'Zero | 'Suc Nat
 ```
 
@@ -130,14 +150,17 @@ TODO This chapter is not finished.
 
 # Implementation
 
-Voile's implementation is inspired from [Agda], [mlang] and its
+Voile's implementation is inspired from [Agda], [mlang], [MiniAgda] and its
 prototype, [minitt].
+
+[MiniAgda] supports induction, coinduction with sized types.
 
 <p style="color: yellowgreen;">
 TODO Something needs to be written here.
 </p>
 
  [Agda]: http://www.cse.chalmers.se/~ulfn/papers/thesis.pdf
+ [MiniAgda]: http://www.cse.chalmers.se/~abela/miniagda
  [mlang]: https://github.com/molikto/mlang
  [minitt]: https://lib.rs/crates/minitt
 
