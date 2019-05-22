@@ -220,5 +220,12 @@ fn introduce_telescope(
         names.push(new_name);
         dt_vec.push(param_ty.clone());
     }
+    if param.names.is_empty() {
+        let new_name = Name::default();
+        dt_map.iter_mut().for_each(|(_name, dbi)| *dbi += 1);
+        dt_env.insert(0, new_name);
+        names.push(new_name);
+        dt_vec.push(param_ty);
+    }
     Ok(dt_vec)
 }

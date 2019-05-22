@@ -7,6 +7,7 @@
 + Upgrade KaTeX to 0.10.2
 + Largely refactor abstract syntax translation logic
 + Abstract/Core pretty-printer
++ Fix evaluator and parameter desugarer
 
 # 0.0.6
 

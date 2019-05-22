@@ -4,11 +4,10 @@
 // Author: ice1000
 //
 
-val id: (A : Type) -> (a : A) -> A;
+val id: (A : Type) -> A -> A;
 let id = \A a. a;
 
 val flip : (A B C : Type)
-         -> (f : (a : A) -> (b : B) -> C)
-         -> ((b : B) -> (a : A) -> C);
-// This does not check. Why?
+         -> (A -> B -> C)
+         -> (B -> A -> C);
 let flip = \A B C f a b. id C (f b a);
