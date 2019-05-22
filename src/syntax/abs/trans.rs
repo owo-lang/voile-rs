@@ -218,7 +218,7 @@ fn introduce_telescope(
         let new_name = Name::default();
         dt_env.insert(0, new_name);
         names.push(new_name);
+        dt_vec.push(param_ty.clone());
     }
-    dt_vec.push(param_ty);
     Ok(dt_vec)
 }
