@@ -1,6 +1,8 @@
-use super::{Abs, AbsDecl};
-use crate::syntax::common::DtKind::*;
 use std::fmt::{Display, Error, Formatter};
+
+use crate::syntax::common::DtKind::*;
+
+use super::{Abs, AbsDecl};
 
 impl Display for Abs {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {

@@ -1,6 +1,8 @@
 mod ast;
+mod pretty;
 
 pub use self::ast::*;
+pub use self::pretty::*;
 
 use super::common::{SyntaxInfo, ToSyntaxInfo, DBI};
 
