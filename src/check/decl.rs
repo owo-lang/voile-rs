@@ -13,12 +13,17 @@ pub fn check_decls(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
 }
 
 pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
-    println!("check_decl: {}.", decl);
     match decl {
         AbsDecl::Both(sign_abs, impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let (sign, tcs) = check_type(tcs, sign_abs)?;
-            let (val, mut tcs) = check(tcs, impl_abs, sign.ast.clone())?;
+            let (sig_fake, tcs) = tcs.check_type(&sign_abs)?;
+            println!("checked sig: {}", sig_fake.ast);
+            let (sign, tcs) = tcs.unsafe_compile(sign_abs);
+            println!("compiled sig: {}", sign.ast);
+            let (val_fake, tcs) = tcs.check(&impl_abs, &sign.ast)?;
+            println!("checked body: {}", val_fake.ast);
+            let (val, mut tcs) = tcs.unsafe_compile(impl_abs);
+            println!("compiled body: {}", val.ast);
 
             tcs.gamma.push(sign);
             tcs.env.push(val);
@@ -28,7 +33,8 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         AbsDecl::Sign(sign_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
             let syntax_info = sign_abs.to_info();
-            let (val, mut tcs) = tcs.check_type(sign_abs)?;
+            let (_, tcs) = tcs.check_type(&sign_abs)?;
+            let (val, mut tcs) = tcs.unsafe_compile(sign_abs);
             tcs.env.push(Term::axiom().into_info(syntax_info));
             tcs.gamma.push(val);
             // Give warning on axiom?
@@ -36,7 +42,7 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         }
         AbsDecl::Impl(impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let (inferred, tcs) = tcs.infer(impl_abs.clone())?;
+            let (inferred, tcs) = tcs.infer(&impl_abs)?;
             let (compiled, mut tcs) = tcs.unsafe_compile(impl_abs);
             tcs.env.push(compiled);
             tcs.gamma.push(inferred);
