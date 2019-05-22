@@ -1,5 +1,6 @@
-use crate::syntax::common::*;
 use std::cmp::Ordering;
+
+use crate::syntax::common::*;
 
 /// Unique identifier.
 #[derive(Debug, Clone, Copy, Eq, Ord)]

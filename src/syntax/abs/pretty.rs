@@ -11,7 +11,7 @@ impl Display for Abs {
             Abs::Bot(_) => write!(f, "Bot"),
             Abs::Local(info, name, dbi) => write!(f, "{}[{:?},{:?}]", info.text, name.uid, dbi),
             Abs::Var(_, dbi) => write!(f, "<{:?}>", dbi),
-            Abs::Meta(_) => unimplemented!(),
+            Abs::Meta(info) => write!(f, "?{}", info.text),
             Abs::Cons(_) => unimplemented!(),
             Abs::ConsType(_) => unimplemented!(),
             Abs::App(_, a, b) => write!(f, "({} {})", a, b),

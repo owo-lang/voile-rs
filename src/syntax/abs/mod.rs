@@ -11,8 +11,8 @@ mod trans;
 mod pretty;
 
 pub use self::ast::*;
-pub use self::trans::*;
 pub use self::pretty::*;
+pub use self::trans::*;
 
 #[cfg(test)]
 mod tests;
