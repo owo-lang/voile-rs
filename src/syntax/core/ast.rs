@@ -59,6 +59,11 @@ impl RedEx for Term {
                 param_type.reduce_with_dbi(arg.clone(), dbi),
                 body.reduce_with_dbi(arg, dbi + 1),
             ),
+            Term::Dt(kind, Closure { param_type, body }) => Term::dependent_type(
+                kind,
+                param_type.reduce_with_dbi(arg.clone(), dbi),
+                body.reduce_with_dbi(arg, dbi + 1),
+            ),
             // Cannot reduce
             e => e,
         }
@@ -179,16 +184,16 @@ impl Term {
         Term::Neut(Neutral::Snd(Box::new(pair)))
     }
 
-    pub fn dependent_type(kind: DtKind, closure: Closure) -> Self {
-        Term::Dt(kind, closure)
+    pub fn dependent_type(kind: DtKind, param_type: Term, body: Term) -> Self {
+        Term::Dt(kind, Closure::new(param_type, body))
     }
 
     pub fn pi(param_type: Term, body: Term) -> Self {
-        Self::dependent_type(DtKind::Pi, Closure::new(param_type, body))
+        Self::dependent_type(DtKind::Pi, param_type, body)
     }
 
     pub fn sig(param_type: Term, body: Term) -> Self {
-        Self::dependent_type(DtKind::Sigma, Closure::new(param_type, body))
+        Self::dependent_type(DtKind::Sigma, param_type, body)
     }
 
     pub fn into_neutral(self) -> Result<Neutral, Self> {

@@ -7,8 +7,8 @@
 val id: (A : Type) -> (a : A) -> A;
 let id = \A a. a;
 
-val flip : (A : Type)
-         -> (f : (a : A) -> (b : A) -> A)
-         -> ((b : A) -> (a : A) -> A);
+val flip : (A : Type) -> (B : Type) -> (C : Type)
+         -> (f : (a : A) -> (b : B) -> C)
+         -> ((b : B) -> (a : A) -> C);
 // This does not check. Why?
-let flip = \A f a b. id A (f b a);
+let flip = \A B C f a b. id C (f b a);

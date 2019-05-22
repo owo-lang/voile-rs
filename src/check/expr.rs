@@ -61,7 +61,7 @@ pub fn check(mut tcs: TCS, expr: &Abs, expected_type: &Term) -> TermTCM {
             let (ret, mut tcs) = tcs.check_type(&**ret)?;
             tcs.pop_local();
             let clos = Closure::new(param.ast, ret.ast);
-            let dt = Term::dependent_type(*kind, clos).into_info(info.clone());
+            let dt = Term::Dt(*kind, clos).into_info(info.clone());
             Ok((dt, tcs))
         }
         (expr, anything) => {
@@ -91,7 +91,7 @@ pub fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = check_type(tcs, &**ret)?;
             tcs.pop_local();
-            let dt = Term::dependent_type(*kind, Closure::new(param.ast, ret.ast)).into_info(info);
+            let dt = Term::dependent_type(*kind, param.ast, ret.ast).into_info(info);
             Ok((dt, tcs))
         }
         Abs::ConsType(_) => unimplemented!(),

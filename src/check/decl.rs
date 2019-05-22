@@ -15,14 +15,12 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
     match decl {
         AbsDecl::Both(sign_abs, impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let (sign_fake, tcs) = tcs.check_type(&sign_abs)?;
-            println!("checked sig: {}", sign_fake.ast);
+            let (_sign_fake, tcs) = tcs.check_type(&sign_abs)?;
             let (sign, tcs) = tcs.unsafe_compile(sign_abs);
-            println!("compiled sig: {}", sign.ast);
-            let (val_fake, tcs) = tcs.check(&impl_abs, &sign.ast)?;
-            println!("checked body: {}", val_fake.ast);
+            println!("sign: {}", sign.ast);
+            let (_val_fake, tcs) = tcs.check(&impl_abs, &sign.ast)?;
             let (val, mut tcs) = tcs.unsafe_compile(impl_abs);
-            println!("compiled body: {}", val.ast);
+            println!("body: {}", val.ast);
 
             tcs.gamma.push(sign);
             tcs.env.push(val);

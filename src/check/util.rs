@@ -23,7 +23,7 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             let (param_ty, tcs) = unsafe_compile(tcs, *param_ty);
             let (ret_ty, tcs) = unsafe_compile(tcs, *ret_ty);
             let closure = Closure::new(param_ty.ast, ret_ty.ast);
-            let term = Term::dependent_type(kind, closure);
+            let term = Term::Dt(kind, closure);
             (term.into_info(info), tcs)
         }
         Abs::Pair(info, a, b) => {
@@ -68,7 +68,7 @@ pub fn unsafe_evaluate(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             let (param_ty, tcs) = unsafe_compile(tcs, *param_ty);
             let (ret_ty, tcs) = unsafe_compile(tcs, *ret_ty);
             let closure = Closure::new(param_ty.ast, ret_ty.ast);
-            let term = Term::dependent_type(kind, closure);
+            let term = Term::Dt(kind, closure);
             (term.into_info(info), tcs)
         }
         Abs::Pair(info, a, b) => {
