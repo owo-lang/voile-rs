@@ -1,6 +1,5 @@
 use crate::syntax::abs::AbsDecl;
 
-use super::expr::{check, check_type};
 use super::monad::{TCM, TCS};
 use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::Term;
@@ -16,8 +15,8 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
     match decl {
         AbsDecl::Both(sign_abs, impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let (sig_fake, tcs) = tcs.check_type(&sign_abs)?;
-            println!("checked sig: {}", sig_fake.ast);
+            let (sign_fake, tcs) = tcs.check_type(&sign_abs)?;
+            println!("checked sig: {}", sign_fake.ast);
             let (sign, tcs) = tcs.unsafe_compile(sign_abs);
             println!("compiled sig: {}", sign.ast);
             let (val_fake, tcs) = tcs.check(&impl_abs, &sign.ast)?;

@@ -4,7 +4,6 @@ use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::{Closure, RedEx, Term};
 
 use super::monad::{TermTCM, TCE, TCM, TCS};
-use super::util::unsafe_compile;
 
 /// $$
 /// \newcommand\U{\textsf{Type}}
@@ -35,43 +34,20 @@ pub fn check(mut tcs: TCS, expr: &Abs, expected_type: &Term) -> TermTCM {
             tcs.local_env.push(fst_term);
             let (snd_term, mut tcs) = tcs.check(&**snd, &snd_ty)?;
             tcs.pop_local();
-            Ok((
-                Term::pair(fst_term_ast, snd_term.ast).into_info(info.clone()),
-                tcs,
-            ))
+            let pair = Term::pair(fst_term_ast, snd_term.ast).into_info(info.clone());
+            Ok((pair, tcs))
         }
-        (Abs::Lam(_full_info, param_info, name, body), Term::Dt(Pi, ret_ty)) => {
+        (Abs::Lam(full_info, param_info, name, body), Term::Dt(Pi, ret_ty)) => {
             let param_type = ret_ty.param_type.clone().into_info(param_info.clone());
-            tcs.local_gamma.push(param_type);
+            tcs.local_gamma.push(param_type.clone());
             let mocked = Term::axiom_with_value(name.uid);
             tcs.local_env
                 .push(mocked.clone().into_info(param_info.clone()));
             let ret_ty_body = ret_ty.body.clone().instantiate(mocked);
             let (lam_term, mut tcs) = tcs.check(body, &ret_ty_body)?;
             tcs.pop_local();
-            Ok((lam_term, tcs))
-        }
-        (Abs::Local(info, name, dbi), anything) => {
-            let inferred = tcs.local_type(*dbi).ast.into_info(info.clone());
-            let tcs: TCS = tcs
-                .check_subtype(&inferred.ast, &anything)
-                .map_err(|e| e.wrap(inferred.info.clone()))?;
-            // This is the key difference from `check` compilation and `unsafe_compile` compilation
-            Ok((tcs.local_val(*dbi).ast.into_info(inferred.info), tcs))
-        }
-        (Abs::Var(info, dbi), anything) => {
-            let inferred = tcs.glob_type(*dbi).ast.into_info(info.clone());
-            let tcs: TCS = tcs
-                .check_subtype(&inferred.ast, &anything)
-                .map_err(|e| e.wrap(inferred.info.clone()))?;
-            Ok((tcs.glob_val(*dbi).ast.into_info(inferred.info), tcs))
-        }
-        (Abs::App(info, f, a), anything) => {
-            let (inferred, tcs) = tcs.infer(expr)?;
-            let tcs: TCS = tcs
-                .check_subtype(&inferred.ast, &anything)
-                .map_err(|e| e.wrap(inferred.info))?;
-            Ok(tcs.unsafe_evaluate(expr.clone()))
+            let lam = Term::lam(param_type.ast, lam_term.ast).into_info(full_info.clone());
+            Ok((lam, tcs))
         }
         (Abs::Bot(info), Term::Type(level)) => {
             Ok((Term::Bot(level - 1).into_info(info.clone()), tcs))
@@ -84,11 +60,17 @@ pub fn check(mut tcs: TCS, expr: &Abs, expected_type: &Term) -> TermTCM {
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = tcs.check_type(&**ret)?;
             tcs.pop_local();
-            let dt = Term::dependent_type(*kind, Closure::new(param.ast, ret.ast))
-                .into_info(info.clone());
+            let clos = Closure::new(param.ast, ret.ast);
+            let dt = Term::dependent_type(*kind, clos).into_info(info.clone());
             Ok((dt, tcs))
         }
-        (e, t) => panic!("Unimplemented checking: `{}` against `{}`.", e, t),
+        (expr, anything) => {
+            let (inferred, tcs) = tcs.infer(expr)?;
+            let tcs: TCS = tcs
+                .check_subtype(&inferred.ast, &anything)
+                .map_err(|e| e.wrap(inferred.info))?;
+            Ok(tcs.unsafe_evaluate(expr.clone()))
+        }
     }
 }
 
@@ -99,7 +81,6 @@ pub fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
         Abs::Type(_, level) => Ok((Term::Type(*level).into_info(info), tcs)),
         Abs::Bot(_) => Ok((Term::Bot(0).into_info(info), tcs)),
         Abs::Local(_, name, dbi) if tcs.local_is_type(*dbi) => {
-            // Rust does not allow matching `info` out :(
             let axiom = Term::axiom_with_value(name.uid).into_info(info);
             Ok((axiom, tcs))
         }
@@ -113,7 +94,7 @@ pub fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
             let dt = Term::dependent_type(*kind, Closure::new(param.ast, ret.ast)).into_info(info);
             Ok((dt, tcs))
         }
-        Abs::ConsType(info) => unimplemented!(),
+        Abs::ConsType(_) => unimplemented!(),
         e => Err(TCE::NotType(info, e.clone())),
     }
 }

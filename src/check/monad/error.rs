@@ -38,21 +38,21 @@ impl Display for TCE {
             TCE::TypeNotInGamma(id) => write!(f, "Type info not in Gamma for: {}.", id),
             TCE::NotSigma(id, term) => write!(
                 f,
-                "Expected a sigma type expression, got: `{:?}` at {}.",
+                "Expected a sigma type expression, got: `{}` at {}.",
                 term, id
             ),
             TCE::NotPi(id, term) => write!(
                 f,
-                "Expected a pi type expression (function), got: `{:?}` at {}.",
+                "Expected a pi type expression (function), got: `{}` at {}.",
                 term, id
             ),
             TCE::NotSameType(term1, term2) => write!(
                 f,
-                "Expected `{:?}` and `{:?}` to be the same type.",
+                "Expected `{}` and `{}` to be the same type.",
                 term1, term2
             ),
             TCE::NotType(id, abs) => {
-                write!(f, "Expected a type expression, got: `{:?}` at {}.", abs, id)
+                write!(f, "Expected a type expression, got: `{}` at {}.", abs, id)
             }
             TCE::DbiOverflow(expected, actual) => write!(
                 f,
@@ -67,7 +67,7 @@ impl Display for TCE {
             }
             TCE::LevelMismatch(expr, expected_to_be_small, big) => write!(
                 f,
-                "Expression `{}` has level {:?}, which is not smaller than {:?}.",
+                "Expression `{}` has level {}, which is not smaller than {}.",
                 expr, expected_to_be_small, big
             ),
             TCE::Wrapped(inner, info) => write!(f, "{}\nAt: {}.", inner, info),

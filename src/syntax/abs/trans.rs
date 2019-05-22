@@ -149,7 +149,7 @@ fn introduce_abstractions(
 ) {
     for param in params {
         let shadowing = local_map.get(&param.info.text).cloned();
-        for (name, dbi) in local_map.iter_mut() {
+        for (_name, dbi) in local_map.iter_mut() {
             let dbi_value = *dbi;
             *dbi += 1;
             if shadowing == Some(dbi_value) {

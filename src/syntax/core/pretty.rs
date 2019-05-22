@@ -25,11 +25,11 @@ impl Display for Closure {
 impl Display for Term {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
-            Term::Type(l) => write!(f, "Type{:?}", l),
+            Term::Type(l) => write!(f, "set{:?}", l),
             Term::Bot(l) => write!(f, "!{:?}", l),
-            Term::Lam(clos) => write!(f, "(lam {})", clos),
-            Term::Dt(Pi, clos) => write!(f, "(pi {})", clos),
-            Term::Dt(Sigma, clos) => write!(f, "(sig {})", clos),
+            Term::Lam(clos) => write!(f, "({} . {})", clos.param_type, clos.body),
+            Term::Dt(Pi, clos) => write!(f, "({} -> {})", clos.param_type, clos.body),
+            Term::Dt(Sigma, clos) => write!(f, "({} * {})", clos.param_type, clos.body),
             Term::Pair(fst, snd) => write!(f, "({}, {})", fst, snd),
             Term::Neut(neut) => neut.fmt(f),
         }

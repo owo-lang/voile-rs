@@ -7,7 +7,7 @@ use super::{Abs, AbsDecl};
 impl Display for Abs {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
-            Abs::Type(_, level) => write!(f, "Type{:?}", level),
+            Abs::Type(_, level) => write!(f, "set{:?}", level),
             Abs::Bot(_) => write!(f, "Bot"),
             Abs::Local(info, name, dbi) => write!(f, "{}[{:?},{:?}]", info.text, name.uid, dbi),
             Abs::Var(_, dbi) => write!(f, "<{:?}>", dbi),
