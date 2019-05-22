@@ -122,6 +122,4 @@ pub enum AbsDecl {
     Impl(Abs),
     /// `Sign` and `Impl`
     Both(Abs, Abs),
-    /// Postulated value, like lambda parameters.
-    None,
 }

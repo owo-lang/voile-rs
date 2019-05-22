@@ -1,7 +1,7 @@
 use super::{trans_decls, AbsDecl};
 use crate::check::monad::TCE;
 use crate::syntax::abs::{trans_expr, Abs};
-use crate::syntax::common::{DtKind, DBI};
+use crate::syntax::common::{DtKind, SyntaxInfo, DBI};
 use crate::syntax::surf::parse_str_err_printed;
 
 #[test]
@@ -172,7 +172,12 @@ fn trans_lam_global() {
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let lam_abs = trans_expr(
         &lam_expr,
-        &[AbsDecl::None],
+        &[AbsDecl::Impl(Abs::Meta(SyntaxInfo {
+            text: "".to_owned(),
+            start: 0,
+            start_line: 0,
+            end: 0,
+        }))],
         &[("b".to_string(), 0)].iter().cloned().collect(),
     )
     .unwrap();

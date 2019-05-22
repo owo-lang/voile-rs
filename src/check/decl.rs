@@ -42,7 +42,6 @@ pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             tcs.gamma.push(inferred);
             Ok(tcs)
         }
-        AbsDecl::None => unimplemented!(),
     }
 }
 

@@ -6,7 +6,7 @@
 + Lambda desugar (#59, #62)
 + Upgrade KaTeX to 0.10.2
 + Largely refactor abstract syntax translation logic
-+ Abstract pretty-printer
++ Abstract/Core pretty-printer
 
 # 0.0.6
 

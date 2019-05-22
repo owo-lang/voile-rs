@@ -38,7 +38,6 @@ impl Display for AbsDecl {
             AbsDecl::Sign(abs) => write!(f, "{}", abs),
             AbsDecl::Impl(abs) => write!(f, "_ : {}", abs),
             AbsDecl::Both(ty, val) => write!(f, "{} : {}", val, ty),
-            AbsDecl::None => write!(f, "// Empty definition."),
         }
     }
 }
