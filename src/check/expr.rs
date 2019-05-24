@@ -77,7 +77,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Term) -> TermTCM {
         (expr, anything) => {
             let (inferred, tcs) = tcs.infer(expr)?;
             let tcs: TCS = tcs
-                .check_subtype(&inferred.ast, &anything)
+                .check_subtype(&inferred.ast, anything)
                 .map_err(|e| e.wrap(inferred.info))?;
             Ok(tcs.unsafe_evaluate(expr.clone()))
         }
