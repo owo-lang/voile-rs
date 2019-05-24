@@ -84,8 +84,9 @@ Duality is a very nice property to have because it implies
 similar implementations.
 
 Since first-class pattern matching solves the expression for free,
-we can split our feature into several libraries -- one core with many
-extensions. Library users can combine the extensions they want like a Jigsaw
+library authors can split all their features into several libraries
+-- one core library with many extensions. Library users can
+combine the core with extensions they want like a Jigsaw
 and exclude everything else (to avoid unwanted dependencies) or create their
 own extensions without touching the original codebase.
 
@@ -103,9 +104,10 @@ own extensions without touching the original codebase.
 MLPolyR exploits first-class sums in error-handling -- exceptions
 are treated as first-class sums while `try`-`catch` clauses are pattern
 matching on them ("consumes" a variant in a sum).
-This is like Java's `checked exceptions`, but with full type-inference.
+Putting exceptions into function signatures
+looks like Java's `checked exceptions`, but with full type-inference.
 However, without the help of dependent types, there can be false positives
-such as conditional exceptions -- consider a function `f` like this:
+such as conditionally-thrown exceptions -- consider a function `f` like this:
 
 ```mlpolyr
 fun f a = if a then throw bla else 0

@@ -116,14 +116,15 @@ impl RedEx for Neutral {
     }
 }
 
-/// Non-redex.
+/// Non-redex, canonical values.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Term {
     /// Type universe.
     Type(Level),
     /// An empty sum.
     Bot(Level),
-    /// Closure.
+    /// Closure with parameter typed.
+    /// For untyped closures, it can be represented as `Neut` directly.
     Lam(Closure),
     /// Pi-like types (dependent types).
     Dt(DtKind, Closure),
