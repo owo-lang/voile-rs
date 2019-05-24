@@ -1,6 +1,6 @@
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{Level, SyntaxInfo, DBI};
-use crate::syntax::core::Term;
+use crate::syntax::core::Val;
 use crate::syntax::surf::Ident;
 use std::fmt::{Display, Error as FmtError, Formatter};
 
@@ -10,12 +10,12 @@ pub enum TCE {
     Textual(String),
     CouldNotInfer(SyntaxInfo),
     TypeNotInGamma(SyntaxInfo),
-    NotSigma(SyntaxInfo, Term),
-    NotPi(SyntaxInfo, Term),
-    NotSameType(Term, Term),
+    NotSigma(SyntaxInfo, Val),
+    NotPi(SyntaxInfo, Val),
+    NotSameType(Val, Val),
     NotTypeAbs(SyntaxInfo, Abs),
-    NotTypeTerm(SyntaxInfo, Term),
-    NotUniverseTerm(SyntaxInfo, Term),
+    NotTypeTerm(SyntaxInfo, Val),
+    NotUniverseTerm(SyntaxInfo, Val),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
     /// Expected the first level to be smaller than second.

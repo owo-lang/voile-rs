@@ -6,7 +6,7 @@ pub use self::pretty::*;
 
 use super::common::{SyntaxInfo, ToSyntaxInfo, DBI};
 
-impl Term {
+impl Val {
     pub fn into_info(self, syntax_info: SyntaxInfo) -> TermInfo {
         TermInfo::new(self, syntax_info)
     }
@@ -16,16 +16,16 @@ impl Term {
 /// This is what should be stored inside of the context.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TermInfo {
-    pub ast: Term,
+    pub ast: Val,
     pub info: SyntaxInfo,
 }
 
 impl TermInfo {
-    pub fn new(ast: Term, info: SyntaxInfo) -> Self {
+    pub fn new(ast: Val, info: SyntaxInfo) -> Self {
         Self { ast, info }
     }
 
-    pub fn map_ast(self, f: impl FnOnce(Term) -> Term) -> Self {
+    pub fn map_ast(self, f: impl FnOnce(Val) -> Val) -> Self {
         Self::new(f(self.ast), self.info)
     }
 

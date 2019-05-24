@@ -2,7 +2,7 @@ use crate::syntax::abs::AbsDecl;
 
 use super::monad::{TCM, TCS};
 use crate::syntax::common::ToSyntaxInfo;
-use crate::syntax::core::Term;
+use crate::syntax::core::Val;
 
 pub fn check_decls(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
     for decl in decls.into_iter() {
@@ -32,7 +32,7 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             let syntax_info = sign_abs.to_info();
             let (sign_fake, tcs) = tcs.check_type(&sign_abs)?;
             let (val, mut tcs) = tcs.unsafe_compile(sign_abs, Some(sign_fake.ast));
-            tcs.env.push(Term::axiom().into_info(syntax_info));
+            tcs.env.push(Val::axiom().into_info(syntax_info));
             tcs.gamma.push(val);
             // Give warning on axiom?
             Ok(tcs)

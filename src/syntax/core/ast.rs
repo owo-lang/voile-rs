@@ -2,64 +2,64 @@ use std::collections::btree_map::BTreeMap;
 
 use crate::syntax::common::{next_uid, DtKind, Level, DBI, UID};
 
-pub type NamedEnv = BTreeMap<String, Term>;
+pub type NamedEnv = BTreeMap<String, Val>;
 
 /// Reducible expressions.
 pub trait RedEx: Sized {
     /// This is primarily a private implementation-related API.
     /// Use at your own risk.
-    fn reduce_with_dbi(self, arg: Term, dbi: DBI) -> Term;
+    fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val;
 
     /// Instantiate `self` as a closure (possibly neutral terms) with
     /// a concrete argument.
     #[inline]
-    fn instantiate(self, arg: Term) -> Term {
+    fn instantiate(self, arg: Val) -> Val {
         self.reduce_with_dbi(arg, 0)
     }
 }
 
-impl Term {
+impl Val {
     /// Just for evaluation during beta-reduction.
-    pub fn apply(self, arg: Term) -> Term {
+    pub fn apply(self, arg: Val) -> Val {
         match self {
-            Term::Lam(closure) => closure.body.instantiate(arg),
-            Term::Neut(n) => Term::app(n, arg),
+            Val::Lam(closure) => closure.body.instantiate(arg),
+            Val::Neut(n) => Val::app(n, arg),
             e => panic!("Cannot apply on `{:?}`.", e),
         }
     }
 
     /// Just for evaluation during beta-reduction.
-    pub fn first(self) -> Term {
+    pub fn first(self) -> Val {
         match self {
-            Term::Pair(a, _) => *a,
-            Term::Neut(n) => Term::fst(n),
+            Val::Pair(a, _) => *a,
+            Val::Neut(n) => Val::fst(n),
             e => panic!("Cannot project on `{:?}`.", e),
         }
     }
 
     /// Just for evaluation during beta-reduction.
-    pub fn second(self) -> Term {
+    pub fn second(self) -> Val {
         match self {
-            Term::Pair(_, b) => *b,
-            Term::Neut(n) => Term::snd(n),
+            Val::Pair(_, b) => *b,
+            Val::Neut(n) => Val::snd(n),
             e => panic!("Cannot project on `{:?}`.", e),
         }
     }
 }
 
-impl RedEx for Term {
-    fn reduce_with_dbi(self, arg: Term, dbi: DBI) -> Term {
+impl RedEx for Val {
+    fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val {
         match self {
-            Term::Pair(a, b) => Term::pair(
+            Val::Pair(a, b) => Val::pair(
                 a.reduce_with_dbi(arg.clone(), dbi),
                 b.reduce_with_dbi(arg, dbi),
             ),
-            Term::Neut(neutral_value) => neutral_value.reduce_with_dbi(arg, dbi),
-            Term::Lam(Closure { param_type, body }) => Term::lam(
+            Val::Neut(neutral_value) => neutral_value.reduce_with_dbi(arg, dbi),
+            Val::Lam(Closure { param_type, body }) => Val::lam(
                 param_type.reduce_with_dbi(arg.clone(), dbi),
                 body.reduce_with_dbi(arg, dbi + 1),
             ),
-            Term::Dt(kind, Closure { param_type, body }) => Term::dependent_type(
+            Val::Dt(kind, Closure { param_type, body }) => Val::dependent_type(
                 kind,
                 param_type.reduce_with_dbi(arg.clone(), dbi),
                 body.reduce_with_dbi(arg, dbi + 1),
@@ -78,7 +78,7 @@ pub enum Neutral {
     /// Postulated value, aka axioms.
     Axi(UID),
     /// Function application.
-    App(Box<Self>, Box<Term>),
+    App(Box<Self>, Box<Val>),
     /// Projecting the first element of a pair.
     Fst(Box<Self>),
     /// Projecting the second element of a pair.
@@ -95,12 +95,12 @@ impl Neutral {
 }
 
 impl RedEx for Neutral {
-    fn reduce_with_dbi(self, arg: Term, dbi: DBI) -> Term {
+    fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val {
         use self::Neutral::*;
         match self {
             Var(n) if dbi == n => arg,
-            Var(n) => Term::var(n),
-            Axi(i) => Term::axiom_with_value(i),
+            Var(n) => Val::var(n),
+            Axi(i) => Val::axiom_with_value(i),
             App(function, argument) => function
                 .reduce_with_dbi(arg.clone(), dbi)
                 .apply(argument.reduce_with_dbi(arg, dbi)),
@@ -116,9 +116,12 @@ impl RedEx for Neutral {
     }
 }
 
+/// Type values.
+pub type TVal = Val;
+
 /// Non-redex, canonical values.
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Term {
+pub enum Val {
     /// Type universe.
     Type(Level),
     /// An empty sum.
@@ -129,43 +132,43 @@ pub enum Term {
     /// Pi-like types (dependent types).
     Dt(DtKind, Closure),
     /// Sum type literal.
-    Sum(BTreeMap<String, Term>),
+    Sum(BTreeMap<String, TVal>),
     /// Sigma instance.
     Pair(Box<Self>, Box<Self>),
     Neut(Neutral),
 }
 
-impl Term {
+impl Val {
     pub fn is_type(&self) -> bool {
         match self {
-            Term::Type(_) => true,
-            Term::Bot(_) => true,
-            Term::Lam(_) => false,
-            Term::Dt(_, _) => true,
-            Term::Sum(_) => true,
-            Term::Pair(_, _) => false,
+            Val::Type(_) => true,
+            Val::Bot(_) => true,
+            Val::Lam(_) => false,
+            Val::Dt(_, _) => true,
+            Val::Sum(_) => true,
+            Val::Pair(_, _) => false,
             // In case it's neutral, we use `is_universe` on its type.
-            Term::Neut(_) => false,
+            Val::Neut(_) => false,
         }
     }
 
     pub fn is_universe(&self) -> bool {
         match self {
-            Term::Type(_) => true,
+            Val::Type(_) => true,
             _ => false,
         }
     }
 
     pub fn pair(first: Self, second: Self) -> Self {
-        Term::Pair(Box::new(first), Box::new(second))
+        Val::Pair(Box::new(first), Box::new(second))
     }
 
     pub fn var(index: DBI) -> Self {
-        Term::Neut(Neutral::Var(index))
+        Val::Neut(Neutral::Var(index))
     }
 
-    pub fn lam(arg_type: Self, body: Self) -> Self {
-        Term::Lam(Closure::new(arg_type, body))
+    pub fn lam(arg_type: TVal, body: Self) -> Self {
+        Val::Lam(Closure::new(arg_type, body))
     }
 
     pub fn axiom() -> Self {
@@ -173,49 +176,49 @@ impl Term {
     }
 
     pub(crate) fn axiom_with_value(uid: UID) -> Self {
-        Term::Neut(Neutral::Axi(uid))
+        Val::Neut(Neutral::Axi(uid))
     }
 
     pub fn app(function: Neutral, arg: Self) -> Self {
-        Term::Neut(Neutral::App(Box::new(function), Box::new(arg)))
+        Val::Neut(Neutral::App(Box::new(function), Box::new(arg)))
     }
 
     pub fn fst(pair: Neutral) -> Self {
-        Term::Neut(Neutral::Fst(Box::new(pair)))
+        Val::Neut(Neutral::Fst(Box::new(pair)))
     }
 
     pub fn snd(pair: Neutral) -> Self {
-        Term::Neut(Neutral::Snd(Box::new(pair)))
+        Val::Neut(Neutral::Snd(Box::new(pair)))
     }
 
-    pub fn dependent_type(kind: DtKind, param_type: Term, body: Term) -> Self {
-        Term::Dt(kind, Closure::new(param_type, body))
+    pub fn dependent_type(kind: DtKind, param_type: TVal, body: Self) -> Self {
+        Val::Dt(kind, Closure::new(param_type, body))
     }
 
-    pub fn pi(param_type: Term, body: Term) -> Self {
+    pub fn pi(param_type: TVal, body: TVal) -> Self {
         Self::dependent_type(DtKind::Pi, param_type, body)
     }
 
-    pub fn sig(param_type: Term, body: Term) -> Self {
+    pub fn sig(param_type: TVal, body: TVal) -> Self {
         Self::dependent_type(DtKind::Sigma, param_type, body)
     }
 
     pub fn into_neutral(self) -> Result<Neutral, Self> {
         match self {
-            Term::Neut(n) => Ok(n),
+            Val::Neut(n) => Ok(n),
             e => Err(e),
         }
     }
 
     pub fn map_neutral(self, f: impl FnOnce(Neutral) -> Neutral) -> Self {
         match self {
-            Term::Neut(n) => Term::Neut(f(n)),
+            Val::Neut(n) => Val::Neut(f(n)),
             e => e,
         }
     }
 }
 
-impl Default for Term {
+impl Default for Val {
     fn default() -> Self {
         Self::axiom()
     }
@@ -224,12 +227,12 @@ impl Default for Term {
 /// A closure with parameter type explicitly specified.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Closure {
-    pub param_type: Box<Term>,
-    pub body: Box<Term>,
+    pub param_type: Box<TVal>,
+    pub body: Box<Val>,
 }
 
 impl Closure {
-    pub fn new(param_type: Term, body: Term) -> Self {
+    pub fn new(param_type: TVal, body: Val) -> Self {
         Self {
             param_type: Box::new(param_type),
             body: Box::new(body),

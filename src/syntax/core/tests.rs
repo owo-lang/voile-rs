@@ -1,32 +1,32 @@
-use crate::syntax::core::Term;
+use crate::syntax::core::Val;
 use crate::syntax::lisp::{self, Lisp};
 
-fn from_str(s: &str) -> Term {
+fn from_str(s: &str) -> Val {
     let lisp = lisp::parse_str(s).unwrap_or_else(|err| panic!("Syntax error: `{}`.", err));
     lisp_to_term(&lisp)
 }
 
-fn lisp_to_term(lisp: &Lisp) -> Term {
+fn lisp_to_term(lisp: &Lisp) -> Val {
     use crate::syntax::lisp::Lisp::*;
     match lisp {
-        Num(dbi) => Term::var(*dbi),
+        Num(dbi) => Val::var(*dbi),
         Sym(sym) => panic!("Unexpected symbol: `{}`.", sym),
         Many(block) => many_to_term(block, lisp),
     }
 }
 
-fn many_to_term(block: &[Lisp], lisp: &Lisp) -> Term {
+fn many_to_term(block: &[Lisp], lisp: &Lisp) -> Val {
     use crate::syntax::lisp::Lisp::*;
     match block {
         // So `()` == `()`.
-        [] => Term::axiom_with_value(0),
+        [] => Val::axiom_with_value(0),
         [Sym("fst"), arg] => lisp_to_term(arg).first(),
         [Sym("snd"), arg] => lisp_to_term(arg).second(),
-        [Sym("type"), arg] => Term::Type(arg.as_dbi().unwrap() as _),
-        [Sym("bot"), arg] => Term::Bot(arg.as_dbi().unwrap() as _),
+        [Sym("type"), arg] => Val::Type(arg.as_dbi().unwrap() as _),
+        [Sym("bot"), arg] => Val::Bot(arg.as_dbi().unwrap() as _),
         [Sym("app"), fst, snd] => lisp_to_term(fst).apply(lisp_to_term(snd)),
-        [Sym("pair"), fst, snd] => Term::pair(lisp_to_term(fst), lisp_to_term(snd)),
-        [Sym("lam"), fst, snd] => Term::lam(lisp_to_term(fst), lisp_to_term(snd)),
+        [Sym("pair"), fst, snd] => Val::pair(lisp_to_term(fst), lisp_to_term(snd)),
+        [Sym("lam"), fst, snd] => Val::lam(lisp_to_term(fst), lisp_to_term(snd)),
         _ => panic!("Bad block: `{}`.", lisp),
     }
 }

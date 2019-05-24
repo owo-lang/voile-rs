@@ -2,7 +2,7 @@ use std::fmt::{Display, Error, Formatter};
 
 use crate::syntax::common::DtKind::*;
 
-use super::{Closure, Neutral, Term};
+use super::{Closure, Neutral, Val};
 
 impl Display for Neutral {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
@@ -22,13 +22,13 @@ impl Display for Closure {
     }
 }
 
-impl Display for Term {
+impl Display for Val {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
-            Term::Type(l) => write!(f, "set{:?}", l),
-            Term::Bot(l) => write!(f, "!{:?}", l),
-            Term::Lam(clos) => write!(f, "({} . {})", clos.param_type, clos.body),
-            Term::Sum(variants) => {
+            Val::Type(l) => write!(f, "set{:?}", l),
+            Val::Bot(l) => write!(f, "!{:?}", l),
+            Val::Lam(clos) => write!(f, "({} . {})", clos.param_type, clos.body),
+            Val::Sum(variants) => {
                 let mut started = false;
                 for (name, param) in variants {
                     if started {
@@ -40,10 +40,10 @@ impl Display for Term {
                 }
                 Ok(())
             }
-            Term::Dt(Pi, clos) => write!(f, "({} -> {})", clos.param_type, clos.body),
-            Term::Dt(Sigma, clos) => write!(f, "({} * {})", clos.param_type, clos.body),
-            Term::Pair(fst, snd) => write!(f, "({}, {})", fst, snd),
-            Term::Neut(neut) => neut.fmt(f),
+            Val::Dt(Pi, clos) => write!(f, "({} -> {})", clos.param_type, clos.body),
+            Val::Dt(Sigma, clos) => write!(f, "({} * {})", clos.param_type, clos.body),
+            Val::Pair(fst, snd) => write!(f, "({}, {})", fst, snd),
+            Val::Neut(neut) => neut.fmt(f),
         }
     }
 }
