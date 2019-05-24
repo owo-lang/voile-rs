@@ -16,7 +16,7 @@ use super::util::compile_cons_type;
 ///      {\Gamma \vdash (a,b):\Sigma (a:A).B(a) \rightsquigarrow (a,b)}
 /// $$
 /// Abstract Term -> Core Term under an expected type.
-pub fn check(mut tcs: TCS, expr: &Abs, expected_type: &Term) -> TermTCM {
+fn check(mut tcs: TCS, expr: &Abs, expected_type: &Term) -> TermTCM {
     match (expr, expected_type) {
         (&Abs::Type(ref info, lower), Term::Type(upper)) => {
             if *upper > lower {
@@ -85,7 +85,7 @@ pub fn check(mut tcs: TCS, expr: &Abs, expected_type: &Term) -> TermTCM {
 }
 
 /// Check if an expression is a valid type expression.
-pub fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
+fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
     let info = expr.to_info();
     match expr {
         Abs::Type(_, level) => Ok((Term::Type(*level).into_info(info), tcs)),
@@ -99,7 +99,7 @@ pub fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
             tcs.local_gamma.push(param.clone());
             let axiom = Term::axiom_with_value(name.uid).into_info(param.to_info());
             tcs.local_env.push(axiom);
-            let (ret, mut tcs) = check_type(tcs, &**ret)?;
+            let (ret, mut tcs) = tcs.check_type(&**ret)?;
             tcs.pop_local();
             let dt = Term::dependent_type(*kind, param.ast, ret.ast).into_info(info);
             Ok((dt, tcs))
@@ -121,7 +121,7 @@ pub fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
 /// \cfrac{\G{a}{\Sigma A.B}}{\G{a\textsf{\.1}}{A}}
 /// $$
 /// Infer type of a value.
-pub fn infer(tcs: TCS, value: &Abs) -> TermTCM {
+fn infer(tcs: TCS, value: &Abs) -> TermTCM {
     use crate::syntax::abs::Abs::*;
     let info = value.to_info();
     match value {
@@ -171,7 +171,7 @@ pub fn infer(tcs: TCS, value: &Abs) -> TermTCM {
 }
 
 /// Check if `subtype` is a subtype of `supertype`.
-pub fn check_subtype(tcs: TCS, subtype: &Term, supertype: &Term) -> TCM {
+fn check_subtype(tcs: TCS, subtype: &Term, supertype: &Term) -> TCM {
     use crate::syntax::core::Neutral::*;
     use crate::syntax::core::Term::*;
     match (subtype, supertype) {

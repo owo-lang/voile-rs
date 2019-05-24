@@ -2,19 +2,55 @@ use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::TCS;
 use crate::syntax::abs::Abs;
-use crate::syntax::common::SyntaxInfo;
+use crate::syntax::common::{DtKind, Level, SyntaxInfo, DBI};
 use crate::syntax::core::{Closure, Term, TermInfo};
+
+macro_rules! compile {
+    () => {impl Fn(TCS, Abs) -> Out};
+}
+type Out = (TermInfo, TCS);
+type Abs2 = (Box<Abs>, Box<Abs>);
+
+fn unsafe_compile_fst(tcs: TCS, info: SyntaxInfo, p: Box<Abs>, recursion: compile!()) -> Out {
+    let (p, tcs) = recursion(tcs, *p);
+    (p.ast.first().into_info(info), tcs)
+}
+
+fn unsafe_compile_snd(tcs: TCS, info: SyntaxInfo, p: Box<Abs>, recursion: compile!()) -> Out {
+    let (p, tcs) = recursion(tcs, *p);
+    (p.ast.second().into_info(info), tcs)
+}
+
+fn unsafe_compile_pair(tcs: TCS, info: SyntaxInfo, (a, b): Abs2, recursion: compile!()) -> Out {
+    let (a, tcs) = recursion(tcs, *a);
+    let (b, tcs) = recursion(tcs, *b);
+    (Term::pair(a.ast, b.ast).into_info(info), tcs)
+}
+
+fn unsafe_compile_dt(
+    tcs: TCS,
+    info: SyntaxInfo,
+    kind: DtKind,
+    (param_ty, ret_ty): Abs2,
+    recursion: compile!(),
+) -> Out {
+    let (param_ty, tcs) = recursion(tcs, *param_ty);
+    let (ret_ty, tcs) = recursion(tcs, *ret_ty);
+    let closure = Closure::new(param_ty.ast, ret_ty.ast);
+    let term = Term::Dt(kind, closure);
+    (term.into_info(info), tcs)
+}
 
 /// This function will produce **dbi**-based variable references.
 ///
 /// Ensure `abs` is well-typed before invoking this,
 /// otherwise this function may panic or produce ill-typed core term.
-pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
+fn unsafe_compile(tcs: TCS, abs: Abs) -> Out {
     match abs {
-        Abs::Type(info, level) => (Term::Type(level).into_info(info), tcs),
-        Abs::Bot(info) => (Term::Bot(0).into_info(info), tcs),
+        Abs::Type(info, level) => unsafe_compile_type(tcs, info, level),
+        Abs::Bot(info) => unsafe_compile_bot(tcs, info),
         Abs::Local(info, _, dbi) => (Term::var(dbi).into_info(info), tcs),
-        Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info), tcs),
+        Abs::Var(info, dbi) => unsafe_compile_glob(tcs, info, dbi),
         Abs::Meta(info) => panic!("Cannot compile meta variable at {}.", info),
         Abs::Cons(_) => unimplemented!(),
         Abs::ConsType(_) => unimplemented!(),
@@ -24,25 +60,11 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             (f.ast.apply(a.ast).into_info(info), tcs)
         }
         Abs::Dt(info, kind, _, param_ty, ret_ty) => {
-            let (param_ty, tcs) = unsafe_compile(tcs, *param_ty);
-            let (ret_ty, tcs) = unsafe_compile(tcs, *ret_ty);
-            let closure = Closure::new(param_ty.ast, ret_ty.ast);
-            let term = Term::Dt(kind, closure);
-            (term.into_info(info), tcs)
+            unsafe_compile_dt(tcs, info, kind, (param_ty, ret_ty), unsafe_compile)
         }
-        Abs::Pair(info, a, b) => {
-            let (a, tcs) = unsafe_compile(tcs, *a);
-            let (b, tcs) = unsafe_compile(tcs, *b);
-            (Term::pair(a.ast, b.ast).into_info(info), tcs)
-        }
-        Abs::Fst(info, p) => {
-            let (p, tcs) = unsafe_compile(tcs, *p);
-            (p.ast.first().into_info(info), tcs)
-        }
-        Abs::Snd(info, p) => {
-            let (p, tcs) = unsafe_compile(tcs, *p);
-            (p.ast.second().into_info(info), tcs)
-        }
+        Abs::Pair(info, a, b) => unsafe_compile_pair(tcs, info, (a, b), unsafe_compile),
+        Abs::Fst(info, p) => unsafe_compile_fst(tcs, info, p, unsafe_compile),
+        Abs::Snd(info, p) => unsafe_compile_snd(tcs, info, p, unsafe_compile),
         Abs::Sum(_, _) => unimplemented!(),
         Abs::Lam(info, _, _, body) => {
             let (body, tcs) = unsafe_compile(tcs, *body);
@@ -55,12 +77,12 @@ pub fn unsafe_compile(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
 ///
 /// Ensure `abs` is well-typed before invoking this,
 /// otherwise this function may panic or produce ill-typed core term.
-pub fn unsafe_evaluate(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
+fn unsafe_evaluate(tcs: TCS, abs: Abs) -> Out {
     match abs {
-        Abs::Type(info, level) => (Term::Type(level).into_info(info), tcs),
-        Abs::Bot(info) => (Term::Bot(0).into_info(info), tcs),
+        Abs::Type(info, level) => unsafe_compile_type(tcs, info, level),
+        Abs::Bot(info) => unsafe_compile_bot(tcs, info),
         Abs::Local(info, _, dbi) => (tcs.local_val(dbi).ast.into_info(info), tcs),
-        Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info), tcs),
+        Abs::Var(info, dbi) => unsafe_compile_glob(tcs, info, dbi),
         Abs::Meta(info) => panic!("Cannot compile meta variable at {}.", info),
         Abs::Cons(info) => unimplemented!(),
         Abs::ConsType(_) => unimplemented!(),
@@ -71,31 +93,29 @@ pub fn unsafe_evaluate(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             (f.ast.apply(a.ast).into_info(info), tcs)
         }
         Abs::Dt(info, kind, _, param_ty, ret_ty) => {
-            let (param_ty, tcs) = unsafe_evaluate(tcs, *param_ty);
-            let (ret_ty, tcs) = unsafe_evaluate(tcs, *ret_ty);
-            let closure = Closure::new(param_ty.ast, ret_ty.ast);
-            let term = Term::Dt(kind, closure);
-            (term.into_info(info), tcs)
+            unsafe_compile_dt(tcs, info, kind, (param_ty, ret_ty), unsafe_evaluate)
         }
-        Abs::Pair(info, a, b) => {
-            let (a, tcs) = unsafe_evaluate(tcs, *a);
-            let (b, tcs) = unsafe_evaluate(tcs, *b);
-            (Term::pair(a.ast, b.ast).into_info(info), tcs)
-        }
-        Abs::Fst(info, p) => {
-            let (p, tcs) = unsafe_evaluate(tcs, *p);
-            (p.ast.first().into_info(info), tcs)
-        }
-        Abs::Snd(info, p) => {
-            let (p, tcs) = unsafe_evaluate(tcs, *p);
-            (p.ast.second().into_info(info), tcs)
-        }
+        Abs::Pair(info, a, b) => unsafe_compile_pair(tcs, info, (a, b), unsafe_evaluate),
+        Abs::Fst(info, p) => unsafe_compile_fst(tcs, info, p, unsafe_evaluate),
+        Abs::Snd(info, p) => unsafe_compile_snd(tcs, info, p, unsafe_evaluate),
         Abs::Sum(_, _) => unimplemented!(),
         Abs::Lam(info, _, _, body) => {
             let (body, tcs) = unsafe_evaluate(tcs, *body);
             (body.ast.into_info(info), tcs)
         }
     }
+}
+
+fn unsafe_compile_type(tcs: TCS, info: SyntaxInfo, level: Level) -> Out {
+    (Term::Type(level).into_info(info), tcs)
+}
+
+fn unsafe_compile_bot(tcs: TCS, info: SyntaxInfo) -> Out {
+    (Term::Bot(0).into_info(info), tcs)
+}
+
+fn unsafe_compile_glob(tcs: TCS, info: SyntaxInfo, dbi: DBI) -> Out {
+    (tcs.glob_val(dbi).ast.into_info(info), tcs)
 }
 
 pub fn compile_cons_type(info: &SyntaxInfo, ret_ty: &Closure) -> TermInfo {

@@ -6,12 +6,12 @@ use crate::syntax::core::Term;
 
 pub fn check_decls(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
     for decl in decls.into_iter() {
-        tcs = check_decl(tcs, decl.clone())?;
+        tcs = tcs.check_decl(decl)?;
     }
     Ok(tcs)
 }
 
-pub fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
+fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
     match decl {
         AbsDecl::Both(sign_abs, impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
