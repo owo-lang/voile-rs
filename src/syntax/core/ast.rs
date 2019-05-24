@@ -128,6 +128,8 @@ pub enum Term {
     Lam(Closure),
     /// Pi-like types (dependent types).
     Dt(DtKind, Closure),
+    /// Sum type literal.
+    Sum(BTreeMap<String, Term>),
     /// Sigma instance.
     Pair(Box<Self>, Box<Self>),
     Neut(Neutral),
@@ -140,6 +142,7 @@ impl Term {
             Term::Bot(_) => true,
             Term::Lam(_) => false,
             Term::Dt(_, _) => true,
+            Term::Sum(_) => true,
             Term::Pair(_, _) => false,
             // In case it's neutral, we use `is_universe` on its type.
             Term::Neut(_) => false,

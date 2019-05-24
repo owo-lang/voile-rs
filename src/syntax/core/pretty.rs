@@ -28,6 +28,18 @@ impl Display for Term {
             Term::Type(l) => write!(f, "set{:?}", l),
             Term::Bot(l) => write!(f, "!{:?}", l),
             Term::Lam(clos) => write!(f, "({} . {})", clos.param_type, clos.body),
+            Term::Sum(variants) => {
+                let mut started = false;
+                for (name, param) in variants {
+                    if started {
+                        f.write_str(" | ")?;
+                    } else {
+                        started = true;
+                    }
+                    write!(f, "'{} {}", name, param)?;
+                }
+                Ok(())
+            }
             Term::Dt(Pi, clos) => write!(f, "({} -> {})", clos.param_type, clos.body),
             Term::Dt(Sigma, clos) => write!(f, "({} * {})", clos.param_type, clos.body),
             Term::Pair(fst, snd) => write!(f, "({}, {})", fst, snd),

@@ -1,0 +1,8 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-05-24
+// sums
+// Author: ice10
+//
+
+val sums : Type -> Type1;
+let sums = 'Label;

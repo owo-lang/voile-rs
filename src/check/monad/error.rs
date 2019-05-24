@@ -13,7 +13,9 @@ pub enum TCE {
     NotSigma(SyntaxInfo, Term),
     NotPi(SyntaxInfo, Term),
     NotSameType(Term, Term),
-    NotType(SyntaxInfo, Abs),
+    NotTypeAbs(SyntaxInfo, Abs),
+    NotTypeTerm(SyntaxInfo, Term),
+    NotUniverseTerm(SyntaxInfo, Term),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
     /// Expected the first level to be smaller than second.
@@ -51,9 +53,17 @@ impl Display for TCE {
                 "Expected `{}` and `{}` to be the same type.",
                 term1, term2
             ),
-            TCE::NotType(id, abs) => {
+            TCE::NotTypeAbs(id, abs) => {
                 write!(f, "Expected a type expression, got: `{}` at {}.", abs, id)
             }
+            TCE::NotTypeTerm(id, term) => {
+                write!(f, "Expected a type expression, got: `{}` at {}.", term, id)
+            }
+            TCE::NotUniverseTerm(id, term) => write!(
+                f,
+                "Expected an universe expression, got: `{}` at {}.",
+                term, id
+            ),
             TCE::DbiOverflow(expected, actual) => write!(
                 f,
                 "DBI overflow, maximum: `{}`, got: `{}`.",

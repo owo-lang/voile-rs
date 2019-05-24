@@ -4,6 +4,7 @@ use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::{Closure, RedEx, Term};
 
 use super::monad::{TermTCM, TCE, TCM, TCS};
+use super::util::compile_cons_type;
 
 /// $$
 /// \newcommand\U{\textsf{Type}}
@@ -46,8 +47,17 @@ pub fn check(mut tcs: TCS, expr: &Abs, expected_type: &Term) -> TermTCM {
             let ret_ty_body = ret_ty.body.clone().instantiate(mocked);
             let (lam_term, mut tcs) = tcs.check(body, &ret_ty_body)?;
             tcs.pop_local();
-            let lam = Term::lam(param_type.ast, lam_term.ast).into_info(full_info.clone());
-            Ok((lam, tcs))
+            let lam = Term::lam(param_type.ast, lam_term.ast);
+            Ok((lam.into_info(full_info.clone()), tcs))
+        }
+        (Abs::ConsType(info), Term::Dt(Pi, ret_ty)) => {
+            if !ret_ty.param_type.is_type() {
+                Err(TCE::NotTypeTerm(info.clone(), *ret_ty.param_type.clone()))
+            } else if !ret_ty.body.is_universe() {
+                Err(TCE::NotUniverseTerm(info.clone(), *ret_ty.body.clone()))
+            } else {
+                Ok((compile_cons_type(info, ret_ty), tcs))
+            }
         }
         (Abs::Bot(info), Term::Type(level)) => {
             Ok((Term::Bot(level - 1).into_info(info.clone()), tcs))
@@ -95,7 +105,7 @@ pub fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
             Ok((dt, tcs))
         }
         Abs::ConsType(_) => unimplemented!(),
-        e => Err(TCE::NotType(info, e.clone())),
+        e => Err(TCE::NotTypeAbs(info, e.clone())),
     }
 }
 

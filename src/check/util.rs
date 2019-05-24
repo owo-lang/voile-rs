@@ -1,5 +1,8 @@
+use std::collections::btree_map::BTreeMap;
+
 use crate::check::monad::TCS;
 use crate::syntax::abs::Abs;
+use crate::syntax::common::SyntaxInfo;
 use crate::syntax::core::{Closure, Term, TermInfo};
 
 /// This function will produce **dbi**-based variable references.
@@ -93,6 +96,13 @@ pub fn unsafe_evaluate(tcs: TCS, abs: Abs) -> (TermInfo, TCS) {
             (body.ast.into_info(info), tcs)
         }
     }
+}
+
+pub fn compile_cons_type(info: &SyntaxInfo, ret_ty: &Closure) -> TermInfo {
+    let mut variant = BTreeMap::default();
+    variant.insert(info.text.clone(), Term::var(0));
+    let lam = Term::lam(*ret_ty.param_type.clone(), Term::Sum(variant));
+    lam.into_info(info.clone())
 }
 
 /// So you can do some functional programming based on method call chains.
