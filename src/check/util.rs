@@ -70,10 +70,17 @@ fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Term>) -> (Te
             let (p, tcs) = compile(tcs, strategy, *p, None);
             (p.ast.second().into_info(info), tcs)
         }
-        Abs::Lam(info, _, _, body) => {
-            let (body, tcs) = compile(tcs, strategy, *body, checked);
-            (body.ast.into_info(info), tcs)
-        }
+        Abs::Lam(info, _, _, body) => match checked {
+            Some(Term::Lam(closure)) => {
+                let (body, tcs) = compile(tcs, strategy, *body, Some(*closure.body));
+                let lam = Term::lam(*closure.param_type, body.ast).into_info(info);
+                (lam, tcs)
+            }
+            _ => {
+                let (body, tcs) = compile(tcs, strategy, *body, None);
+                (body.ast.into_info(info), tcs)
+            }
+        },
         e => panic!("Cannot compile `{}` at {}", e, e.syntax_info()),
     }
 }
