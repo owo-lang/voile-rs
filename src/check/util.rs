@@ -28,6 +28,8 @@ fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (Ter
             Strategy::Evaluate => (Val::var(dbi).into_info(info), tcs),
         },
         Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info), tcs),
+        // Because I don't know what else can I output.
+        Abs::ConsType(info) => (compile_cons_type(info, Val::axiom()), tcs),
         Abs::App(info, f, a) => {
             // The function should always be compiled to DBI-based terms
             let (f, tcs) = compile(tcs, Strategy::Evaluate, *f, None);
@@ -85,11 +87,11 @@ fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (Ter
     }
 }
 
-pub fn compile_cons_type(info: &SyntaxInfo, ret_ty: &Closure) -> TermInfo {
+pub fn compile_cons_type(info: SyntaxInfo, ret_ty: Val) -> TermInfo {
     let mut variant = BTreeMap::default();
     variant.insert(info.text.clone(), Val::var(0));
-    let lam = Val::lam(*ret_ty.param_type.clone(), Val::Sum(variant));
-    lam.into_info(info.clone())
+    let lam = Val::lam(ret_ty, Val::Sum(variant));
+    lam.into_info(info)
 }
 
 /// So you can do some functional programming based on method call chains.

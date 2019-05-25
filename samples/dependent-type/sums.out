@@ -1,0 +1,4 @@
+Parse successful.
+sign: (set0 -> set1)
+body: (<1> . ''Label [0])
+Type-Check successful.

@@ -5,6 +5,7 @@ use crate::syntax::core::{Closure, RedEx, Val};
 
 use super::monad::{TermTCM, TCE, TCM, TCS};
 use super::util::compile_cons_type;
+use std::collections::BTreeMap;
 
 /// $$
 /// \newcommand\U{\textsf{Type}}
@@ -42,8 +43,8 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> TermTCM {
             let param_type = ret_ty.param_type.clone().into_info(param_info.clone());
             tcs.local_gamma.push(param_type.clone());
             let mocked = Val::axiom_with_value(name.uid);
-            tcs.local_env
-                .push(mocked.clone().into_info(param_info.clone()));
+            let mocked_term = mocked.clone().into_info(param_info.clone());
+            tcs.local_env.push(mocked_term);
             let ret_ty_body = ret_ty.body.clone().instantiate(mocked);
             let (lam_term, mut tcs) = tcs.check(body, &ret_ty_body)?;
             tcs.pop_local();
@@ -56,7 +57,10 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> TermTCM {
             } else if !ret_ty.body.is_universe() {
                 Err(TCE::NotUniverseTerm(info.clone(), *ret_ty.body.clone()))
             } else {
-                Ok((compile_cons_type(info, ret_ty), tcs))
+                Ok((
+                    compile_cons_type(info.clone(), *ret_ty.param_type.clone()),
+                    tcs,
+                ))
             }
         }
         (Abs::Bot(info), Val::Type(level)) => {
@@ -154,6 +158,12 @@ fn infer(tcs: TCS, value: &Abs) -> TermTCM {
         }
         // TODO: special treatment for `ConsType` and `Cons`.
         App(_, f, a) => match &**f {
+            ConsType(info) => {
+                let (a, tcs) = tcs.check_type(a)?;
+                let mut variant = BTreeMap::default();
+                variant.insert(info.text.clone(), a.ast);
+                Ok((Val::Sum(variant).into_info(info.clone()), tcs))
+            }
             f => {
                 let (f_ty, tcs) = tcs.infer(f)?;
                 match f_ty.ast {
