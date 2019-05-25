@@ -15,6 +15,7 @@ pub enum TCE {
     NotSameType(Val, Val),
     NotTypeAbs(SyntaxInfo, Abs),
     NotTypeVal(SyntaxInfo, Val),
+    NotSumVal(SyntaxInfo, Val),
     NotUniverseVal(SyntaxInfo, Val),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
@@ -57,6 +58,11 @@ impl Display for TCE {
             TCE::NotTypeVal(id, val) => {
                 write!(f, "Expected a type expression, got: `{}` at {}.", val, id)
             }
+            TCE::NotSumVal(id, val) => write!(
+                f,
+                "Expected a sum type expression, got: `{}` at {}.",
+                val, id
+            ),
             TCE::NotUniverseVal(id, val) => write!(
                 f,
                 "Expected an universe expression, got: `{}` at {}.",

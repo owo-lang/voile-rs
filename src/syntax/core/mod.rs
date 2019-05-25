@@ -4,7 +4,7 @@ mod pretty;
 pub use self::ast::*;
 pub use self::pretty::*;
 
-use super::common::{SyntaxInfo, ToSyntaxInfo, DBI};
+use super::common::{SyntaxInfo, ToSyntaxInfo};
 
 impl Val {
     pub fn into_info(self, syntax_info: SyntaxInfo) -> ValInfo {

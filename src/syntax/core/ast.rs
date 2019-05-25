@@ -165,10 +165,10 @@ impl Val {
         }
     }
 
-    pub fn is_sum(&self) -> bool {
+    pub fn try_into_sum(self) -> Result<BTreeMap<String, TVal>, Self> {
         match self {
-            Val::Sum(_) => true,
-            _ => false,
+            Val::Sum(variants) => Ok(variants),
+            e => Err(e),
         }
     }
 

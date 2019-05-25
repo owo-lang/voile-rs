@@ -87,7 +87,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
 }
 
 /// Check if an expression is a valid type expression.
-fn check_type(tcs: TCS, expr: &Abs) -> ValTCM {
+fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
     let info = expr.to_info();
     match expr {
         Abs::Type(_, level) => Ok((Val::Type(*level).into_info(info), tcs)),
@@ -105,6 +105,19 @@ fn check_type(tcs: TCS, expr: &Abs) -> ValTCM {
             tcs.pop_local();
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(info);
             Ok((dt, tcs))
+        }
+        Abs::Sum(_, variants) => {
+            let mut sum = BTreeMap::default();
+            for variant in variants {
+                let (variant, new_tcs) = tcs.check_type(variant)?;
+                tcs = new_tcs;
+                let info = variant.info;
+                let e = |e: Val| TCE::NotSumVal(info, e);
+                let mut new = variant.ast.try_into_sum().map_err(e)?;
+                // TODO: check overlapping variants
+                sum.append(&mut new);
+            }
+            Ok((Val::Sum(sum).into_info(info), tcs))
         }
         e => Err(TCE::NotTypeAbs(info, e.clone())),
     }
