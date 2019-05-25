@@ -13,7 +13,7 @@ impl Display for Abs {
             Abs::Var(_, dbi) => write!(f, "<{:?}>", dbi),
             Abs::Meta(info) => write!(f, "?{}", info.text),
             Abs::Cons(_) => unimplemented!(),
-            Abs::ConsType(info) => write!(f, "'{}", info.text),
+            Abs::Variant(info) => write!(f, "'{}", info.text),
             Abs::App(_, a, b) => write!(f, "({} {})", a, b),
             Abs::Dt(_, Pi, name, param, ret) => {
                 write!(f, "(<{:?}> : {}) -> {}", name.uid, param, ret)

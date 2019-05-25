@@ -85,7 +85,7 @@ fn trans_expr_inner(
         ),
         Expr::Meta(ident) => Ok(Abs::Meta(ident.to_info())),
         Expr::Cons(ident) => Ok(Abs::Cons(ident.to_info())),
-        Expr::ConsType(ident) => Ok(Abs::ConsType(ident.to_info())),
+        Expr::Variant(ident) => Ok(Abs::Variant(ident.to_info())),
         Expr::Bot(ident) => Ok(Abs::Bot(ident.to_info())),
         Expr::Sum(first, variants) => {
             let abs_vec: Vec<Abs> = variants

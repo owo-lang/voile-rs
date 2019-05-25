@@ -51,7 +51,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let lam = Val::lam(param_type.ast, lam_term.ast);
             Ok((lam.into_info(full_info.clone()), tcs))
         }
-        (Abs::ConsType(info), Val::Dt(Pi, ret_ty)) => {
+        (Abs::Variant(info), Val::Dt(Pi, ret_ty)) => {
             if !ret_ty.param_type.is_type() {
                 Err(TCE::NotTypeVal(info.clone(), *ret_ty.param_type.clone()))
             } else if !ret_ty.body.is_universe() {
@@ -156,9 +156,9 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
-        // TODO: special treatment for `ConsType` and `Cons`.
+        // TODO: special treatment for `Cons`.
         App(_, f, a) => match &**f {
-            ConsType(info) => {
+            Variant(info) => {
                 let (a, tcs) = tcs.check_type(a)?;
                 let mut variant = BTreeMap::default();
                 variant.insert(info.text.clone(), a.ast);

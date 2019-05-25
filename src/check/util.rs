@@ -3,7 +3,7 @@ use std::collections::btree_map::BTreeMap;
 use crate::check::monad::TCS;
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
-use crate::syntax::core::{Closure, ValInfo, Val};
+use crate::syntax::core::{Closure, Val, ValInfo};
 
 /// Term-producing strategy -- whether to produce
 /// dbi-based variables or uid-based variables.
@@ -29,7 +29,7 @@ fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (Val
         },
         Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info), tcs),
         // Because I don't know what else can I output.
-        Abs::ConsType(info) => (compile_cons_type(info, Val::axiom()), tcs),
+        Abs::Variant(info) => (compile_cons_type(info, Val::axiom()), tcs),
         Abs::App(info, f, a) => {
             // The function should always be compiled to DBI-based terms
             let (f, tcs) = compile(tcs, Strategy::Evaluate, *f, None);

@@ -2,6 +2,10 @@
 
 # 0.0.8
 
++ Rename `ConsType` to `Variant`, `Term` to `Val`
++ Improve lambda compilation (#71, #73)
++ `Variant` related checking, introduce `Sum` in core (#11, #70)
+
 # 0.0.7
 
 + Tuple desugar (#51)

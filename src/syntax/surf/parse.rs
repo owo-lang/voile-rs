@@ -105,7 +105,7 @@ fn primary_expr(rules: Tok) -> Expr {
         Rule::ident => Expr::Var(ident(the_rule)),
         Rule::cons => Expr::Cons(ident(the_rule)),
         Rule::bottom => Expr::Bot(ident(the_rule)),
-        Rule::one_sum => Expr::ConsType(ident(the_rule)),
+        Rule::one_sum => Expr::Variant(ident(the_rule)),
         Rule::meta => Expr::Meta(ident(the_rule)),
         Rule::lambda => lambda(the_rule),
         Rule::type_keyword => type_keyword(the_rule),

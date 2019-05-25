@@ -32,7 +32,7 @@ pub enum Expr {
     /// Constructor call
     Cons(Ident),
     /// Type of a constructor call
-    ConsType(Ident),
+    Variant(Ident),
     /// Empty type
     Bot(Ident),
     /// Explicit meta variable
