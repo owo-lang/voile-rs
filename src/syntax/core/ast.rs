@@ -76,7 +76,9 @@ pub enum Neutral {
     /// Local variable, referred by de-bruijn index.
     Var(DBI),
     /// Postulated value, aka axioms.
-    Axi(UID),
+    /// If the `Option<DBI>` value is `None`, then it's really postulated.
+    /// Otherwise it should be a generated lambda parameter.
+    Axi(UID, Option<DBI>),
     /// Function application.
     App(Box<Self>, Box<Val>),
     /// Projecting the first element of a pair.
@@ -86,9 +88,13 @@ pub enum Neutral {
 }
 
 impl Neutral {
-    pub fn map_axiom<F: Fn(UID) -> Self + Copy>(self, f: F) -> Self {
+    pub fn axiom_to_var(self) -> Self {
+        self.map_axiom(|uid, dbi| dbi.map_or_else(|| Neutral::Axi(uid, None), Neutral::Var))
+    }
+
+    pub fn map_axiom<F: Fn(UID, Option<DBI>) -> Self + Copy>(self, f: F) -> Self {
         match self {
-            Neutral::Axi(uid) => f(uid),
+            Neutral::Axi(uid, dbi) => f(uid, dbi),
             Neutral::App(fun, a) => Neutral::App(
                 Box::new(fun.map_axiom(f)),
                 Box::new(a.map_neutral(|n| n.map_axiom(f))),
@@ -106,7 +112,7 @@ impl RedEx for Neutral {
         match self {
             Var(n) if dbi == n => arg,
             Var(n) => Val::var(n),
-            Axi(i) => Val::axiom_with_value(i),
+            Axi(i, dbi) => Val::Neut(Axi(i, dbi)),
             App(function, argument) => function
                 .reduce_with_dbi(arg.clone(), dbi)
                 .apply(argument.reduce_with_dbi(arg, dbi)),
@@ -189,7 +195,7 @@ impl Val {
     }
 
     pub(crate) fn axiom_with_value(uid: UID) -> Self {
-        Val::Neut(Neutral::Axi(uid))
+        Val::Neut(Neutral::Axi(uid, None))
     }
 
     pub fn app(function: Neutral, arg: Self) -> Self {

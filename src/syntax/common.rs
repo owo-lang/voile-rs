@@ -19,7 +19,7 @@ pub type DBI = usize;
 pub type UID = usize;
 static mut UID_COUNT: UID = 0;
 
-pub unsafe fn next_uid() -> UID {
+pub(crate) unsafe fn next_uid() -> UID {
     let val = UID_COUNT;
     UID_COUNT += 1;
     val

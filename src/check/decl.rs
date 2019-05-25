@@ -16,10 +16,12 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         AbsDecl::Both(sign_abs, impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
             let (sign_fake, tcs) = tcs.check_type(&sign_abs)?;
-            let (sign, tcs) = tcs.compile(sign_abs, Some(sign_fake.ast));
+            println!("sign_fk: {}", sign_fake.ast);
+            let sign = sign_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
             println!("sign: {}", sign.ast);
-            let (val_fake, tcs) = tcs.check(&impl_abs, &sign.ast)?;
-            let (val, mut tcs) = tcs.compile(impl_abs, Some(val_fake.ast));
+            let (val_fake, mut tcs) = tcs.check(&impl_abs, &sign.ast)?;
+            println!("body_fk: {}", val_fake.ast);
+            let val = val_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
             println!("body: {}", val.ast);
 
             tcs.gamma.push(sign);

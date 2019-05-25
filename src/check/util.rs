@@ -3,7 +3,7 @@ use std::collections::btree_map::BTreeMap;
 use crate::check::monad::TCS;
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
-use crate::syntax::core::{Closure, Val, ValInfo};
+use crate::syntax::core::{Closure, Neutral, Val, ValInfo};
 
 /// Term-producing strategy -- whether to produce
 /// dbi-based variables or uid-based variables.
@@ -23,9 +23,17 @@ fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (Val
     match abs {
         Abs::Type(info, level) => (Val::Type(level).into_info(info), tcs),
         Abs::Bot(info) => (Val::Bot(0).into_info(info), tcs),
-        Abs::Local(info, _, dbi) => match strategy {
-            Strategy::Check => (tcs.local_val(dbi).ast.into_info(info), tcs),
-            Strategy::Evaluate => (Val::var(dbi).into_info(info), tcs),
+        Abs::Local(info, _, i) => match strategy {
+            Strategy::Check => {
+                let map_neut = |neut: Neutral| {
+                    neut.map_axiom(|uid, dbi| Neutral::Axi(uid, Some(dbi.unwrap_or(i))))
+                };
+                let local = tcs.local_val(i);
+                println!("local={}", local.ast);
+                let val = local.ast.map_neutral(map_neut).into_info(info);
+                (val, tcs)
+            }
+            Strategy::Evaluate => (Val::var(i).into_info(info), tcs),
         },
         Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info), tcs),
         // Because I don't know what else can I output.

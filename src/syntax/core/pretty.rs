@@ -8,7 +8,8 @@ impl Display for Neutral {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             Neutral::Var(dbi) => write!(f, "[{:?}]", dbi),
-            Neutral::Axi(uid) => write!(f, "<{:?}>", uid),
+            Neutral::Axi(uid, None) => write!(f, "<{:?}>", uid),
+            Neutral::Axi(uid, Some(dbi)) => write!(f, "<{:?},{:?}>", uid, dbi),
             Neutral::App(fun, a) => write!(f, "({} {})", fun, a),
             Neutral::Fst(p) => write!(f, "({}.1)", p),
             Neutral::Snd(p) => write!(f, "({}.2)", p),

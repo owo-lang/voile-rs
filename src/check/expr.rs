@@ -196,11 +196,11 @@ fn check_subtype(tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
     use crate::syntax::core::Val::*;
     match (subtype, supertype) {
         (Type(sub_level), Type(super_level)) if sub_level <= super_level => Ok(tcs),
-        (Neut(Axi(uid0)), Neut(Axi(uid1))) => {
+        (Neut(Axi(uid0, _)), Neut(Axi(uid1, _))) => {
             if uid0 == uid1 {
                 Ok(tcs)
             } else {
-                Err(TCE::NotSameType(Neut(Axi(*uid0)), Neut(Axi(*uid1))))
+                Err(TCE::NotSameType(subtype.clone(), supertype.clone()))
             }
         }
         (Neut(Var(dbi0)), Neut(Var(dbi1))) => {
