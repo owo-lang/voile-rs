@@ -79,7 +79,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> TermTCM {
             let tcs: TCS = tcs
                 .check_subtype(&inferred.ast, anything)
                 .map_err(|e| e.wrap(inferred.info))?;
-            Ok(tcs.unsafe_evaluate(expr.clone(), None))
+            Ok(tcs.evaluate(expr.clone()))
         }
     }
 }
@@ -104,7 +104,6 @@ fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(info);
             Ok((dt, tcs))
         }
-        Abs::ConsType(_) => unimplemented!(),
         e => Err(TCE::NotTypeAbs(info, e.clone())),
     }
 }
@@ -146,7 +145,7 @@ fn infer(tcs: TCS, value: &Abs) -> TermTCM {
             match pair_ty.ast {
                 Val::Dt(Sigma, closure) => {
                     // Since we can infer the type of `pair`, it has to be well-typed
-                    let (pair_compiled, tcs) = tcs.unsafe_evaluate(*pair.clone(), None);
+                    let (pair_compiled, tcs) = tcs.evaluate(*pair.clone());
                     let fst = pair_compiled.ast.first();
                     Ok((closure.body.instantiate(fst).into_info(info), tcs))
                 }

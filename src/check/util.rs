@@ -95,12 +95,12 @@ pub fn compile_cons_type(info: &SyntaxInfo, ret_ty: &Closure) -> TermInfo {
 /// So you can do some functional programming based on method call chains.
 impl TCS {
     #[inline]
-    pub fn unsafe_evaluate(self, abs: Abs, checked: Option<Val>) -> (TermInfo, Self) {
-        compile(self, Strategy::Check, abs, checked)
+    pub fn evaluate(self, abs: Abs) -> (TermInfo, Self) {
+        compile(self, Strategy::Check, abs, None)
     }
 
     #[inline]
-    pub fn unsafe_compile(self, abs: Abs, checked: Option<Val>) -> (TermInfo, Self) {
+    pub fn compile(self, abs: Abs, checked: Option<Val>) -> (TermInfo, Self) {
         compile(self, Strategy::Evaluate, abs, checked)
     }
 }
