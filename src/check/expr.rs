@@ -3,7 +3,7 @@ use crate::syntax::common::DtKind::*;
 use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::{Closure, RedEx, Val};
 
-use super::monad::{TermTCM, TCE, TCM, TCS};
+use super::monad::{ValTCM, TCE, TCM, TCS};
 use super::util::compile_cons_type;
 use std::collections::BTreeMap;
 
@@ -17,7 +17,7 @@ use std::collections::BTreeMap;
 ///      {\Gamma \vdash (a,b):\Sigma (a:A).B(a) \rightsquigarrow (a,b)}
 /// $$
 /// Abstract Term -> Core Term under an expected type.
-fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> TermTCM {
+fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     match (expr, expected_type) {
         (&Abs::Type(ref info, lower), Val::Type(upper)) => {
             if *upper > lower {
@@ -53,9 +53,9 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> TermTCM {
         }
         (Abs::ConsType(info), Val::Dt(Pi, ret_ty)) => {
             if !ret_ty.param_type.is_type() {
-                Err(TCE::NotTypeTerm(info.clone(), *ret_ty.param_type.clone()))
+                Err(TCE::NotTypeVal(info.clone(), *ret_ty.param_type.clone()))
             } else if !ret_ty.body.is_universe() {
-                Err(TCE::NotUniverseTerm(info.clone(), *ret_ty.body.clone()))
+                Err(TCE::NotUniverseVal(info.clone(), *ret_ty.body.clone()))
             } else {
                 Ok((
                     compile_cons_type(info.clone(), *ret_ty.param_type.clone()),
@@ -89,7 +89,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> TermTCM {
 }
 
 /// Check if an expression is a valid type expression.
-fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
+fn check_type(tcs: TCS, expr: &Abs) -> ValTCM {
     let info = expr.to_info();
     match expr {
         Abs::Type(_, level) => Ok((Val::Type(*level).into_info(info), tcs)),
@@ -124,7 +124,7 @@ fn check_type(tcs: TCS, expr: &Abs) -> TermTCM {
 /// \cfrac{\G{a}{\Sigma A.B}}{\G{a\textsf{\.1}}{A}}
 /// $$
 /// Infer type of a value.
-fn infer(tcs: TCS, value: &Abs) -> TermTCM {
+fn infer(tcs: TCS, value: &Abs) -> ValTCM {
     use crate::syntax::abs::Abs::*;
     let info = value.to_info();
     match value {
@@ -206,12 +206,12 @@ fn check_subtype(tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
 /// So you can do some functional programming based on method call chains.
 impl TCS {
     #[inline]
-    pub fn check(self, expr: &Abs, expected_type: &Val) -> TermTCM {
+    pub fn check(self, expr: &Abs, expected_type: &Val) -> ValTCM {
         check(self, expr, expected_type)
     }
 
     #[inline]
-    pub fn infer(self, value: &Abs) -> TermTCM {
+    pub fn infer(self, value: &Abs) -> ValTCM {
         infer(self, value)
     }
 
@@ -221,7 +221,7 @@ impl TCS {
     }
 
     #[inline]
-    pub fn check_type(self, expr: &Abs) -> TermTCM {
+    pub fn check_type(self, expr: &Abs) -> ValTCM {
         check_type(self, expr)
     }
 }

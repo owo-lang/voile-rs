@@ -3,30 +3,30 @@ use crate::syntax::lisp::{self, Lisp};
 
 fn from_str(s: &str) -> Val {
     let lisp = lisp::parse_str(s).unwrap_or_else(|err| panic!("Syntax error: `{}`.", err));
-    lisp_to_term(&lisp)
+    lisp_to_val(&lisp)
 }
 
-fn lisp_to_term(lisp: &Lisp) -> Val {
+fn lisp_to_val(lisp: &Lisp) -> Val {
     use crate::syntax::lisp::Lisp::*;
     match lisp {
         Num(dbi) => Val::var(*dbi),
         Sym(sym) => panic!("Unexpected symbol: `{}`.", sym),
-        Many(block) => many_to_term(block, lisp),
+        Many(block) => many_to_val(block, lisp),
     }
 }
 
-fn many_to_term(block: &[Lisp], lisp: &Lisp) -> Val {
+fn many_to_val(block: &[Lisp], lisp: &Lisp) -> Val {
     use crate::syntax::lisp::Lisp::*;
     match block {
         // So `()` == `()`.
         [] => Val::axiom_with_value(0),
-        [Sym("fst"), arg] => lisp_to_term(arg).first(),
-        [Sym("snd"), arg] => lisp_to_term(arg).second(),
+        [Sym("fst"), arg] => lisp_to_val(arg).first(),
+        [Sym("snd"), arg] => lisp_to_val(arg).second(),
         [Sym("type"), arg] => Val::Type(arg.as_dbi().unwrap() as _),
         [Sym("bot"), arg] => Val::Bot(arg.as_dbi().unwrap() as _),
-        [Sym("app"), fst, snd] => lisp_to_term(fst).apply(lisp_to_term(snd)),
-        [Sym("pair"), fst, snd] => Val::pair(lisp_to_term(fst), lisp_to_term(snd)),
-        [Sym("lam"), fst, snd] => Val::lam(lisp_to_term(fst), lisp_to_term(snd)),
+        [Sym("app"), fst, snd] => lisp_to_val(fst).apply(lisp_to_val(snd)),
+        [Sym("pair"), fst, snd] => Val::pair(lisp_to_val(fst), lisp_to_val(snd)),
+        [Sym("lam"), fst, snd] => Val::lam(lisp_to_val(fst), lisp_to_val(snd)),
         _ => panic!("Bad block: `{}`.", lisp),
     }
 }
@@ -75,14 +75,8 @@ fn test_app_reduction() {
 }
 
 /**
-https://github.com/owo-lang/voile-rs/issues/47
-
-First of all, `\x.\y.y` is `Lam(Lam(Dbi(0))`.
-Instantiate this (e.g. with a value `114514`), according to our current strategy, will produce
-`Lam(114514)`, which means that our implementation is evaluating `(\x.\y.y) 114514` to `\y.114514`.
-
-Junk! Need to fix it asap.
-*/
+ * https://github.com/owo-lang/voile-rs/issues/47
+ */
 #[test]
 fn test_issue_47() {
     assert_eq!(

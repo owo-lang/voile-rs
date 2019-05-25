@@ -14,8 +14,8 @@ pub enum TCE {
     NotPi(SyntaxInfo, Val),
     NotSameType(Val, Val),
     NotTypeAbs(SyntaxInfo, Abs),
-    NotTypeTerm(SyntaxInfo, Val),
-    NotUniverseTerm(SyntaxInfo, Val),
+    NotTypeVal(SyntaxInfo, Val),
+    NotUniverseVal(SyntaxInfo, Val),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
     /// Expected the first level to be smaller than second.
@@ -36,33 +36,31 @@ impl Display for TCE {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         match self {
             TCE::Textual(text) => f.write_str(text),
-            TCE::CouldNotInfer(term) => write!(f, "Could not infer type of: {}.", term),
+            TCE::CouldNotInfer(val) => write!(f, "Could not infer type of: {}.", val),
             TCE::TypeNotInGamma(id) => write!(f, "Type info not in Gamma for: {}.", id),
-            TCE::NotSigma(id, term) => write!(
+            TCE::NotSigma(id, val) => write!(
                 f,
                 "Expected a sigma type expression, got: `{}` at {}.",
-                term, id
+                val, id
             ),
-            TCE::NotPi(id, term) => write!(
+            TCE::NotPi(id, val) => write!(
                 f,
                 "Expected a pi type expression (function), got: `{}` at {}.",
-                term, id
+                val, id
             ),
-            TCE::NotSameType(term1, term2) => write!(
-                f,
-                "Expected `{}` and `{}` to be the same type.",
-                term1, term2
-            ),
+            TCE::NotSameType(val1, val2) => {
+                write!(f, "Expected `{}` and `{}` to be the same type.", val1, val2)
+            }
             TCE::NotTypeAbs(id, abs) => {
                 write!(f, "Expected a type expression, got: `{}` at {}.", abs, id)
             }
-            TCE::NotTypeTerm(id, term) => {
-                write!(f, "Expected a type expression, got: `{}` at {}.", term, id)
+            TCE::NotTypeVal(id, val) => {
+                write!(f, "Expected a type expression, got: `{}` at {}.", val, id)
             }
-            TCE::NotUniverseTerm(id, term) => write!(
+            TCE::NotUniverseVal(id, val) => write!(
                 f,
                 "Expected an universe expression, got: `{}` at {}.",
-                term, id
+                val, id
             ),
             TCE::DbiOverflow(expected, actual) => write!(
                 f,

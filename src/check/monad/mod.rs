@@ -5,10 +5,10 @@ mod state;
 
 pub use self::error::*;
 pub use self::state::*;
-use crate::syntax::core::TermInfo;
+use crate::syntax::core::ValInfo;
 
 /// Type-Checking Monad.
 pub type TCM<T = TCS> = Result<T, TCE>;
 
-/// Term-Producing Type-Checking Monad.
-pub type TermTCM = TCM<(TermInfo, TCS)>;
+/// Val-Producing Type-Checking Monad.
+pub type ValTCM = TCM<(ValInfo, TCS)>;

@@ -1,8 +1,8 @@
 use crate::syntax::common::DBI;
-use crate::syntax::core::TermInfo;
+use crate::syntax::core::ValInfo;
 
 /// Typing context.
-pub type Gamma = Vec<TermInfo>;
+pub type Gamma = Vec<ValInfo>;
 
 #[derive(Debug, Clone, Default)]
 pub struct TCS {
@@ -17,19 +17,19 @@ pub struct TCS {
 }
 
 impl TCS {
-    pub fn local_type(&self, dbi: DBI) -> TermInfo {
+    pub fn local_type(&self, dbi: DBI) -> ValInfo {
         self.local_gamma[self.local_gamma.len() - dbi - 1].clone()
     }
 
-    pub fn glob_type(&self, dbi: DBI) -> TermInfo {
+    pub fn glob_type(&self, dbi: DBI) -> ValInfo {
         self.gamma[dbi].clone()
     }
 
-    pub fn local_val(&self, dbi: DBI) -> TermInfo {
+    pub fn local_val(&self, dbi: DBI) -> ValInfo {
         self.local_env[self.local_env.len() - dbi - 1].clone()
     }
 
-    pub fn glob_val(&self, dbi: DBI) -> TermInfo {
+    pub fn glob_val(&self, dbi: DBI) -> ValInfo {
         self.env[dbi].clone()
     }
 

@@ -3,7 +3,7 @@ use std::collections::btree_map::BTreeMap;
 use crate::check::monad::TCS;
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
-use crate::syntax::core::{Closure, TermInfo, Val};
+use crate::syntax::core::{Closure, ValInfo, Val};
 
 /// Term-producing strategy -- whether to produce
 /// dbi-based variables or uid-based variables.
@@ -19,7 +19,7 @@ enum Strategy {
 /// In order to have that term, you'll need to type-check the `abs` first,
 /// which guarantees `abs` to be well-typed.
 /// This function will be unsafe if `checked` is `None`.
-fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (TermInfo, TCS) {
+fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (ValInfo, TCS) {
     match abs {
         Abs::Type(info, level) => (Val::Type(level).into_info(info), tcs),
         Abs::Bot(info) => (Val::Bot(0).into_info(info), tcs),
@@ -87,7 +87,7 @@ fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (Ter
     }
 }
 
-pub fn compile_cons_type(info: SyntaxInfo, ret_ty: Val) -> TermInfo {
+pub fn compile_cons_type(info: SyntaxInfo, ret_ty: Val) -> ValInfo {
     let mut variant = BTreeMap::default();
     variant.insert(info.text.clone(), Val::var(0));
     let lam = Val::lam(ret_ty, Val::Sum(variant));
@@ -97,12 +97,12 @@ pub fn compile_cons_type(info: SyntaxInfo, ret_ty: Val) -> TermInfo {
 /// So you can do some functional programming based on method call chains.
 impl TCS {
     #[inline]
-    pub fn evaluate(self, abs: Abs) -> (TermInfo, Self) {
+    pub fn evaluate(self, abs: Abs) -> (ValInfo, Self) {
         compile(self, Strategy::Check, abs, None)
     }
 
     #[inline]
-    pub fn compile(self, abs: Abs, checked: Option<Val>) -> (TermInfo, Self) {
+    pub fn compile(self, abs: Abs, checked: Option<Val>) -> (ValInfo, Self) {
         compile(self, Strategy::Evaluate, abs, checked)
     }
 }
