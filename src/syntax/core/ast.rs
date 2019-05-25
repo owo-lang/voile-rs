@@ -86,9 +86,15 @@ pub enum Neutral {
 }
 
 impl Neutral {
-    pub fn map_var(self, f: impl FnOnce(DBI) -> DBI) -> Self {
+    pub fn map_axiom<F: Fn(UID) -> Self + Copy>(self, f: F) -> Self {
         match self {
-            Neutral::Var(dbi) => Neutral::Var(f(dbi)),
+            Neutral::Axi(uid) => f(uid),
+            Neutral::App(fun, a) => Neutral::App(
+                Box::new(fun.map_axiom(f)),
+                Box::new(a.map_neutral(|n| n.map_axiom(f))),
+            ),
+            Neutral::Fst(p) => Neutral::Fst(Box::new(p.map_axiom(f))),
+            Neutral::Snd(p) => Neutral::Snd(Box::new(p.map_axiom(f))),
             e => e,
         }
     }
@@ -210,9 +216,17 @@ impl Val {
         }
     }
 
-    pub fn map_neutral(self, f: impl FnOnce(Neutral) -> Neutral) -> Self {
+    pub fn map_neutral<F: Fn(Neutral) -> Neutral + Copy>(self, f: F) -> Self {
         match self {
             Val::Neut(n) => Val::Neut(f(n)),
+            Val::Pair(a, b) => Self::pair(a.map_neutral(f), b.map_neutral(f)),
+            Val::Sum(v) => Val::Sum(v.into_iter().map(|(k, v)| (k, v.map_neutral(f))).collect()),
+            Val::Lam(Closure { param_type, body }) => {
+                Self::lam(param_type.map_neutral(f), body.map_neutral(f))
+            }
+            Val::Dt(kind, Closure { param_type, body }) => {
+                Self::dependent_type(kind, param_type.map_neutral(f), body.map_neutral(f))
+            }
             e => e,
         }
     }

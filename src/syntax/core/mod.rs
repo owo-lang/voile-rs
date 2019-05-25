@@ -28,10 +28,6 @@ impl ValInfo {
     pub fn map_ast(self, f: impl FnOnce(Val) -> Val) -> Self {
         Self::new(f(self.ast), self.info)
     }
-
-    pub fn increase_dbi(self, dbi: DBI) -> Self {
-        self.map_ast(|ast| ast.map_neutral(|n| n.map_var(|x| x + 1 + dbi)))
-    }
 }
 
 impl ToSyntaxInfo for ValInfo {
