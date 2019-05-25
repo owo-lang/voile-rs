@@ -4,7 +4,7 @@ use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::{Closure, RedEx, Val};
 
 use super::monad::{ValTCM, TCE, TCM, TCS};
-use super::util::compile_cons_type;
+use super::util::compile_variant;
 use std::collections::BTreeMap;
 
 /// $$
@@ -57,10 +57,8 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             } else if !ret_ty.body.is_universe() {
                 Err(TCE::NotUniverseVal(info.clone(), *ret_ty.body.clone()))
             } else {
-                Ok((
-                    compile_cons_type(info.clone(), *ret_ty.param_type.clone()),
-                    tcs,
-                ))
+                let variant = compile_variant(info.clone(), *ret_ty.param_type.clone());
+                Ok((variant, tcs))
             }
         }
         (Abs::Bot(info), Val::Type(level)) => {

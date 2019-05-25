@@ -29,7 +29,7 @@ fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (Val
         },
         Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info), tcs),
         // Because I don't know what else can I output.
-        Abs::Variant(info) => (compile_cons_type(info, Val::axiom()), tcs),
+        Abs::Variant(info) => (compile_variant(info, Val::axiom()), tcs),
         Abs::App(info, f, a) => {
             // The function should always be compiled to DBI-based terms
             let (f, tcs) = compile(tcs, Strategy::Evaluate, *f, None);
@@ -87,7 +87,7 @@ fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (Val
     }
 }
 
-pub fn compile_cons_type(info: SyntaxInfo, ret_ty: Val) -> ValInfo {
+pub fn compile_variant(info: SyntaxInfo, ret_ty: Val) -> ValInfo {
     let mut variant = BTreeMap::default();
     variant.insert(info.text.clone(), Val::var(0));
     let lam = Val::lam(ret_ty, Val::Sum(variant));

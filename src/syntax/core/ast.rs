@@ -165,6 +165,13 @@ impl Val {
         }
     }
 
+    pub fn is_sum(&self) -> bool {
+        match self {
+            Val::Sum(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn pair(first: Self, second: Self) -> Self {
         Val::Pair(Box::new(first), Box::new(second))
     }
