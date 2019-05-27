@@ -191,11 +191,15 @@ impl Val {
     }
 
     pub fn axiom() -> Self {
-        Self::axiom_with_value(unsafe { next_uid() })
+        Self::axiom_with_uid(unsafe { next_uid() })
     }
 
-    pub(crate) fn axiom_with_value(uid: UID) -> Self {
+    pub(crate) fn axiom_with_uid(uid: UID) -> Self {
         Val::Neut(Neutral::Axi(uid, None))
+    }
+
+    pub(crate) fn axiom_with_index(uid: UID, dbi: DBI) -> Self {
+        Val::Neut(Neutral::Axi(uid, Some(dbi)))
     }
 
     pub fn app(function: Neutral, arg: Self) -> Self {

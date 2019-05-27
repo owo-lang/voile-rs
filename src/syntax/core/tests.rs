@@ -19,7 +19,7 @@ fn many_to_val(block: &[Lisp], lisp: &Lisp) -> Val {
     use crate::syntax::lisp::Lisp::*;
     match block {
         // So `()` == `()`.
-        [] => Val::axiom_with_value(0),
+        [] => Val::axiom_with_uid(0),
         [Sym("fst"), arg] => lisp_to_val(arg).first(),
         [Sym("snd"), arg] => lisp_to_val(arg).second(),
         [Sym("type"), arg] => Val::Type(arg.as_dbi().unwrap() as _),

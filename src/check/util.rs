@@ -29,7 +29,6 @@ fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (Val
                     neut.map_axiom(|uid, dbi| Neutral::Axi(uid, Some(dbi.unwrap_or(i))))
                 };
                 let local = tcs.local_val(i);
-                println!("local={}", local.ast);
                 let val = local.ast.map_neutral(map_neut).into_info(info);
                 (val, tcs)
             }
