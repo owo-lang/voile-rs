@@ -5,6 +5,8 @@
 + Rename `ConsType` to `Variant`, `Term` to `Val`
 + Improve lambda compilation (#71, #73)
 + `Variant` related checking, introduce `Sum` in core (#11, #70)
++ Remove features of `clap` to avoid transitive winapi
+  0.2.8 dependency
 
 # 0.0.7
 

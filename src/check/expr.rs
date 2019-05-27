@@ -169,11 +169,11 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
         }
         // TODO: special treatment for `Cons`.
         App(_, f, a) => match &**f {
-            Variant(info) => {
+            Variant(variant_info) => {
                 let (a, tcs) = tcs.check_type(a)?;
                 let mut variant = BTreeMap::default();
-                variant.insert(info.text.clone(), a.ast);
-                Ok((Val::Sum(variant).into_info(info.clone()), tcs))
+                variant.insert(variant_info.text.clone(), a.ast);
+                Ok((Val::Sum(variant).into_info(info), tcs))
             }
             f => {
                 let (f_ty, tcs) = tcs.infer(f)?;
