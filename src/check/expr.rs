@@ -140,7 +140,10 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
     let info = value.to_info();
     match value {
         Type(_, level) => Ok((Val::Type(level + 1).into_info(info), tcs)),
-        Local(_, _, dbi) => Ok((tcs.local_type(*dbi).ast.clone().into_info(info), tcs)),
+        Local(_, _, dbi) => {
+            let local = tcs.local_type(*dbi).ast.clone().attach_dbi(*dbi);
+            Ok((local.into_info(info), tcs))
+        }
         Var(_, dbi) => Ok((tcs.glob_type(*dbi).ast.clone().into_info(info), tcs)),
         Pair(_, fst, snd) => {
             let (fst_ty, tcs) = tcs.infer(&**fst)?;

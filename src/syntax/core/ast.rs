@@ -45,6 +45,12 @@ impl Val {
             e => panic!("Cannot project on `{:?}`.", e),
         }
     }
+
+    pub fn attach_dbi(self, i: DBI) -> Self {
+        let map_neut =
+            |neut: Neutral| neut.map_axiom(|uid, dbi| Neutral::Axi(uid, Some(dbi.unwrap_or(i))));
+        self.map_neutral(map_neut)
+    }
 }
 
 impl RedEx for Val {
@@ -110,7 +116,7 @@ impl RedEx for Neutral {
     fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val {
         use self::Neutral::*;
         match self {
-            Var(n) if dbi == n => arg,
+            Var(n) if dbi == n => arg.attach_dbi(dbi),
             Var(n) => Val::var(n),
             Axi(i, dbi) => Val::Neut(Axi(i, dbi)),
             App(function, argument) => function
