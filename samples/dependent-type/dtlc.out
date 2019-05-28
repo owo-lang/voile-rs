@@ -3,4 +3,4 @@ sign: (set0 -> ([0] -> [1]))
 body: (set0 . ([0] . [0]))
 sign: (set0 -> (set0 -> (set0 -> (([2] -> ([2] -> [2])) -> ([2] -> ([4] -> [3]))))))
 body: (set0 . (set0 . (set0 . (([2] -> ([2] -> [2])) . ([2] . ([4] . (([2] [0]) [1])))))))
-Type-Check successful.
+Checkmate, dram!

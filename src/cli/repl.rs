@@ -70,10 +70,8 @@ const GAMMA_CMD: &'static str = ":gamma";
 const CTX_CMD: &'static str = ":context";
 const HELP_CMD: &'static str = ":help";
 const LOAD_CMD: &'static str = ":load";
-const LEXICAL_CMD: &'static str = ":lexical";
 
 const LOAD_PFX: &'static str = ":load ";
-const LEXICAL_PFX: &'static str = ":lexical ";
 
 fn show_gamma(tcs: &TCS) {
     for val in &tcs.0.gamma {
@@ -139,7 +137,6 @@ fn help(current_mode: &str) {
          {:<20} {}\n\
          {:<20} {}\n\
          {:<20} {}\n\
-         {:<20} {}\n\
          ",
         QUIT_CMD,
         "Quit the REPL.",
@@ -147,8 +144,6 @@ fn help(current_mode: &str) {
         "Show current typing context.",
         CTX_CMD,
         "Show current value context.",
-        ":lexical <EXPR>",
-        "Show the lexical information of the expression.",
         ":load <FILE>",
         "Load an external file.",
     );
@@ -189,17 +184,10 @@ pub fn repl_plain(mut tcs: TCS) {
 
 pub fn repl(mut tcs: TCS) {
     repl_welcome_message("RICH");
-    let all_cmd: Vec<_> = vec![
-        QUIT_CMD,
-        GAMMA_CMD,
-        CTX_CMD,
-        HELP_CMD,
-        LOAD_CMD,
-        LEXICAL_CMD,
-    ]
-    .iter()
-    .map(|s| s.to_string())
-    .collect();
+    let all_cmd: Vec<_> = vec![QUIT_CMD, GAMMA_CMD, CTX_CMD, HELP_CMD, LOAD_CMD]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
     let mut r = Editor::with_config(
         Config::builder()
             .history_ignore_space(true)
@@ -214,7 +202,7 @@ pub fn repl(mut tcs: TCS) {
     loop {
         match r.readline(PROMPT) {
             Ok(line) => {
-                let line = line.trim();
+                let line: &str = line.trim();
                 r.add_history_entry(line.as_ref());
                 if let Some(ok) = repl_work(tcs, "RICH", line) {
                     tcs = ok;

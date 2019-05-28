@@ -48,4 +48,8 @@ impl TCS {
             .expect("Unexpected empty local gamma");
         self.local_env.pop().expect("Unexpected empty local env");
     }
+
+    pub fn glob_size(&self) -> usize {
+        self.gamma.len()
+    }
 }

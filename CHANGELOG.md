@@ -10,6 +10,8 @@
 + Now we're not compiling after tycking, but transform the
   tycked terms (#74, #75)
 + REPL (#56, #76)
++ The message "Type-Check successful." is changed to
+  "Checkmate, dram!"
 
 # 0.0.7
 

@@ -33,10 +33,15 @@ fn main() {
                     .map_err(|err| eprintln!("{}", err))
                     .unwrap_or_else(|()| {
                         eprintln!("Type-Check failed.");
-                        std::process::exit(1);
+                        std::process::exit(1)
                     });
 
                 if !args.quiet {
+                    for i in 0..checked.glob_size() {
+                        println!("sign: {}", checked.gamma[i].ast);
+                        println!("body: {}", checked.env[i].ast);
+                    }
+
                     // Meme: https://github.com/owo-lang/voile-rs/issues/56
                     println!("Checkmate, dram!");
                 }

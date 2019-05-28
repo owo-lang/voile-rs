@@ -17,10 +17,8 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
             let (sign_fake, tcs) = tcs.check_type(&sign_abs)?;
             let sign = sign_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
-            println!("sign: {}", sign.ast);
             let (val_fake, mut tcs) = tcs.check(&impl_abs, &sign.ast)?;
             let val = val_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
-            println!("body: {}", val.ast);
 
             tcs.gamma.push(sign);
             tcs.env.push(val);
