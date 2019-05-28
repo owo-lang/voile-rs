@@ -3,8 +3,8 @@ use crate::syntax::common::DtKind::*;
 use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::{Closure, RedEx, Val};
 
+use super::eval::compile_variant;
 use super::monad::{ValTCM, TCE, TCM, TCS};
-use super::util::compile_variant;
 use std::collections::BTreeMap;
 
 /// $$
