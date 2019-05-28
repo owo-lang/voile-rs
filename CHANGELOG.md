@@ -7,6 +7,8 @@
 + `Variant` related checking, introduce `Sum` in core (#11, #70)
 + Remove features of `clap` to avoid transitive winapi
   0.2.8 dependency
++ Now we're not compiling after tycking, but transform the
+  tycked terms (#74, #75)
 
 # 0.0.7
 
