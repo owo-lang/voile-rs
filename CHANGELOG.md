@@ -9,6 +9,7 @@
   0.2.8 dependency
 + Now we're not compiling after tycking, but transform the
   tycked terms (#74, #75)
++ REPL (#56, #76)
 
 # 0.0.7
 

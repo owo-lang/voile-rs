@@ -37,7 +37,8 @@ fn main() {
                     });
 
                 if !args.quiet {
-                    println!("Type-Check successful.");
+                    // Meme: https://github.com/owo-lang/voile-rs/issues/56
+                    println!("Checkmate, dram!");
                 }
 
                 (checked, abs_decls)

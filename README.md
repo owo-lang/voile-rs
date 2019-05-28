@@ -26,3 +26,24 @@ sums and records.
 + [Doc.rs][doc-rs] documentation (a tutorial is included)
 + [Change Log](CHANGELOG.md)
 + [IntelliJ Plugin][plugin]
+
+## Install
+
+You can install the voile type-checker by this command
+(cargo installation and rust stable toolchain are assumed):
+
+```bash
+cargo install voile --bin voilec
+```
+
+After installation, you can type-check a voile file by:
+
+```bash
+voilec [filename]
+```
+
+You can also start a REPL:
+
+```bash
+voilec -i
+```
