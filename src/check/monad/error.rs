@@ -16,6 +16,7 @@ pub enum TCE {
     NotTypeAbs(SyntaxInfo, Abs),
     NotTypeVal(SyntaxInfo, Val),
     NotSumVal(SyntaxInfo, Val),
+    OverlappingVariant(SyntaxInfo, String),
     MissingVariant(String),
     NotUniverseVal(SyntaxInfo, Val),
     /// Maximum `DBI` vs. Requested `DBI`
@@ -65,6 +66,11 @@ impl Display for TCE {
                 val, id
             ),
             TCE::MissingVariant(variant) => write!(f, "Expect variant `{}`, but missing.", variant),
+            TCE::OverlappingVariant(id, variant) => write!(
+                f,
+                "Unexpected overlapping variant: `{}` at {}.",
+                variant, id
+            ),
             TCE::NotUniverseVal(id, val) => write!(
                 f,
                 "Expected an universe expression, got: `{}` at {}.",

@@ -6,3 +6,5 @@
 
 val one_sum : Type -> Type1;
 let one_sum = 'Label;
+
+let two_sums = 'Label Type + 'Label2 Type;

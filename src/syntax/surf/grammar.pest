@@ -9,7 +9,7 @@ WHITESPACE = _{ WHITE_SPACE | ("//" ~ (!NEWLINE ~ ANY)*) }
 // Identifier
 ident_char =
  _{ ASCII_ALPHA
-  | "\\\\"
+  | "_"
   }
 ident_raw =
  _{ ident_char
@@ -17,6 +17,7 @@ ident_raw =
     | ASCII_DIGIT
     | "'"
     | "_"
+    | "\\"
     )*
   }
 ///Yellow

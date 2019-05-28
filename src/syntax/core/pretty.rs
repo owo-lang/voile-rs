@@ -33,7 +33,7 @@ impl Display for Val {
                 let mut started = false;
                 for (name, param) in variants {
                     if started {
-                        f.write_str(" | ")?;
+                        f.write_str(" + ")?;
                     } else {
                         started = true;
                     }

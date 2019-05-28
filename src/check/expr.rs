@@ -5,7 +5,7 @@ use crate::syntax::core::{Closure, RedEx, Val};
 
 use super::eval::compile_variant;
 use super::monad::{ValTCM, TCE, TCM, TCS};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// $$
 /// \newcommand\U{\textsf{Type}}
@@ -119,7 +119,14 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
             }
             Ok((Val::Sum(sum).into_info(info), tcs))
         }
-        e => Err(TCE::NotTypeAbs(info, e.clone())),
+        e => {
+            let (ty, tcs) = tcs.infer(e)?;
+            if ty.ast.is_universe() {
+                Ok(tcs.evaluate(e.clone()))
+            } else {
+                Err(TCE::NotUniverseVal(info, ty.ast))
+            }
+        }
     }
 }
 
@@ -135,7 +142,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
 /// \cfrac{\G{a}{\Sigma A.B}}{\G{a\textsf{\.1}}{A}}
 /// $$
 /// Infer type of a value.
-fn infer(tcs: TCS, value: &Abs) -> ValTCM {
+fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
     use crate::syntax::abs::Abs::*;
     let info = value.to_info();
     match value {
@@ -169,6 +176,28 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 }
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
+        }
+        Sum(_, variants) => {
+            let mut known = BTreeSet::default();
+            for variant in variants {
+                let (variant, new_tcs) = tcs.check_type(variant)?;
+                tcs = new_tcs;
+                let info = variant.info;
+                match variant.ast.try_into_sum() {
+                    Ok(variants) => {
+                        for (name, _) in variants {
+                            if known.contains(&name) {
+                                return Err(TCE::OverlappingVariant(info, name));
+                            } else {
+                                known.insert(name);
+                            }
+                        }
+                    }
+                    Err(e) => return Err(TCE::NotSumVal(info, e)),
+                }
+            }
+            // TODO: level
+            Ok((Val::Type(0).into_info(info), tcs))
         }
         // TODO: special treatment for `Cons`.
         App(_, f, a) => match &**f {

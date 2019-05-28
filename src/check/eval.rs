@@ -19,7 +19,7 @@ enum Strategy {
 /// In order to have that term, you'll need to type-check the `abs` first,
 /// which guarantees `abs` to be well-typed.
 /// This function will be unsafe if `checked` is `None`.
-fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (ValInfo, TCS) {
+fn compile(mut tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (ValInfo, TCS) {
     match abs {
         Abs::Type(info, level) => (Val::Type(level).into_info(info), tcs),
         Abs::Bot(info) => (Val::Bot(0).into_info(info), tcs),
@@ -52,6 +52,19 @@ fn compile(tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (Val
                 (term.into_info(info), tcs)
             }
         },
+        Abs::Sum(info, sums) => {
+            let mut variants = BTreeMap::default();
+            for sum in sums {
+                let (val, new_tcs) = compile(tcs, strategy, sum, None);
+                tcs = new_tcs;
+                if let Val::Sum(mut new) = val.ast {
+                    variants.append(&mut new);
+                } else {
+                    panic!("Compile failed: not a sum, at {}.", val.info);
+                }
+            }
+            (Val::Sum(variants).into_info(info), tcs)
+        }
         Abs::Pair(info, a, b) => match checked {
             Some(Val::Pair(checked_a, checked_b)) => {
                 let (a, tcs) = compile(tcs, strategy, *a, Some(*checked_a));
