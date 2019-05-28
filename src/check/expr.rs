@@ -112,9 +112,15 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
                 let (variant, new_tcs) = tcs.check_type(variant)?;
                 tcs = new_tcs;
                 let info = variant.info;
-                let e = |e: Val| TCE::NotSumVal(info, e);
-                let mut new = variant.ast.try_into_sum().map_err(e)?;
-                // TODO: check overlapping variants
+                let mut new = match variant.ast.try_into_sum() {
+                    Ok(new) => new,
+                    Err(e) => return Err(TCE::NotSumVal(info, e)),
+                };
+                for new_variant in new.keys() {
+                    if sum.contains_key(new_variant) {
+                        return Err(TCE::OverlappingVariant(info, new_variant.clone()));
+                    }
+                }
                 sum.append(&mut new);
             }
             Ok((Val::Sum(sum).into_info(info), tcs))
