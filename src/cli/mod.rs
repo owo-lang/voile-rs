@@ -1,7 +1,7 @@
 extern crate voile;
 
 use voile::check::check_main;
-use voile::syntax::abs::trans_decls;
+use voile::syntax::abs::trans_decls_contextual;
 
 mod args;
 mod repl;
@@ -21,7 +21,7 @@ fn main() {
 
             if !args.parse_only {
                 // Translate to abstract syntax
-                let abs_decls = trans_decls(decls)
+                let abs_decls = trans_decls_contextual(Default::default(), decls)
                     .map_err(|err| eprintln!("{}", err))
                     .unwrap_or_else(|()| {
                         eprintln!("Scope-Check failed.");
@@ -29,11 +29,10 @@ fn main() {
                     });
 
                 // Type Check
-                let checked = check_main(abs_decls)
+                let checked = check_main(abs_decls.0.clone())
                     .map_err(|err| eprintln!("{}", err))
                     .unwrap_or_else(|()| {
                         eprintln!("Type-Check failed.");
-
                         std::process::exit(1);
                     });
 
@@ -41,7 +40,7 @@ fn main() {
                     println!("Type-Check successful.");
                 }
 
-                checked
+                (checked, abs_decls)
             } else {
                 Default::default()
             }

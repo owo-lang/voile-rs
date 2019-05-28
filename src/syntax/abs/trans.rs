@@ -10,13 +10,14 @@ use super::ast::*;
 type NamedDbi = BTreeMap<String, DBI>;
 
 pub fn trans_decls(decls: Vec<Decl>) -> TCM<Vec<AbsDecl>> {
-    decls
-        .iter()
-        .try_fold(Default::default(), trans_one_decl)
-        .map(|res| res.0)
+    trans_decls_contextual(Default::default(), decls).map(|tcs| tcs.0)
 }
 
-type DeclTCS = (Vec<AbsDecl>, NamedDbi);
+pub fn trans_decls_contextual(tcs: DeclTCS, decls: Vec<Decl>) -> TCM<DeclTCS> {
+    decls.iter().try_fold(tcs, trans_one_decl)
+}
+
+pub type DeclTCS = (Vec<AbsDecl>, NamedDbi);
 
 fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclTCS> {
     let name = &decl.name;
