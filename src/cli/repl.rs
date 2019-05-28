@@ -202,8 +202,8 @@ pub fn repl(mut tcs: TCS) {
     loop {
         match r.readline(PROMPT) {
             Ok(line) => {
-                let line: &str = line.trim();
-                r.add_history_entry(line.as_ref());
+                let line = line.trim();
+                r.add_history_entry(line);
                 if let Some(ok) = repl_work(tcs, "RICH", line) {
                     tcs = ok;
                 } else {

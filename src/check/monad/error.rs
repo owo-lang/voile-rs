@@ -16,6 +16,7 @@ pub enum TCE {
     NotTypeAbs(SyntaxInfo, Abs),
     NotTypeVal(SyntaxInfo, Val),
     NotSumVal(SyntaxInfo, Val),
+    MissingVariant(String),
     NotUniverseVal(SyntaxInfo, Val),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
@@ -63,6 +64,7 @@ impl Display for TCE {
                 "Expected a sum type expression, got: `{}` at {}.",
                 val, id
             ),
+            TCE::MissingVariant(variant) => write!(f, "Expect variant `{}`, but missing.", variant),
             TCE::NotUniverseVal(id, val) => write!(
                 f,
                 "Expected an universe expression, got: `{}` at {}.",

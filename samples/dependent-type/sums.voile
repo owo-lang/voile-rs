@@ -4,5 +4,5 @@
 // Author: ice10
 //
 
-val sums : Type -> Type1;
-let sums = 'Label;
+val one_sum : Type -> Type1;
+let one_sum = 'Label;

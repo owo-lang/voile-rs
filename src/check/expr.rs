@@ -172,8 +172,13 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
         }
         // TODO: special treatment for `Cons`.
         App(_, f, a) => match &**f {
-            Variant(variant_info) => {
-                let (a, tcs) = tcs.check_type(a)?;
+            Variant(_) => {
+                let (_, tcs) = tcs.check_type(a)?;
+                // TODO: level
+                Ok((Val::Type(0).into_info(info), tcs))
+            }
+            Cons(variant_info) => {
+                let (a, tcs) = tcs.infer(a)?;
                 let mut variant = BTreeMap::default();
                 variant.insert(variant_info.text.clone(), a.ast);
                 Ok((Val::Sum(variant).into_info(info), tcs))
@@ -194,24 +199,33 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
 }
 
 /// Check if `subtype` is a subtype of `supertype`.
-fn check_subtype(tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
+fn check_subtype(mut tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
     use crate::syntax::core::Neutral::*;
     use crate::syntax::core::Val::*;
     match (subtype, supertype) {
         (Type(sub_level), Type(super_level)) if sub_level <= super_level => Ok(tcs),
-        (Neut(Axi(uid0, _)), Neut(Axi(uid1, _))) => {
-            if uid0 == uid1 {
+        (Neut(Axi(sub_uid, _)), Neut(Axi(super_uid, _))) => {
+            if sub_uid == super_uid {
                 Ok(tcs)
             } else {
                 Err(TCE::NotSameType(subtype.clone(), supertype.clone()))
             }
         }
-        (Neut(Var(dbi0)), Neut(Var(dbi1))) => {
-            if dbi0 == dbi1 {
+        (Neut(Var(sub_dbi)), Neut(Var(super_dbi))) => {
+            if sub_dbi == super_dbi {
                 Ok(tcs)
             } else {
-                Err(TCE::NotSameType(Neut(Var(*dbi0)), Neut(Var(*dbi1))))
+                Err(TCE::NotSameType(Neut(Var(*sub_dbi)), Neut(Var(*super_dbi))))
             }
+        }
+        (Sum(sub_variants), Sum(super_variants)) => {
+            for (name, ty) in sub_variants {
+                let counterpart = super_variants
+                    .get(name)
+                    .ok_or_else(|| TCE::MissingVariant(name.clone()))?;
+                tcs = tcs.check_subtype(ty, counterpart)?;
+            }
+            Ok(tcs)
         }
         (e, t) => panic!("Unimplemented subtyping: `{}` against `{}`.", e, t),
     }
