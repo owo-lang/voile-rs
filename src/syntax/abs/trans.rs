@@ -89,7 +89,7 @@ fn trans_expr_inner(
         Expr::Variant(ident) => Ok(Abs::Variant(ident.to_info())),
         Expr::Bot(ident) => Ok(Abs::Bot(ident.to_info())),
         Expr::Sum(first, variants) => {
-            let abs_vec: Vec<Abs> = variants
+            let mut abs_vec: Vec<Abs> = variants
                 .iter()
                 .map(|expr| trans_expr_inner(expr, env, global_map, local_env, local_map))
                 .collect::<TCM<_>>()?;
@@ -97,6 +97,7 @@ fn trans_expr_inner(
             let info = abs_vec
                 .iter()
                 .fold(first.to_info(), |l, r| l.merge(r.to_info(), " | "));
+            abs_vec.push(first);
             Ok(Abs::Sum(info, abs_vec))
         }
         Expr::Tup(first, tup_vec) => tup_vec.iter().try_fold(

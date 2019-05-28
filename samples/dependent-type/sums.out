@@ -2,5 +2,5 @@ Parse successful.
 sign: (set0 -> set1)
 body: (set0 . ''Label [0])
 sign: set0
-body: ''Label2 [0]
+body: ''Label [0] + ''Label2 [0]
 Checkmate, dram!
