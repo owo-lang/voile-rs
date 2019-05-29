@@ -47,6 +47,7 @@ impl Display for Val {
             Val::Dt(Sigma, clos) => write!(f, "({} * {})", clos.param_type, clos.body),
             Val::Pair(fst, snd) => write!(f, "({}, {})", fst, snd),
             Val::Neut(neut) => neut.fmt(f),
+            Val::Cons(name, a) => write!(f, "(@{} {})", name, a),
         }
     }
 }

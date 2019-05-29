@@ -108,11 +108,14 @@ pub fn compile_variant(info: SyntaxInfo, ret_ty: Val) -> ValInfo {
 
 /// So you can do some functional programming based on method call chains.
 impl TCS {
+    /// Should be invoked **only** during type-checking,
+    /// produce uid-based terms (which can be further type-checked).
     #[inline]
     pub fn evaluate(self, abs: Abs) -> (ValInfo, Self) {
         compile(self, Strategy::Check, abs, None)
     }
 
+    /// Produce dbi-based terms (which can be further evaluated).
     #[inline]
     pub fn compile(self, abs: Abs, checked: Option<Val>) -> (ValInfo, Self) {
         compile(self, Strategy::Evaluate, abs, checked)

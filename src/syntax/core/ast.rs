@@ -69,6 +69,7 @@ impl RedEx for Val {
                     .map(|(name, ty)| (name, ty.reduce_with_dbi(arg.clone(), dbi)))
                     .collect(),
             ),
+            Val::Cons(name, a) => Self::cons(name, a.reduce_with_dbi(arg, dbi)),
             // Cannot reduce
             e => e,
         }
@@ -148,6 +149,8 @@ pub enum Val {
     Dt(DtKind, Closure),
     /// Sum type literal.
     Sum(Variants),
+    /// Constructor invocation.
+    Cons(String, Box<Self>),
     /// Sigma instance.
     Pair(Box<Self>, Box<Self>),
     Neut(Neutral),
@@ -159,6 +162,7 @@ impl Val {
             Val::Type(_) => true,
             Val::Lam(_) => false,
             Val::Dt(_, _) => true,
+            Val::Cons(_, _) => false,
             Val::Sum(_) => true,
             Val::Pair(_, _) => false,
             // In case it's neutral, we use `is_universe` on its type.
@@ -182,6 +186,10 @@ impl Val {
 
     pub fn pair(first: Self, second: Self) -> Self {
         Val::Pair(Box::new(first), Box::new(second))
+    }
+
+    pub fn cons(name: String, param: Self) -> Self {
+        Val::Cons(name, Box::new(param))
     }
 
     pub fn var(index: DBI) -> Self {
@@ -250,6 +258,7 @@ impl Val {
             Val::Dt(kind, Closure { param_type, body }) => {
                 Self::dependent_type(kind, param_type.map_neutral(f), body.map_neutral(f))
             }
+            Val::Cons(name, a) => Self::cons(name, a.map_neutral(f)),
             e => e,
         }
     }
