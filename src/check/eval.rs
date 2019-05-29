@@ -3,7 +3,7 @@ use std::collections::btree_map::BTreeMap;
 use crate::check::monad::TCS;
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
-use crate::syntax::core::{Closure, Val, ValInfo};
+use crate::syntax::core::{Val, ValInfo};
 
 /// Term-producing strategy -- whether to produce
 /// dbi-based variables or uid-based variables.
@@ -34,21 +34,20 @@ fn compile(mut tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> 
             // The function should always be compiled to DBI-based terms
             let (f, tcs) = compile(tcs, Strategy::Evaluate, *f, None);
             let (a, tcs) = compile(tcs, strategy, *a, None);
-            (f.ast.apply(a.ast).into_info(info), tcs)
+            let applied = f.ast.apply(a.ast);
+            (applied.into_info(info), tcs)
         }
         Abs::Dt(info, kind, _, param_ty, ret_ty) => match checked {
             Some(Val::Dt(kind, closure)) => {
                 let (param_ty, tcs) = compile(tcs, strategy, *param_ty, Some(*closure.param_type));
                 let (ret_ty, tcs) = compile(tcs, strategy, *ret_ty, Some(*closure.body));
-                let closure = Closure::new(param_ty.ast, ret_ty.ast);
-                let term = Val::Dt(kind, closure);
+                let term = Val::dependent_type(kind, param_ty.ast, ret_ty.ast);
                 (term.into_info(info), tcs)
             }
             _ => {
                 let (param_ty, tcs) = compile(tcs, strategy, *param_ty, None);
                 let (ret_ty, tcs) = compile(tcs, strategy, *ret_ty, None);
-                let closure = Closure::new(param_ty.ast, ret_ty.ast);
-                let term = Val::Dt(kind, closure);
+                let term = Val::dependent_type(kind, param_ty.ast, ret_ty.ast);
                 (term.into_info(info), tcs)
             }
         },

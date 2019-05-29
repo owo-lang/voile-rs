@@ -63,6 +63,12 @@ impl RedEx for Val {
                 param_type.reduce_with_dbi(arg.clone(), dbi),
                 body.reduce_with_dbi(arg, dbi + 1),
             ),
+            Val::Sum(variants) => Val::Sum(
+                variants
+                    .into_iter()
+                    .map(|(name, ty)| (name, ty.reduce_with_dbi(arg.clone(), dbi)))
+                    .collect(),
+            ),
             // Cannot reduce
             e => e,
         }

@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::syntax::abs::Abs;
 use crate::syntax::common::DtKind::*;
 use crate::syntax::common::ToSyntaxInfo;
-use crate::syntax::core::{Closure, Val};
+use crate::syntax::core::Val;
 
 use super::eval::compile_variant;
 use super::monad::{ValTCM, TCE, TCM, TCS};
@@ -73,8 +73,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = tcs.check_type(&**ret)?;
             tcs.pop_local();
-            let clos = Closure::new(param.ast, ret.ast);
-            let dt = Val::Dt(*kind, clos).into_info(info.clone());
+            let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(info.clone());
             Ok((dt, tcs))
         }
         (expr, anything) => {
