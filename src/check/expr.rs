@@ -8,16 +8,53 @@ use crate::syntax::core::Val;
 use super::eval::compile_variant;
 use super::monad::{ValTCM, TCE, TCM, TCS};
 
-/// $$
-/// \newcommand\U{\textsf{Type}}
-/// \cfrac{i < j}{\Gamma \vdash \U\_i : \U\_j \rightsquigarrow \U\_i}
-/// \quad
-/// \cfrac{}{\Gamma \vdash\bot:\U\_i \rightsquigarrow \bot\_i}
-/// \newline
-/// \cfrac{\Gamma \vdash a:A \quad \Gamma,a:A \vdash b:B(a)}
-///      {\Gamma \vdash (a,b):\Sigma (a:A).B(a) \rightsquigarrow (a,b)}
-/// $$
-/// Abstract Term -> Core Term under an expected type.
+/**
+$$
+\\newcommand{\\cL}{{\\cal L}}
+\\newcommand{\\xx}[0]{\\texttt{x}}
+\\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
+\\newcommand{\\Gistype}[0]{\\Gamma \\istype}
+\\newcommand{\\tyck}[0]{\\vdash_\\texttt{c}}
+\\newcommand{\\Gtyck}[0]{\\Gamma \\tyck}
+\\newcommand{\\infer}[0]{\\vdash_\\texttt{i}}
+\\newcommand{\\Ginfer}[0]{\\Gamma \\infer}
+\\newcommand{\\ty}[0]{\\textsf{Type}}
+\\newcommand{\\Sum}[0]{\\texttt{Sum}\\ }
+\\newcommand{\\merge}[0]{\\texttt{merge}}
+\\newcommand{\\inst}[0]{\\texttt{inst}}
+\\newcommand{\\cons}[0]{\\texttt{cons}\\ }
+\\newcommand{\\app}[0]{\\texttt{app}}
+\\cfrac{\\Gtyck a:\\Pi\\ C \\Rightarrow n \\quad
+        \\Gtyck b:o \\Rightarrow m}
+       {\\Gtyck a\\ b : \\inst(C, m) \\Rightarrow \\app(n, m)}
+\\\\
+\\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
+        \\Gamma,n:o \\tyck b:\\inst(C, n) \\Rightarrow m}
+       {\\Gtyck a, b : \\Sigma\\ C \\Rightarrow n, m}
+\\\\
+\\cfrac{\\Gamma,[\\xx]:o \\tyck a:\\app(n, [\\xx])}
+       {\\Gtyck \\lambda \\xx.a :\\Pi \\lang o \\rightarrow n \\rang
+           \\Rightarrow \\lambda \\lang o \\rightarrow n \\rang}
+\\\\
+\\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
+        \\Gistype c \\Rightarrow m}
+       {\\Gtyck a:o+m \\Rightarrow n}
+\\\\
+\\cfrac{}{\\Gtyck `L:\\Pi \\lang o \\rightarrow n \\rang
+          \\Rightarrow \\lambda \\lang o \\rightarrow n \\rang}
+\\\\
+\\cfrac{\\Gistype a \\Rightarrow n \\quad
+       \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
+      {\\Gtyck (\\Sigma \\xx:a.b):\\ty \\Rightarrow
+          \\Sigma \\lang n \\rightarrow m \\rang}
+\\\\
+\\cfrac{\\Gistype a \\Rightarrow n \\quad
+       \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
+      {\\Gtyck (\\Pi \\xx:a.b):\\ty \\Rightarrow
+          \\Pi \\lang n \\rightarrow m \\rang}
+$$
+Abstract Term -> Core Term under an expected type.
+*/
 fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     match (expr, expected_type) {
         (&Abs::Type(ref info, lower), Val::Type(upper)) => {
@@ -84,7 +121,42 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     }
 }
 
-/// Check if an expression is a valid type expression.
+/**
+$$
+\\newcommand{\\cL}{{\\cal L}}
+\\newcommand{\\xx}[0]{\\texttt{x}}
+\\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
+\\newcommand{\\Gistype}[0]{\\Gamma \\istype}
+\\newcommand{\\tyck}[0]{\\vdash_\\texttt{c}}
+\\newcommand{\\Gtyck}[0]{\\Gamma \\tyck}
+\\newcommand{\\infer}[0]{\\vdash_\\texttt{i}}
+\\newcommand{\\Ginfer}[0]{\\Gamma \\infer}
+\\newcommand{\\ty}[0]{\\textsf{Type}}
+\\newcommand{\\Sum}[0]{\\texttt{Sum}\\ }
+\\newcommand{\\merge}[0]{\\texttt{merge}}
+\\newcommand{\\inst}[0]{\\texttt{inst}}
+\\newcommand{\\cons}[0]{\\texttt{cons}\\ }
+\\newcommand{\\app}[0]{\\texttt{app}}
+\\cfrac{}{\\Gistype \\ty \\Rightarrow \\ty}
+\\quad
+\\cfrac{}{\\Gistype \\bot \\Rightarrow \\Sum ()}
+\\\\
+\\cfrac{\\Gistype a \\Rightarrow n \\quad
+        \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
+       {\\Gistype \\Sigma \\xx:a.b \\Rightarrow
+           \\Sigma \\lang n \\rightarrow m \\rang}
+\\\\
+\\cfrac{\\Gistype a \\Rightarrow n \\quad
+        \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
+       {\\Gistype \\Pi \\xx:a.b \\Rightarrow
+           \\Pi \\lang n \\rightarrow m \\rang}
+\\\\
+\\cfrac{\\Gistype a \\Rightarrow \\Sum S_1 \\quad
+        \\Gistype b \\Rightarrow \\Sum S_2}
+       {\\Gistype a+b \\Rightarrow \\Sum \\merge(S\_1, S_2)}
+$$
+Check if an expression is a valid type expression.
+*/
 fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
     let info = expr.to_info();
     match expr {
