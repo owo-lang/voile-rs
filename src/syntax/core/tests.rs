@@ -60,18 +60,15 @@ fn test_pair_reduction() {
         from_str("(snd (fst (pair (pair 114 (type 514)) ())))"),
         from_str("(type 514)")
     );
-    assert_eq!(from_str("(snd 114514)"), from_str("(snd 114514)"));
-    assert_eq!(from_str("(fst 114514)"), from_str("(fst 114514)"));
+    assert_eq!(&format!("{}", from_str("(snd 114514)")), "([114514].2)");
+    assert_eq!(&format!("{}", from_str("(fst 114514)")), "([114514].1)");
 }
 
 #[test]
 fn test_app_reduction() {
-    assert_eq!(from_str("(app 114 514)"), from_str("(app 114 514)"));
+    assert_eq!(&format!("{}", from_str("(app 114 514)")), "([114] [514])");
     assert_eq!(from_str("(app (lam () 0) 514)"), from_str("514"));
-    assert_eq!(
-        from_str("(app (lam () 1) 514)"),
-        from_str("(app (lam () 1) 514)")
-    );
+    assert_eq!(from_str("(app (lam () 1) 514)"), from_str("1"));
 }
 
 /**

@@ -12,6 +12,8 @@
 + REPL (#56, #76)
 + The message "Type-Check successful." is changed to
   "Checkmate, dram!"
++ Fix wrong desugar of sum expression
++ Fix closure instantiation
 
 # 0.0.7
 

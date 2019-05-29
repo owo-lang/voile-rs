@@ -9,20 +9,13 @@ pub trait RedEx: Sized {
     /// This is primarily a private implementation-related API.
     /// Use at your own risk.
     fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val;
-
-    /// Instantiate `self` as a closure (possibly neutral terms) with
-    /// a concrete argument.
-    #[inline]
-    fn instantiate(self, arg: Val) -> Val {
-        self.reduce_with_dbi(arg, 0)
-    }
 }
 
 impl Val {
     /// Just for evaluation during beta-reduction.
     pub fn apply(self, arg: Val) -> Val {
         match self {
-            Val::Lam(closure) => closure.body.instantiate(arg),
+            Val::Lam(closure) => closure.instantiate(arg),
             Val::Neut(n) => Val::app(n, arg),
             e => panic!("Cannot apply on `{:?}`.", e),
         }
@@ -274,5 +267,13 @@ impl Closure {
             param_type: Box::new(param_type),
             body: Box::new(body),
         }
+    }
+
+    pub fn instantiate(self, arg: Val) -> Val {
+        self.body.reduce_with_dbi(arg, 0)
+    }
+
+    pub fn instantiate_cloned(&self, arg: Val) -> Val {
+        self.body.clone().reduce_with_dbi(arg, 0)
     }
 }

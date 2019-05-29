@@ -1,11 +1,12 @@
+use std::collections::{BTreeMap, BTreeSet};
+
 use crate::syntax::abs::Abs;
 use crate::syntax::common::DtKind::*;
 use crate::syntax::common::ToSyntaxInfo;
-use crate::syntax::core::{Closure, RedEx, Val};
+use crate::syntax::core::{Closure, Val};
 
 use super::eval::compile_variant;
 use super::monad::{ValTCM, TCE, TCM, TCS};
-use std::collections::{BTreeMap, BTreeSet};
 
 /// $$
 /// \newcommand\U{\textsf{Type}}
@@ -29,7 +30,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
         (Abs::Pair(info, fst, snd), Val::Dt(Sigma, closure)) => {
             let (fst_term, mut tcs) = tcs.check(&**fst, &*closure.param_type)?;
             let fst_term_ast = fst_term.ast.clone();
-            let snd_ty = closure.body.clone().instantiate(fst_term_ast.clone());
+            let snd_ty = closure.instantiate_cloned(fst_term_ast.clone());
             // This `fst_term.to_info()` is probably wrong, but I'm not sure how to fix
             let param_type = closure.param_type.clone().into_info(fst_term.to_info());
             tcs.local_gamma.push(param_type);
@@ -45,7 +46,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let mocked = Val::axiom_with_uid(name.uid);
             let mocked_term = mocked.clone().into_info(param_info.clone());
             tcs.local_env.push(mocked_term);
-            let ret_ty_body = ret_ty.body.clone().instantiate(mocked);
+            let ret_ty_body = ret_ty.instantiate_cloned(mocked);
             let (lam_term, mut tcs) = tcs.check(body, &ret_ty_body)?;
             tcs.pop_local();
             let lam = Val::lam(param_type.ast, lam_term.ast);
@@ -178,7 +179,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
                     // Since we can infer the type of `pair`, it has to be well-typed
                     let (pair_compiled, tcs) = tcs.evaluate(*pair.clone());
                     let fst = pair_compiled.ast.first();
-                    Ok((closure.body.instantiate(fst).into_info(info), tcs))
+                    Ok((closure.instantiate(fst).into_info(info), tcs))
                 }
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
@@ -223,7 +224,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
                 match f_ty.ast {
                     Val::Dt(Pi, closure) => {
                         let (new_a, tcs) = tcs.check(&**a, &closure.param_type)?;
-                        Ok((closure.body.instantiate(new_a.ast).into_info(info), tcs))
+                        Ok((closure.instantiate(new_a.ast).into_info(info), tcs))
                     }
                     other => Err(TCE::NotPi(info, other)),
                 }
