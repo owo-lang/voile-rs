@@ -27,7 +27,6 @@ impl Display for Val {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             Val::Type(l) => write!(f, "set{:?}", l),
-            Val::Bot(l) => write!(f, "!{:?}", l),
             Val::Lam(clos) => write!(f, "({} . {})", clos.param_type, clos.body),
             Val::Sum(variants) => {
                 let mut started = false;
@@ -38,6 +37,9 @@ impl Display for Val {
                         started = true;
                     }
                     write!(f, "'{} {}", name, param)?;
+                }
+                if variants.is_empty() {
+                    f.write_str("!")?;
                 }
                 Ok(())
             }

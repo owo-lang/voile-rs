@@ -2,6 +2,8 @@
 
 # 0.0.9
 
++ Remove `Bot` in core (#78)
+
 # 0.0.8
 
 + Rename `ConsType` to `Variant`, `Term` to `Val`

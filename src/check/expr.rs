@@ -63,7 +63,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             }
         }
         (Abs::Bot(info), Val::Type(level)) => {
-            Ok((Val::Bot(level - 1).into_info(info.clone()), tcs))
+            Ok((Val::Sum(Default::default()).into_info(info.clone()), tcs))
         }
         (Abs::Dt(info, kind, name, param, ret), Val::Type(l)) => {
             // TODO: level checking
@@ -91,7 +91,6 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
     let info = expr.to_info();
     match expr {
         Abs::Type(_, level) => Ok((Val::Type(*level).into_info(info), tcs)),
-        Abs::Bot(_) => Ok((Val::Bot(0).into_info(info), tcs)),
         Abs::Local(_, name, dbi) if tcs.local_is_type(*dbi) => {
             let axiom = Val::axiom_with_index(name.uid, *dbi).into_info(info);
             Ok((axiom, tcs))

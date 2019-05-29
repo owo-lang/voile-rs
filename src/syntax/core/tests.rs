@@ -23,7 +23,6 @@ fn many_to_val(block: &[Lisp], lisp: &Lisp) -> Val {
         [Sym("fst"), arg] => lisp_to_val(arg).first(),
         [Sym("snd"), arg] => lisp_to_val(arg).second(),
         [Sym("type"), arg] => Val::Type(arg.as_dbi().unwrap() as _),
-        [Sym("bot"), arg] => Val::Bot(arg.as_dbi().unwrap() as _),
         [Sym("app"), fst, snd] => lisp_to_val(fst).apply(lisp_to_val(snd)),
         [Sym("pair"), fst, snd] => Val::pair(lisp_to_val(fst), lisp_to_val(snd)),
         [Sym("lam"), fst, snd] => Val::lam(lisp_to_val(fst), lisp_to_val(snd)),
@@ -41,7 +40,6 @@ fn test_sanity() {
 fn test_parsing() {
     let _ = from_str("233");
     let _ = from_str("(type 233)");
-    let _ = from_str("(bot 233)");
     let _ = from_str("(app 233 666)");
     let _ = from_str("(pair 114 514)");
     let _ = from_str("(fst 1919810)");

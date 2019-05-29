@@ -141,8 +141,6 @@ pub type TVal = Val;
 pub enum Val {
     /// Type universe.
     Type(Level),
-    /// An empty sum.
-    Bot(Level),
     /// Closure with parameter typed.
     /// For untyped closures, it can be represented as `Neut` directly.
     Lam(Closure),
@@ -159,7 +157,6 @@ impl Val {
     pub fn is_type(&self) -> bool {
         match self {
             Val::Type(_) => true,
-            Val::Bot(_) => true,
             Val::Lam(_) => false,
             Val::Dt(_, _) => true,
             Val::Sum(_) => true,
