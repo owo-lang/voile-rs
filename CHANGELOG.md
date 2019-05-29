@@ -1,5 +1,7 @@
 # Change Log
 
+# 0.0.9
+
 # 0.0.8
 
 + Rename `ConsType` to `Variant`, `Term` to `Val`
