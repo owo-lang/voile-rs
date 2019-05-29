@@ -22,7 +22,7 @@ enum Strategy {
 fn compile(mut tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> (ValInfo, TCS) {
     match abs {
         Abs::Type(info, level) => (Val::Type(level).into_info(info), tcs),
-        Abs::Bot(info) => (Val::Sum(Default::default()).into_info(info), tcs),
+        Abs::Bot(info) => (Val::bot().into_info(info), tcs),
         Abs::Local(info, _, i) => match strategy {
             Strategy::Check => (tcs.local_val(i).ast.attach_dbi(i).into_info(info), tcs),
             Strategy::Evaluate => (Val::var(i).into_info(info), tcs),

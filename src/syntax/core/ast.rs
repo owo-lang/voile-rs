@@ -2,7 +2,7 @@ use std::collections::btree_map::BTreeMap;
 
 use crate::syntax::common::{next_uid, DtKind, Level, DBI, UID};
 
-pub type NamedEnv = BTreeMap<String, Val>;
+pub type Variants = BTreeMap<String, TVal>;
 
 /// Reducible expressions.
 pub trait RedEx: Sized {
@@ -147,7 +147,7 @@ pub enum Val {
     /// Pi-like types (dependent types).
     Dt(DtKind, Closure),
     /// Sum type literal.
-    Sum(BTreeMap<String, TVal>),
+    Sum(Variants),
     /// Sigma instance.
     Pair(Box<Self>, Box<Self>),
     Neut(Neutral),
@@ -173,7 +173,7 @@ impl Val {
         }
     }
 
-    pub fn try_into_sum(self) -> Result<BTreeMap<String, TVal>, Self> {
+    pub fn try_into_sum(self) -> Result<Variants, Self> {
         match self {
             Val::Sum(variants) => Ok(variants),
             e => Err(e),
@@ -190,6 +190,10 @@ impl Val {
 
     pub fn lam(arg_type: TVal, body: Self) -> Self {
         Val::Lam(Closure::new(arg_type, body))
+    }
+
+    pub fn bot() -> TVal {
+        Val::Sum(Default::default())
     }
 
     pub fn axiom() -> Self {
@@ -216,15 +220,15 @@ impl Val {
         Val::Neut(Neutral::Snd(Box::new(pair)))
     }
 
-    pub fn dependent_type(kind: DtKind, param_type: TVal, body: Self) -> Self {
+    pub fn dependent_type(kind: DtKind, param_type: TVal, body: TVal) -> TVal {
         Val::Dt(kind, Closure::new(param_type, body))
     }
 
-    pub fn pi(param_type: TVal, body: TVal) -> Self {
+    pub fn pi(param_type: TVal, body: TVal) -> TVal {
         Self::dependent_type(DtKind::Pi, param_type, body)
     }
 
-    pub fn sig(param_type: TVal, body: TVal) -> Self {
+    pub fn sig(param_type: TVal, body: TVal) -> TVal {
         Self::dependent_type(DtKind::Sigma, param_type, body)
     }
 

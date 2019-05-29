@@ -62,9 +62,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 Ok((variant, tcs))
             }
         }
-        (Abs::Bot(info), Val::Type(level)) => {
-            Ok((Val::Sum(Default::default()).into_info(info.clone()), tcs))
-        }
+        (Abs::Bot(info), Val::Type(level)) => Ok((Val::bot().into_info(info.clone()), tcs)),
         (Abs::Dt(info, kind, name, param, ret), Val::Type(l)) => {
             // TODO: level checking
             let (param, mut tcs) = tcs.check_type(&**param)?;
