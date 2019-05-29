@@ -27,33 +27,43 @@ $$
 \\cfrac{\\Gtyck a:\\Pi\\ C \\Rightarrow n \\quad
         \\Gtyck b:o \\Rightarrow m}
        {\\Gtyck a\\ b : \\inst(C, m) \\Rightarrow \\app(n, m)}
-\\\\
+\\\\ \\space \\\\
 \\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
         \\Gamma,n:o \\tyck b:\\inst(C, n) \\Rightarrow m}
        {\\Gtyck a, b : \\Sigma\\ C \\Rightarrow n, m}
-\\\\
+\\\\ \\space \\\\
 \\cfrac{\\Gamma,[\\xx]:o \\tyck a:\\app(n, [\\xx])}
        {\\Gtyck \\lambda \\xx.a :\\Pi \\lang o \\rightarrow n \\rang
            \\Rightarrow \\lambda \\lang o \\rightarrow n \\rang}
-\\\\
+\\\\ \\space \\\\
 \\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
         \\Gistype c \\Rightarrow m}
        {\\Gtyck a:o+m \\Rightarrow n}
-\\\\
+\\\\ \\space \\\\
 \\cfrac{}{\\Gtyck `L:\\Pi \\lang o \\rightarrow n \\rang
           \\Rightarrow \\lambda \\lang o \\rightarrow n \\rang}
-\\\\
+\\\\ \\space \\\\
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
        \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
       {\\Gtyck (\\Sigma \\xx:a.b):\\ty \\Rightarrow
           \\Sigma \\lang n \\rightarrow m \\rang}
-\\\\
+\\\\ \\space \\\\
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
        \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
       {\\Gtyck (\\Pi \\xx:a.b):\\ty \\Rightarrow
           \\Pi \\lang n \\rightarrow m \\rang}
 $$
 Abstract Term -> Core Term under an expected type.
+
+Some additional operations:
+
+$$
+\\newcommand{\\merge}[0]{\\texttt{merge}}
+\\begin{alignedat}{1}
+\\merge((), S) &= S \\\\
+\\merge((\`L\\ a, S\_1), S\_2) &= \\merge(S\_1, (\`L a, S\_2))
+\\end{alignedat}
+$$
 */
 fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     match (expr, expected_type) {
@@ -140,17 +150,17 @@ $$
 \\cfrac{}{\\Gistype \\ty \\Rightarrow \\ty}
 \\quad
 \\cfrac{}{\\Gistype \\bot \\Rightarrow \\Sum ()}
-\\\\
+\\\\ \\space \\\\
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gistype \\Sigma \\xx:a.b \\Rightarrow
            \\Sigma \\lang n \\rightarrow m \\rang}
-\\\\
+\\\\ \\space \\\\
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gistype \\Pi \\xx:a.b \\Rightarrow
            \\Pi \\lang n \\rightarrow m \\rang}
-\\\\
+\\\\ \\space \\\\
 \\cfrac{\\Gistype a \\Rightarrow \\Sum S_1 \\quad
         \\Gistype b \\Rightarrow \\Sum S_2}
        {\\Gistype a+b \\Rightarrow \\Sum \\merge(S\_1, S_2)}

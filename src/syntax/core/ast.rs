@@ -12,7 +12,17 @@ pub trait RedEx: Sized {
 }
 
 impl Val {
-    /// Just for evaluation during beta-reduction.
+    /**
+    $$
+    \\newcommand{\\inst}[0]{\\texttt{inst}}
+    \\newcommand{\\app}[0]{\\texttt{app}}
+    \\begin{alignedat}{1}
+    \\app(\\lambda C, o) &= \\inst(C, o) \\\\
+    \\app([k], o) &= [k\ o]
+    \\end{alignedat}
+    $$
+    Just for evaluation during beta-reduction.
+    */
     pub fn apply(self, arg: Val) -> Val {
         match self {
             Val::Lam(closure) => closure.instantiate(arg),
@@ -21,7 +31,17 @@ impl Val {
         }
     }
 
-    /// Just for evaluation during beta-reduction.
+    /**
+    $$
+    \\newcommand{\\first}[0]{\\texttt{first}}
+    \\newcommand{\\second}[0]{\\texttt{second}}
+    \\begin{alignedat}{1}
+    \\first(n, m) &= n \\\\
+    \\first([k]) &= [k\ .1] \\\\
+    \\end{alignedat}
+    $$
+    Just for evaluation during beta-reduction.
+    */
     pub fn first(self) -> Val {
         match self {
             Val::Pair(a, _) => *a,
@@ -30,7 +50,15 @@ impl Val {
         }
     }
 
-    /// Just for evaluation during beta-reduction.
+    /**
+    \\newcommand{\\first}[0]{\\texttt{first}}
+    \\newcommand{\\second}[0]{\\texttt{second}}
+    \\begin{alignedat}{1}
+    \\second(n, m) &= m \\\\
+    \\second([k]) &= [k\ .2]
+    \\end{alignedat}
+    Just for evaluation during beta-reduction.
+    */
     pub fn second(self) -> Val {
         match self {
             Val::Pair(_, b) => *b,
