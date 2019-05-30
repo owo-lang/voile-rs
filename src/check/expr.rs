@@ -2,10 +2,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::syntax::abs::Abs;
 use crate::syntax::common::DtKind::*;
-use crate::syntax::common::ToSyntaxInfo;
-use crate::syntax::core::Val;
+use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
+use crate::syntax::core::{Closure, Val};
 
-use super::eval::compile_variant;
+use super::eval::{compile_cons, compile_variant};
 use super::monad::{ValTCM, TCE, TCM, TCS};
 
 /**
@@ -100,14 +100,14 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             Ok((lam.into_info(full_info.clone()), tcs))
         }
         (Abs::Variant(info), Val::Dt(Pi, ret_ty)) => {
-            if !ret_ty.param_type.is_type() {
-                Err(TCE::NotTypeVal(info.clone(), *ret_ty.param_type.clone()))
-            } else if !ret_ty.body.is_universe() {
-                Err(TCE::NotUniverseVal(info.clone(), *ret_ty.body.clone()))
-            } else {
-                let variant = compile_variant(info.clone(), *ret_ty.param_type.clone());
-                Ok((variant, tcs))
-            }
+            check_variant_or_cons(info, ret_ty)?;
+            let variant = compile_variant(info.clone(), *ret_ty.param_type.clone());
+            Ok((variant, tcs))
+        }
+        (Abs::Cons(info), Val::Dt(Pi, ret_ty)) => {
+            check_variant_or_cons(info, ret_ty)?;
+            let cons = compile_cons(info.clone(), *ret_ty.param_type.clone());
+            Ok((cons, tcs))
         }
         (Abs::Bot(info), Val::Type(level)) => Ok((Val::bot().into_info(info.clone()), tcs)),
         (Abs::Dt(info, kind, name, param, ret), Val::Type(l)) => {
@@ -128,6 +128,16 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 .map_err(|e| e.wrap(inferred.info))?;
             Ok(tcs.evaluate(expr.clone()))
         }
+    }
+}
+
+fn check_variant_or_cons(info: &SyntaxInfo, ret_ty: &Closure) -> TCM<()> {
+    if !ret_ty.param_type.is_type() {
+        Err(TCE::NotTypeVal(info.clone(), *ret_ty.param_type.clone()))
+    } else if !ret_ty.body.is_universe() {
+        Err(TCE::NotUniverseVal(info.clone(), *ret_ty.body.clone()))
+    } else {
+        Ok(())
     }
 }
 
@@ -294,7 +304,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
             Cons(variant_info) => {
                 let (a, tcs) = tcs.infer(a)?;
                 let mut variant = BTreeMap::default();
-                variant.insert(variant_info.text.clone(), a.ast);
+                variant.insert(variant_info.text[1..].to_owned(), a.ast);
                 Ok((Val::Sum(variant).into_info(info), tcs))
             }
             f => {
