@@ -62,9 +62,9 @@ pub trait ToSyntaxInfo {
     /// Borrow the syntax info.
     fn syntax_info(&self) -> &SyntaxInfo;
 
-    /// Create a cloned syntax info.
+    /// Create a copied syntax info.
     fn to_info(&self) -> SyntaxInfo {
-        self.syntax_info().clone()
+        *self.syntax_info()
     }
 }
 

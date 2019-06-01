@@ -87,7 +87,7 @@ fn trans_expr_inner(
         Expr::Meta(ident) => Ok(Abs::Meta(ident.clone())),
         Expr::Cons(ident) => Ok(Abs::Cons(ident.clone())),
         Expr::Variant(ident) => Ok(Abs::Variant(ident.clone())),
-        Expr::Bot(ident) => Ok(Abs::Bot(ident.to_info())),
+        Expr::Bot(info) => Ok(Abs::Bot(*info)),
         Expr::Sum(first, variants) => {
             let mut abs_vec: Vec<Abs> = variants
                 .iter()

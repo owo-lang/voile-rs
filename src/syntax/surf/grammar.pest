@@ -28,6 +28,8 @@ cons = @{ "@" ~ ident_raw }
 meta = @{ "_" }
 ///#E0957B
 bottom = @{ "!" }
+///#E0957B
+no_cases = @{ "nocases" }
 ///Pink
 one_sum = @{ "'" ~ ident_raw }
 
@@ -78,6 +80,7 @@ primary_expr =
  | one_sum
  | bottom
  | meta
+ | no_cases
  | lambda
  | ident
  | "(" ~ expr ~ ")"

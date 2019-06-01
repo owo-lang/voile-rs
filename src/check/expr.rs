@@ -294,7 +294,6 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
             // TODO: level
             Ok((Val::Type(0).into_info(info), tcs))
         }
-        // TODO: special treatment for `Cons`.
         App(_, f, a) => match &**f {
             Variant(_) => {
                 let (_, tcs) = tcs.check_type(a)?;

@@ -22,7 +22,7 @@ pub enum Expr {
     /// Type of a constructor call
     Variant(Ident),
     /// Empty type
-    Bot(Ident),
+    Bot(SyntaxInfo),
     /// Explicit meta variable
     Meta(Ident),
     /// `Type` literal, with levels
