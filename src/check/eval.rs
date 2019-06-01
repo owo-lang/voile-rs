@@ -102,12 +102,16 @@ fn compile(mut tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> 
 
 pub fn compile_variant(info: Ident, ret_ty: Val) -> ValInfo {
     let mut variant = BTreeMap::default();
-    variant.insert(info.text[1..].to_owned(), Val::var(0));
+    let mut text = info.text;
+    text.remove(0);
+    variant.insert(text, Val::var(0));
     Val::lam(ret_ty, Val::Sum(variant)).into_info(info.info)
 }
 
 pub fn compile_cons(info: Ident, ret_ty: Val) -> ValInfo {
-    Val::lam(ret_ty, Val::cons(info.text[1..].to_owned(), Val::var(0))).into_info(info.info)
+    let mut text = info.text;
+    text.remove(0);
+    Val::lam(ret_ty, Val::cons(text, Val::var(0))).into_info(info.info)
 }
 
 /// So you can do some functional programming based on method call chains.

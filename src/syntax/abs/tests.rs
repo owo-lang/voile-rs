@@ -1,8 +1,9 @@
-use super::{trans_decls, AbsDecl};
 use crate::check::monad::TCE;
 use crate::syntax::abs::{trans_expr, Abs};
-use crate::syntax::common::{DtKind, SyntaxInfo, DBI};
+use crate::syntax::common::{DtKind, Ident, DBI};
 use crate::syntax::surf::parse_str_err_printed;
+
+use super::{trans_decls, AbsDecl};
 
 #[test]
 fn trans_bot() {
@@ -72,14 +73,14 @@ fn must_be_pi(abs: Abs) -> (Abs, Abs) {
 
 fn must_be_lam(abs: Abs) -> Abs {
     match abs {
-        Abs::Lam(_, _, _, _, abs) => *abs,
+        Abs::Lam(_, _, _, abs) => *abs,
         e => panic!("`{:?}` is not an `Abs::Lam(_, _, _)`.", e),
     }
 }
 
 fn must_be_local(abs: Abs) -> DBI {
     match abs {
-        Abs::Local(_, _, _, dbi) => dbi,
+        Abs::Local(_, _, dbi) => dbi,
         e => panic!("`{:?}` is not an `Abs::Local(_, _, _)`.", e),
     }
 }
@@ -172,14 +173,17 @@ fn trans_lam_global() {
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let lam_abs = trans_expr(
         &lam_expr,
-        &[AbsDecl::Impl(Abs::Meta("".to_owned(), Default::default()))],
+        &[AbsDecl::Impl(Abs::Meta(Ident {
+            text: "".to_owned(),
+            info: Default::default(),
+        }))],
         &[("b".to_string(), 0)].iter().cloned().collect(),
     )
     .unwrap();
     println!("{}", lam_abs);
     match lam_abs {
-        Abs::Lam(_, _, _, _, global_b) => match *global_b {
-            Abs::Var(_, _, b_index) => assert_eq!(b_index, 0),
+        Abs::Lam(_, _, _, global_b) => match *global_b {
+            Abs::Var(_, b_index) => assert_eq!(b_index, 0),
             _ => panic!(),
         },
         _ => panic!(),

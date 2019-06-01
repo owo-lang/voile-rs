@@ -69,7 +69,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     match (expr, expected_type) {
         (&Abs::Type(ref info, lower), Val::Type(upper)) => {
             if *upper > lower {
-                Ok((Val::Type(lower).into_info(info.clone()), tcs))
+                Ok((Val::Type(lower).into_info(*info), tcs))
             } else {
                 Err(TCE::LevelMismatch(expr.to_info(), lower + 1, *upper))
             }
@@ -84,20 +84,20 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             tcs.local_env.push(fst_term);
             let (snd_term, mut tcs) = tcs.check(&**snd, &snd_ty)?;
             tcs.pop_local();
-            let pair = Val::pair(fst_term_ast, snd_term.ast).into_info(info.clone());
+            let pair = Val::pair(fst_term_ast, snd_term.ast).into_info(*info);
             Ok((pair, tcs))
         }
         (Abs::Lam(full_info, param_info, name, body), Val::Dt(Pi, ret_ty)) => {
-            let param_type = ret_ty.param_type.clone().into_info(param_info.info.clone());
+            let param_type = ret_ty.param_type.clone().into_info(param_info.info);
             tcs.local_gamma.push(param_type.clone());
             let mocked = Val::axiom_with_uid(name.uid);
-            let mocked_term = mocked.clone().into_info(param_info.info.clone());
+            let mocked_term = mocked.clone().into_info(param_info.info);
             tcs.local_env.push(mocked_term);
             let ret_ty_body = ret_ty.instantiate_cloned(mocked);
             let (lam_term, mut tcs) = tcs.check(body, &ret_ty_body)?;
             tcs.pop_local();
             let lam = Val::lam(param_type.ast, lam_term.ast);
-            Ok((lam.into_info(full_info.clone()), tcs))
+            Ok((lam.into_info(*full_info), tcs))
         }
         (Abs::Variant(info), Val::Dt(Pi, ret_ty)) => {
             check_variant_or_cons(&info.info, ret_ty)?;
@@ -109,7 +109,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let cons = compile_cons(info.clone(), *ret_ty.param_type.clone());
             Ok((cons, tcs))
         }
-        (Abs::Bot(info), Val::Type(level)) => Ok((Val::bot().into_info(info.clone()), tcs)),
+        (Abs::Bot(info), Val::Type(level)) => Ok((Val::bot().into_info(*info), tcs)),
         (Abs::Dt(info, kind, name, param, ret), Val::Type(l)) => {
             // TODO: level checking
             let (param, mut tcs) = tcs.check_type(&**param)?;
@@ -118,7 +118,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = tcs.check_type(&**ret)?;
             tcs.pop_local();
-            let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(info.clone());
+            let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(*info);
             Ok((dt, tcs))
         }
         (expr, anything) => {
@@ -133,9 +133,9 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
 
 fn check_variant_or_cons(info: &SyntaxInfo, ret_ty: &Closure) -> TCM<()> {
     if !ret_ty.param_type.is_type() {
-        Err(TCE::NotTypeVal(info.clone(), *ret_ty.param_type.clone()))
+        Err(TCE::NotTypeVal(*info, *ret_ty.param_type.clone()))
     } else if !ret_ty.body.is_universe() {
-        Err(TCE::NotUniverseVal(info.clone(), *ret_ty.body.clone()))
+        Err(TCE::NotUniverseVal(*info, *ret_ty.body.clone()))
     } else {
         Ok(())
     }

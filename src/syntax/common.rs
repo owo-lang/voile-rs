@@ -36,21 +36,11 @@ impl<'a> From<Span<'a>> for SyntaxInfo {
 }
 
 /// Trivial information about the surface syntax items.
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
 pub struct SyntaxInfo {
     pub start: usize,
     pub line: usize,
     pub end: usize,
-}
-
-impl SyntaxInfo {
-    pub fn merge(self, rhs: Self) -> Self {
-        Self {
-            line: self.line,
-            start: self.start,
-            end: rhs.end,
-        }
-    }
 }
 
 /// Surface syntax tree element: Identifier.
@@ -82,7 +72,11 @@ impl Add for SyntaxInfo {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        self.merge(rhs)
+        Self::Output {
+            line: self.line,
+            start: self.start,
+            end: rhs.end,
+        }
     }
 }
 

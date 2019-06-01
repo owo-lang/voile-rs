@@ -125,7 +125,7 @@ fn trans_expr_inner(
                 |lam_abs, param| {
                     let pop_empty = "The stack `names` is empty. Please report this as a bug.";
                     let name = names.pop().expect(pop_empty);
-                    Abs::lam(info.clone(), param.clone(), name, lam_abs)
+                    Abs::lam(*info, param.clone(), name, lam_abs)
                 },
             ))
         }
