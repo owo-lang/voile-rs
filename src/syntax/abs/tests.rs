@@ -72,14 +72,14 @@ fn must_be_pi(abs: Abs) -> (Abs, Abs) {
 
 fn must_be_lam(abs: Abs) -> Abs {
     match abs {
-        Abs::Lam(_, _, _, abs) => *abs,
+        Abs::Lam(_, _, _, _, abs) => *abs,
         e => panic!("`{:?}` is not an `Abs::Lam(_, _, _)`.", e),
     }
 }
 
 fn must_be_local(abs: Abs) -> DBI {
     match abs {
-        Abs::Local(_, _, dbi) => dbi,
+        Abs::Local(_, _, _, dbi) => dbi,
         e => panic!("`{:?}` is not an `Abs::Local(_, _, _)`.", e),
     }
 }
@@ -161,7 +161,7 @@ fn trans_lam_lookup_failed() {
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let tce = trans_expr(&lam_expr, &[], &Default::default()).unwrap_err();
     match tce {
-        TCE::LookUpFailed(ident) => assert_eq!(ident.info.text, "b"),
+        TCE::LookUpFailed(ident) => assert_eq!(ident.text, "b"),
         _ => panic!(),
     }
 }
@@ -172,19 +172,14 @@ fn trans_lam_global() {
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let lam_abs = trans_expr(
         &lam_expr,
-        &[AbsDecl::Impl(Abs::Meta(SyntaxInfo {
-            text: "".to_owned(),
-            start: 0,
-            start_line: 0,
-            end: 0,
-        }))],
+        &[AbsDecl::Impl(Abs::Meta("".to_owned(), Default::default()))],
         &[("b".to_string(), 0)].iter().cloned().collect(),
     )
     .unwrap();
     println!("{}", lam_abs);
     match lam_abs {
-        Abs::Lam(_, _, _, global_b) => match *global_b {
-            Abs::Var(_, b_index) => assert_eq!(b_index, 0),
+        Abs::Lam(_, _, _, _, global_b) => match *global_b {
+            Abs::Var(_, _, b_index) => assert_eq!(b_index, 0),
             _ => panic!(),
         },
         _ => panic!(),

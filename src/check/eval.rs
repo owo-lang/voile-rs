@@ -2,7 +2,7 @@ use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::TCS;
 use crate::syntax::abs::Abs;
-use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
+use crate::syntax::common::{Ident, ToSyntaxInfo};
 use crate::syntax::core::{Val, ValInfo};
 
 /// Term-producing strategy -- whether to produce
@@ -24,10 +24,10 @@ fn compile(mut tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> 
         Abs::Type(info, level) => (Val::Type(level).into_info(info), tcs),
         Abs::Bot(info) => (Val::bot().into_info(info), tcs),
         Abs::Local(info, _, i) => match strategy {
-            Strategy::Check => (tcs.local_val(i).ast.attach_dbi(i).into_info(info), tcs),
-            Strategy::Evaluate => (Val::var(i).into_info(info), tcs),
+            Strategy::Check => (tcs.local_val(i).ast.attach_dbi(i).into_info(info.info), tcs),
+            Strategy::Evaluate => (Val::var(i).into_info(info.info), tcs),
         },
-        Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info), tcs),
+        Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info.info), tcs),
         // Because I don't know what else can I output.
         Abs::Variant(info) => (compile_variant(info, Val::axiom()), tcs),
         Abs::Cons(info) => (compile_cons(info, Val::axiom()), tcs),
@@ -100,14 +100,14 @@ fn compile(mut tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> 
     }
 }
 
-pub fn compile_variant(info: SyntaxInfo, ret_ty: Val) -> ValInfo {
+pub fn compile_variant(info: Ident, ret_ty: Val) -> ValInfo {
     let mut variant = BTreeMap::default();
     variant.insert(info.text[1..].to_owned(), Val::var(0));
-    Val::lam(ret_ty, Val::Sum(variant)).into_info(info)
+    Val::lam(ret_ty, Val::Sum(variant)).into_info(info.info)
 }
 
-pub fn compile_cons(info: SyntaxInfo, ret_ty: Val) -> ValInfo {
-    Val::lam(ret_ty, Val::cons(info.text[1..].to_owned(), Val::var(0))).into_info(info)
+pub fn compile_cons(info: Ident, ret_ty: Val) -> ValInfo {
+    Val::lam(ret_ty, Val::cons(info.text[1..].to_owned(), Val::var(0))).into_info(info.info)
 }
 
 /// So you can do some functional programming based on method call chains.

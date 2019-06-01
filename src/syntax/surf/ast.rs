@@ -1,16 +1,4 @@
-use crate::syntax::common::{Level, SyntaxInfo, ToSyntaxInfo};
-
-/// Surface syntax tree node: Identifier.
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Ident {
-    pub info: SyntaxInfo,
-}
-
-impl ToSyntaxInfo for Ident {
-    fn syntax_info(&self) -> &SyntaxInfo {
-        &self.info
-    }
-}
+use crate::syntax::common::{Ident, Level, SyntaxInfo};
 
 /// Surface syntax tree node: Parameter.
 ///

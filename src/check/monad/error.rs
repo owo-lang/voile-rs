@@ -1,8 +1,8 @@
-use crate::syntax::abs::Abs;
-use crate::syntax::common::{Level, SyntaxInfo, DBI};
-use crate::syntax::core::Val;
-use crate::syntax::surf::Ident;
 use std::fmt::{Display, Error as FmtError, Formatter};
+
+use crate::syntax::abs::Abs;
+use crate::syntax::common::{Ident, Level, SyntaxInfo, DBI};
+use crate::syntax::core::Val;
 
 /// Type-Checking Error.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -82,10 +82,7 @@ impl Display for TCE {
                 expected, actual
             ),
             TCE::LookUpFailed(var) => {
-                f.write_str("Look up failed for `")?;
-                // more information here?
-                var.info.text.fmt(f)?;
-                f.write_str("`, ")
+                write!(f, "Look up failed for `{}` at {}", var.text, var.info)
             }
             TCE::LevelMismatch(expr, expected_to_be_small, big) => write!(
                 f,

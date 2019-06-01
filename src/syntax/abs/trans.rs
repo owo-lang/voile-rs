@@ -1,8 +1,8 @@
 use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::common::{DtKind, ToSyntaxInfo, DBI};
-use crate::syntax::surf::{Decl, DeclKind, Expr, Ident, Param};
+use crate::syntax::common::{DtKind, Ident, ToSyntaxInfo, DBI};
+use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
 
@@ -24,7 +24,7 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
     let abs = trans_expr(&decl.body, &result, &name_map)?;
 
     let dbi = *name_map
-        .entry(name.info.text.clone())
+        .entry(name.text.clone())
         .or_insert_with(|| result.len());
     let original = if result.len() > dbi {
         Some(result.remove(dbi))
@@ -57,12 +57,12 @@ fn trans_expr_inner(
     match expr {
         Expr::Type(syntax, level) => Ok(Abs::Type(syntax.clone(), *level)),
         Expr::Var(ident) => {
-            let name = &ident.info.text;
+            let name = &ident.text;
             if local_map.contains_key(name) {
                 let dbi = local_map[name];
-                Ok(Abs::Local(ident.to_info(), local_env[dbi], dbi))
+                Ok(Abs::Local(ident.clone(), local_env[dbi], dbi))
             } else if global_map.contains_key(name) {
-                Ok(Abs::Var(ident.to_info(), global_map[name]))
+                Ok(Abs::Var(ident.clone(), global_map[name]))
             } else {
                 Err(TCE::LookUpFailed(ident.clone()))
             }
@@ -71,7 +71,7 @@ fn trans_expr_inner(
             trans_expr_inner(applied, env, global_map, local_env, local_map)?,
             |result, each_expr| -> TCM<_> {
                 let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                let info = result.to_info().merge(abs.to_info(), " ");
+                let info = result.to_info() + abs.to_info();
                 Ok(Abs::app(info, result, abs))
             },
         ),
@@ -80,13 +80,13 @@ fn trans_expr_inner(
             trans_expr_inner(startup, env, global_map, local_env, local_map)?,
             |result, each_expr| -> TCM<_> {
                 let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                let info = result.to_info().merge(abs.to_info(), " ");
+                let info = result.to_info() + abs.to_info();
                 Ok(Abs::app(info, result, abs))
             },
         ),
-        Expr::Meta(ident) => Ok(Abs::Meta(ident.to_info())),
-        Expr::Cons(ident) => Ok(Abs::Cons(ident.to_info())),
-        Expr::Variant(ident) => Ok(Abs::Variant(ident.to_info())),
+        Expr::Meta(ident) => Ok(Abs::Meta(ident.clone())),
+        Expr::Cons(ident) => Ok(Abs::Cons(ident.clone())),
+        Expr::Variant(ident) => Ok(Abs::Variant(ident.clone())),
         Expr::Bot(ident) => Ok(Abs::Bot(ident.to_info())),
         Expr::Sum(first, variants) => {
             let mut abs_vec: Vec<Abs> = variants
@@ -94,9 +94,7 @@ fn trans_expr_inner(
                 .map(|expr| trans_expr_inner(expr, env, global_map, local_env, local_map))
                 .collect::<TCM<_>>()?;
             let first = trans_expr_inner(first, env, global_map, local_env, local_map)?;
-            let info = abs_vec
-                .iter()
-                .fold(first.to_info(), |l, r| l.merge(r.to_info(), " | "));
+            let info = abs_vec.iter().fold(first.to_info(), |l, r| l + r.to_info());
             abs_vec.push(first);
             Ok(Abs::Sum(info, abs_vec))
         }
@@ -127,7 +125,7 @@ fn trans_expr_inner(
                 |lam_abs, param| {
                     let pop_empty = "The stack `names` is empty. Please report this as a bug.";
                     let name = names.pop().expect(pop_empty);
-                    Abs::lam(info.clone(), param.to_info(), name, lam_abs)
+                    Abs::lam(info.clone(), param.clone(), name, lam_abs)
                 },
             ))
         }
@@ -150,7 +148,7 @@ fn introduce_abstractions(
     names: &mut Vec<Name>,
 ) {
     for param in params {
-        let shadowing = local_map.get(&param.info.text).cloned();
+        let shadowing = local_map.get(&param.text).cloned();
         for (_name, dbi) in local_map.iter_mut() {
             let dbi_value = *dbi;
             *dbi += 1;
@@ -158,7 +156,7 @@ fn introduce_abstractions(
                 local_env.remove(dbi_value);
             }
         }
-        local_map.insert(param.info.text.clone(), 0);
+        local_map.insert(param.text.clone(), 0);
         let new_name = Name::default();
         local_env.insert(0, new_name);
         names.push(new_name);
@@ -184,7 +182,7 @@ fn trans_dependent_type(
     Ok(pi_vec.into_iter().rev().fold(
         trans_expr_inner(result, env, glob, &pi, &pi_map)?,
         |pi_abs, param| {
-            let info = param.to_info().merge(pi_abs.to_info(), " -> ");
+            let info = param.to_info() + pi_abs.to_info();
             let pop_empty = "The stack `names` is empty. Please report this as a bug.";
             Abs::dependent_type(info, kind, names.pop().expect(pop_empty), param, pi_abs)
         },
@@ -202,7 +200,7 @@ fn introduce_telescope(
 ) -> TCM<Vec<Abs>> {
     let param_ty = trans_expr_inner(&param.ty, env, global_map, &dt_env, &dt_map)?;
     for name in &param.names {
-        let param_name = name.info.text.clone();
+        let param_name = name.text.clone();
         // These two are actually our assumption. Hope they're correct.
         assert_eq!(dt_env.len(), dt_map.len());
         // let shadowing = dt_map.get(&param_name).cloned();

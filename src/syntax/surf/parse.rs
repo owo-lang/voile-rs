@@ -1,11 +1,11 @@
 use pest::Parser;
 use pest_derive::Parser;
 
-use crate::syntax::common::{Level, SyntaxInfo};
+use crate::syntax::common::{Ident, Level, SyntaxInfo};
 use crate::syntax::pest_util::end_of_rule;
 
 use super::ast::Param;
-use super::{Decl, DeclKind, Expr, Ident};
+use super::{Decl, DeclKind, Expr};
 
 #[derive(Parser)]
 #[grammar = "syntax/surf/grammar.pest"]
@@ -182,6 +182,7 @@ fn type_keyword(rules: Tok) -> Expr {
 
 fn ident(rule: Tok) -> Ident {
     Ident {
+        text: rule.as_str().to_owned(),
         info: From::from(rule.as_span()),
     }
 }

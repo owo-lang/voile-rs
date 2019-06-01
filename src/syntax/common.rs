@@ -28,8 +28,7 @@ pub(crate) unsafe fn next_uid() -> UID {
 impl<'a> From<Span<'a>> for SyntaxInfo {
     fn from(span: Span) -> Self {
         SyntaxInfo {
-            text: span.as_str().to_string(),
-            start_line: span.start_pos().line_col().0,
+            line: span.start_pos().line_col().0,
             start: span.start(),
             end: span.end(),
         }
@@ -39,21 +38,32 @@ impl<'a> From<Span<'a>> for SyntaxInfo {
 /// Trivial information about the surface syntax items.
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
 pub struct SyntaxInfo {
-    /// This is used for pretty-printing, it may probably be different from the original text.
-    pub text: String,
     pub start: usize,
-    pub start_line: usize,
+    pub line: usize,
     pub end: usize,
 }
 
 impl SyntaxInfo {
-    pub fn merge(self, rhs: Self, middle: &str) -> Self {
+    pub fn merge(self, rhs: Self) -> Self {
         Self {
-            text: format!("({}){}({})", self.text, middle, rhs.text),
-            start_line: self.start_line,
+            line: self.line,
             start: self.start,
             end: rhs.end,
         }
+    }
+}
+
+/// Surface syntax tree element: Identifier.
+/// Also used in other syntax trees.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Ident {
+    pub info: SyntaxInfo,
+    pub text: String,
+}
+
+impl ToSyntaxInfo for Ident {
+    fn syntax_info(&self) -> &SyntaxInfo {
+        &self.info
     }
 }
 
@@ -72,16 +82,12 @@ impl Add for SyntaxInfo {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        self.merge(rhs, "")
+        self.merge(rhs)
     }
 }
 
 impl std::fmt::Display for SyntaxInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "expression `{}` at line {:?} ({:?}:{:?})",
-            self.text, self.start_line, self.start, self.end
-        )
+        write!(f, "line {:?} ({:?}:{:?})", self.line, self.start, self.end)
     }
 }

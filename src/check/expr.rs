@@ -88,10 +88,10 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             Ok((pair, tcs))
         }
         (Abs::Lam(full_info, param_info, name, body), Val::Dt(Pi, ret_ty)) => {
-            let param_type = ret_ty.param_type.clone().into_info(param_info.clone());
+            let param_type = ret_ty.param_type.clone().into_info(param_info.info.clone());
             tcs.local_gamma.push(param_type.clone());
             let mocked = Val::axiom_with_uid(name.uid);
-            let mocked_term = mocked.clone().into_info(param_info.clone());
+            let mocked_term = mocked.clone().into_info(param_info.info.clone());
             tcs.local_env.push(mocked_term);
             let ret_ty_body = ret_ty.instantiate_cloned(mocked);
             let (lam_term, mut tcs) = tcs.check(body, &ret_ty_body)?;
@@ -100,12 +100,12 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             Ok((lam.into_info(full_info.clone()), tcs))
         }
         (Abs::Variant(info), Val::Dt(Pi, ret_ty)) => {
-            check_variant_or_cons(info, ret_ty)?;
+            check_variant_or_cons(&info.info, ret_ty)?;
             let variant = compile_variant(info.clone(), *ret_ty.param_type.clone());
             Ok((variant, tcs))
         }
         (Abs::Cons(info), Val::Dt(Pi, ret_ty)) => {
-            check_variant_or_cons(info, ret_ty)?;
+            check_variant_or_cons(&info.info, ret_ty)?;
             let cons = compile_cons(info.clone(), *ret_ty.param_type.clone());
             Ok((cons, tcs))
         }

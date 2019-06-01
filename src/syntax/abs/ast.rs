@@ -38,22 +38,22 @@ pub enum Abs {
     /// Bottom type
     Bot(SyntaxInfo),
     /// Local variable
-    Local(SyntaxInfo, Name, DBI),
+    Local(Ident, Name, DBI),
     /// Global variable
-    Var(SyntaxInfo, DBI),
+    Var(Ident, DBI),
     /// Meta variable
-    Meta(SyntaxInfo),
+    Meta(Ident),
     /// Constructor call
-    Cons(SyntaxInfo),
+    Cons(Ident),
     /// One variant inside of a sum type
-    Variant(SyntaxInfo),
+    Variant(Ident),
     /// Apply or Pipeline in surface
     App(SyntaxInfo, Box<Self>, Box<Self>),
     /// Dependent Type, `(a -> b -> c)` as `Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))`
     Dt(SyntaxInfo, DtKind, Name, Box<Self>, Box<Self>),
     /// The first `SyntaxInfo` is the syntax info of this whole lambda,
     /// while the second is about its parameter
-    Lam(SyntaxInfo, SyntaxInfo, Name, Box<Self>),
+    Lam(SyntaxInfo, Ident, Name, Box<Self>),
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
     Snd(SyntaxInfo, Box<Self>),
@@ -65,11 +65,11 @@ impl ToSyntaxInfo for Abs {
         match self {
             Abs::Type(info, _) => info,
             Abs::Bot(info) => info,
-            Abs::Local(info, _, _) => info,
-            Abs::Var(info, _) => info,
-            Abs::Meta(info) => info,
-            Abs::Cons(info) => info,
-            Abs::Variant(info) => info,
+            Abs::Local(info, _, _) => &info.info,
+            Abs::Var(info, _) => &info.info,
+            Abs::Meta(info) => &info.info,
+            Abs::Cons(info) => &info.info,
+            Abs::Variant(info) => &info.info,
             Abs::App(info, _, _) => info,
             Abs::Dt(info, _, _, _, _) => info,
             Abs::Pair(info, _, _) => info,
@@ -98,8 +98,8 @@ impl Abs {
         Abs::Snd(info, Box::new(of))
     }
 
-    pub fn lam(whole_info: SyntaxInfo, param_info: SyntaxInfo, name: Name, body: Self) -> Self {
-        Abs::Lam(whole_info, param_info, name, Box::new(body))
+    pub fn lam(whole_info: SyntaxInfo, param: Ident, name: Name, body: Self) -> Self {
+        Abs::Lam(whole_info, param, name, Box::new(body))
     }
 
     pub fn pair(info: SyntaxInfo, first: Self, second: Self) -> Self {

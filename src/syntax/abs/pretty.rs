@@ -21,8 +21,8 @@ impl Display for Abs {
             Abs::Dt(_, Sigma, name, fst, snd) => {
                 write!(f, "(<{:?}> : {}) * {}", name.uid, fst, snd)
             }
-            Abs::Lam(_, param_info, name, body) => {
-                write!(f, "(\\{}[{:?}]. {})", param_info.text, name.uid, body)
+            Abs::Lam(_, param, name, body) => {
+                write!(f, "(\\{}[{:?}]. {})", param.text, name.uid, body)
             }
             Abs::Pair(_, a, b) => write!(f, "({}, {})", a, b),
             Abs::Fst(_, p) => write!(f, "({}.1)", p),
