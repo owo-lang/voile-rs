@@ -351,6 +351,14 @@ fn check_subtype(mut tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
             }
             Ok(tcs)
         }
+        // Bottom type
+        (Sum(variants), sup) => {
+            if variants.is_empty() {
+                Ok(tcs)
+            } else {
+                Err(TCE::NotSubtype(Sum(variants.clone()), sup.clone()))
+            }
+        }
         (e, t) => panic!("Unimplemented subtyping: `{}` against `{}`.", e, t),
     }
 }

@@ -2,7 +2,7 @@ use std::fmt::{Display, Error as FmtError, Formatter};
 
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{Ident, Level, SyntaxInfo, DBI};
-use crate::syntax::core::Val;
+use crate::syntax::core::{TVal, Val};
 
 /// Type-Checking Error.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -10,9 +10,12 @@ pub enum TCE {
     Textual(String),
     CouldNotInfer(SyntaxInfo),
     TypeNotInGamma(SyntaxInfo),
-    NotSigma(SyntaxInfo, Val),
-    NotPi(SyntaxInfo, Val),
-    NotSameType(Val, Val),
+    NotSigma(SyntaxInfo, TVal),
+    NotPi(SyntaxInfo, TVal),
+    NotSameType(TVal, TVal),
+    /// Expected the first `TVal` to be the subtype of
+    /// the second `TVal`.
+    NotSubtype(TVal, TVal),
     NotTypeAbs(SyntaxInfo, Abs),
     NotTypeVal(SyntaxInfo, Val),
     NotSumVal(SyntaxInfo, Val),
@@ -53,6 +56,9 @@ impl Display for TCE {
             ),
             TCE::NotSameType(val1, val2) => {
                 write!(f, "Expected `{}` and `{}` to be the same type.", val1, val2)
+            }
+            TCE::NotSubtype(sub, sup) => {
+                write!(f, "Expected `{}` to be the subtype of `{}`.", sub, sup)
             }
             TCE::NotTypeAbs(id, abs) => {
                 write!(f, "Expected a type expression, got: `{}` at {}.", abs, id)
