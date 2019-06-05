@@ -55,4 +55,7 @@ fn simple_expr_parsing() {
     parse_str_err_printed("val deep : @Dark Fantasy;")
         .map(|ast| println!("{:?}", ast))
         .unwrap();
+    parse_str_err_printed("val uw : ^^^pl se;")
+        .map(|ast| println!("{:?}", ast))
+        .unwrap();
 }

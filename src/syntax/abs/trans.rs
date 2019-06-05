@@ -138,6 +138,7 @@ fn trans_expr_inner(
             &*result,
             DtKind::Pi,
         ),
+        Expr::Lift(levels, inner) => unimplemented!(),
     }
 }
 

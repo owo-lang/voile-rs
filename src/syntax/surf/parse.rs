@@ -88,8 +88,30 @@ fn declaration(rules: Tok) -> Decl {
 expr_parser!(dollar_expr, comma_expr, app);
 expr_parser!(comma_expr, pipe_expr, tup);
 expr_parser!(pipe_expr, sum_expr, pipe);
-expr_parser!(sum_expr, app_expr, sum);
+expr_parser!(sum_expr, lift_expr, sum);
+// expr_parser!(lift_expr, app_expr, lift); customized
 expr_parser!(app_expr, primary_expr, app);
+
+fn lift_expr(rules: Tok) -> Expr {
+    let mut lift_count = 0u32;
+    for smaller in rules.into_inner() {
+        match smaller.as_rule() {
+            Rule::lift_op => {
+                lift_count += 1;
+            }
+            Rule::app_expr => {
+                let expr = app_expr(smaller);
+                return if lift_count == 0 {
+                    expr
+                } else {
+                    Expr::lift(lift_count, expr)
+                };
+            }
+            _ => unreachable!(),
+        }
+    }
+    unreachable!()
+}
 
 fn expr(rules: Tok) -> Expr {
     let mut inner: Tik = rules.into_inner();

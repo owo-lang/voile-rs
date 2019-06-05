@@ -42,6 +42,7 @@ type_level = @{ ASCII_DIGIT* }
 type_keyword = ${ "Type" ~ type_level }
 semicolon = _{ ";" }
 arrow = _{ "->" }
+lift_op = { "^" }
 dot = _{ "." }
 sum_op = _{ "+" }
 sig_op = _{ "*" }
@@ -72,7 +73,8 @@ pi_expr = { (param ~ arrow)* ~ dollar_expr }
 dollar_expr = { comma_expr ~ (dollar_op ~ comma_expr)* }
 comma_expr = { pipe_expr ~ (comma_op ~ pipe_expr)* }
 pipe_expr = { sum_expr ~ (pipe_op ~ sum_expr)* }
-sum_expr = { app_expr ~ (sum_op ~ app_expr)* }
+sum_expr = { lift_expr ~ (sum_op ~ lift_expr)* }
+lift_expr = { lift_op* ~ app_expr }
 app_expr = { primary_expr+ }
 primary_expr =
  { type_keyword
