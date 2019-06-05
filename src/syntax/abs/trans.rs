@@ -1,7 +1,7 @@
 use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::common::{DtKind, Ident, ToSyntaxInfo, DBI};
+use crate::syntax::common::{DtKind, DtKind::*, Ident, ToSyntaxInfo, DBI};
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
@@ -89,10 +89,8 @@ fn trans_expr_inner(
         Expr::Variant(ident) => Ok(Abs::Variant(ident.clone())),
         Expr::Bot(info) => Ok(Abs::Bot(*info)),
         Expr::Sum(first, variants) => {
-            let mut abs_vec: Vec<Abs> = variants
-                .iter()
-                .map(|expr| trans_expr_inner(expr, env, global_map, local_env, local_map))
-                .collect::<TCM<_>>()?;
+            let f = |expr: &Expr| trans_expr_inner(expr, env, global_map, local_env, local_map);
+            let mut abs_vec: Vec<Abs> = variants.iter().map(f).collect::<TCM<_>>()?;
             let first = trans_expr_inner(first, env, global_map, local_env, local_map)?;
             let info = abs_vec.iter().fold(first.to_info(), |l, r| l + r.to_info());
             abs_vec.push(first);
@@ -106,13 +104,7 @@ fn trans_expr_inner(
             },
         ),
         Expr::Sig(initial, last) => trans_dependent_type(
-            env,
-            global_map,
-            local_env,
-            local_map,
-            initial,
-            &*last,
-            DtKind::Sigma,
+            env, global_map, local_env, local_map, initial, &*last, Sigma,
         ),
         Expr::Lam(info, params, body) => {
             let mut local_env = local_env.to_vec();
@@ -120,25 +112,20 @@ fn trans_expr_inner(
             let mut local_map = local_map.clone();
             let mut names = Vec::with_capacity(params.len());
             introduce_abstractions(params, &mut local_env, &mut local_map, &mut names);
-            Ok(params.iter().rev().fold(
-                trans_expr_inner(body, env, global_map, &local_env, &local_map)?,
-                |lam_abs, param| {
-                    let pop_empty = "The stack `names` is empty. Please report this as a bug.";
-                    let name = names.pop().expect(pop_empty);
-                    Abs::lam(*info, param.clone(), name, lam_abs)
-                },
-            ))
+            let body = trans_expr_inner(&**body, env, global_map, &local_env, &local_map)?;
+            Ok(params.iter().rev().fold(body, |lam_abs, param| {
+                let pop_empty = "The stack `names` is empty. Please report this as a bug.";
+                let name = names.pop().expect(pop_empty);
+                Abs::lam(*info, param.clone(), name, lam_abs)
+            }))
         }
-        Expr::Pi(params, result) => trans_dependent_type(
-            env,
-            global_map,
-            local_env,
-            local_map,
-            params,
-            &*result,
-            DtKind::Pi,
-        ),
-        Expr::Lift(levels, inner) => unimplemented!(),
+        Expr::Pi(params, result) => {
+            trans_dependent_type(env, global_map, local_env, local_map, params, &*result, Pi)
+        }
+        Expr::Lift(info, levels, inner) => {
+            let inner = trans_expr_inner(&**inner, env, global_map, local_env, local_map)?;
+            Ok(Abs::lift(*info, *levels, inner))
+        }
     }
 }
 

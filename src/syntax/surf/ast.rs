@@ -26,7 +26,7 @@ pub enum Expr {
     /// Explicit meta variable
     Meta(Ident),
     /// Lift an expression many times
-    Lift(u32, Box<Self>),
+    Lift(SyntaxInfo, Level, Box<Self>),
     /// `Type` literal, with levels
     Type(SyntaxInfo, Level),
     /// Function application.<br/>
@@ -68,8 +68,8 @@ impl Expr {
         Expr::App(Box::new(applied), arguments)
     }
 
-    pub fn lift(count: u32, target: Self) -> Self {
-        Expr::Lift(count, Box::new(target))
+    pub fn lift(info: SyntaxInfo, count: u32, target: Self) -> Self {
+        Expr::Lift(info, count, Box::new(target))
     }
 
     pub fn pipe(first: Self, functions: Vec<Self>) -> Self {

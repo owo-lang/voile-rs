@@ -94,6 +94,7 @@ expr_parser!(app_expr, primary_expr, app);
 
 fn lift_expr(rules: Tok) -> Expr {
     let mut lift_count = 0u32;
+    let syntax_info = From::from(rules.as_span());
     for smaller in rules.into_inner() {
         match smaller.as_rule() {
             Rule::lift_op => {
@@ -104,7 +105,7 @@ fn lift_expr(rules: Tok) -> Expr {
                 return if lift_count == 0 {
                     expr
                 } else {
-                    Expr::lift(lift_count, expr)
+                    Expr::lift(syntax_info, lift_count, expr)
                 };
             }
             _ => unreachable!(),

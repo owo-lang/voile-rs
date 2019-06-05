@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 
 use crate::syntax::common::*;
 
+// TODO: replace with `UID`
 /// Unique identifier.
 #[derive(Debug, Clone, Copy, Eq, Ord)]
 pub struct Name {
@@ -43,6 +44,8 @@ pub enum Abs {
     Var(Ident, DBI),
     /// Meta variable
     Meta(Ident),
+    /// Lift an expression many times
+    Lift(SyntaxInfo, Level, Box<Self>),
     /// Constructor call
     Cons(Ident),
     /// One variant inside of a sum type
@@ -63,20 +66,21 @@ pub enum Abs {
 impl ToSyntaxInfo for Abs {
     fn syntax_info(&self) -> &SyntaxInfo {
         match self {
-            Abs::Type(info, _) => info,
-            Abs::Bot(info) => info,
-            Abs::Local(info, _, _) => &info.info,
-            Abs::Var(info, _) => &info.info,
-            Abs::Meta(info) => &info.info,
-            Abs::Cons(info) => &info.info,
-            Abs::Variant(info) => &info.info,
-            Abs::App(info, _, _) => info,
-            Abs::Dt(info, _, _, _, _) => info,
-            Abs::Pair(info, _, _) => info,
-            Abs::Fst(info, _) => info,
-            Abs::Snd(info, _) => info,
-            Abs::Sum(info, _) => info,
-            Abs::Lam(info, _, _, _) => info,
+            Abs::Type(info, _)
+            | Abs::Bot(info)
+            | Abs::App(info, _, _)
+            | Abs::Dt(info, _, _, _, _)
+            | Abs::Pair(info, _, _)
+            | Abs::Fst(info, _)
+            | Abs::Snd(info, _)
+            | Abs::Sum(info, _)
+            | Abs::Lift(info,_, _)
+            | Abs::Lam(info, _, _, _) => info,
+            Abs::Local(info, _, _)
+            | Abs::Var(info, _)
+            | Abs::Meta(info)
+            | Abs::Cons(info)
+            | Abs::Variant(info) => &info.info,
         }
     }
 }
@@ -104,6 +108,10 @@ impl Abs {
 
     pub fn pair(info: SyntaxInfo, first: Self, second: Self) -> Self {
         Abs::Pair(info, Box::new(first), Box::new(second))
+    }
+
+    pub fn lift(info: SyntaxInfo, lift_count: Level, expr: Self) -> Self {
+        Abs::Lift(info, lift_count, Box::new(expr))
     }
 
     pub fn pi(info: SyntaxInfo, name: Name, input: Self, output: Self) -> Self {
