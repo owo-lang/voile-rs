@@ -11,6 +11,12 @@ pub trait RedEx: Sized {
     fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val;
 }
 
+/// Expression with universe level.
+pub trait LeveledEx: Sized {
+    /// Lift the level of `self`.
+    fn lift(self, levels: Level) -> Self;
+}
+
 impl Val {
     /**
     $$
@@ -104,6 +110,25 @@ impl RedEx for Val {
     }
 }
 
+impl LeveledEx for TVal {
+    fn lift(self, levels: Level) -> Val {
+        match self {
+            Val::Type(l) => Val::Type(l + levels),
+            Val::Lam(closure) => Val::Lam(closure.lift(levels)),
+            Val::Dt(kind, closure) => Val::Dt(kind, closure.lift(levels)),
+            Val::Sum(variants) => Val::Sum(
+                variants
+                    .into_iter()
+                    .map(|(name, e)| (name, e.lift(levels)))
+                    .collect(),
+            ),
+            Val::Cons(name, e) => Val::cons(name, e.lift(levels)),
+            Val::Pair(l, r) => Val::pair(l.lift(levels), r.lift(levels)),
+            Val::Neut(neut) => Val::Neut(neut.lift(levels)),
+        }
+    }
+}
+
 /// Irreducible because of the presence of generated value.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Neutral {
@@ -159,6 +184,12 @@ impl RedEx for Neutral {
                 .second()
                 .reduce_with_dbi(arg, dbi),
         }
+    }
+}
+
+impl LeveledEx for Neutral {
+    fn lift(self, levels: Level) -> Self {
+        unimplemented!()
     }
 }
 
@@ -319,5 +350,11 @@ impl Closure {
 
     pub fn instantiate_cloned(&self, arg: Val) -> Val {
         self.body.clone().reduce_with_dbi(arg, 0)
+    }
+}
+
+impl LeveledEx for Closure {
+    fn lift(self, levels: Level) -> Self {
+        Self::new(self.param_type.lift(levels), self.body.lift(levels))
     }
 }

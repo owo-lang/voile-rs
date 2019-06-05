@@ -5,7 +5,6 @@ use std::ops::Add;
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum DtKind {
     Pi,
-    // TODO: discussion: do we need this?
     Sigma,
 }
 
