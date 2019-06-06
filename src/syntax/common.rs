@@ -51,20 +51,15 @@ pub struct Ident {
 }
 
 impl ToSyntaxInfo for Ident {
-    fn syntax_info(&self) -> &SyntaxInfo {
-        &self.info
+    fn syntax_info(&self) -> SyntaxInfo {
+        self.info
     }
 }
 
 /// Something that holds a `SyntaxInfo`.
 pub trait ToSyntaxInfo {
     /// Borrow the syntax info.
-    fn syntax_info(&self) -> &SyntaxInfo;
-
-    /// Create a copied syntax info.
-    fn to_info(&self) -> SyntaxInfo {
-        *self.syntax_info()
-    }
+    fn syntax_info(&self) -> SyntaxInfo;
 }
 
 impl Add for SyntaxInfo {

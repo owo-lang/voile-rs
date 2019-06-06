@@ -31,8 +31,8 @@ impl ValInfo {
 }
 
 impl ToSyntaxInfo for ValInfo {
-    fn syntax_info(&self) -> &SyntaxInfo {
-        &self.info
+    fn syntax_info(&self) -> SyntaxInfo {
+        self.info
     }
 }
 
