@@ -1,37 +1,4 @@
-use std::cmp::Ordering;
-
 use crate::syntax::common::*;
-
-// TODO: replace with `UID`
-/// Unique identifier.
-#[derive(Debug, Clone, Copy, Eq, Ord)]
-pub struct Name {
-    pub uid: UID,
-}
-
-impl Name {
-    pub fn from(uid: UID) -> Self {
-        Self { uid }
-    }
-}
-
-impl Default for Name {
-    fn default() -> Self {
-        Self::from(unsafe { next_uid() })
-    }
-}
-
-impl PartialEq for Name {
-    fn eq(&self, other: &Self) -> bool {
-        self.uid == other.uid
-    }
-}
-
-impl PartialOrd for Name {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.uid.partial_cmp(&other.uid)
-    }
-}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Abs {
@@ -39,7 +6,7 @@ pub enum Abs {
     /// Bottom type
     Bot(SyntaxInfo),
     /// Local variable
-    Local(Ident, Name, DBI),
+    Local(Ident, UID, DBI),
     /// Global variable
     Var(Ident, DBI),
     /// Meta variable
@@ -53,10 +20,10 @@ pub enum Abs {
     /// Apply or Pipeline in surface
     App(SyntaxInfo, Box<Self>, Box<Self>),
     /// Dependent Type, `(a -> b -> c)` as `Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))`
-    Dt(SyntaxInfo, DtKind, Name, Box<Self>, Box<Self>),
+    Dt(SyntaxInfo, DtKind, UID, Box<Self>, Box<Self>),
     /// The first `SyntaxInfo` is the syntax info of this whole lambda,
     /// while the second is about its parameter
-    Lam(SyntaxInfo, Ident, Name, Box<Self>),
+    Lam(SyntaxInfo, Ident, UID, Box<Self>),
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
     Snd(SyntaxInfo, Box<Self>),
@@ -86,7 +53,7 @@ impl ToSyntaxInfo for Abs {
 }
 
 impl Abs {
-    pub fn dependent_type(info: SyntaxInfo, kind: DtKind, name: Name, a: Self, b: Self) -> Self {
+    pub fn dependent_type(info: SyntaxInfo, kind: DtKind, name: UID, a: Self, b: Self) -> Self {
         Abs::Dt(info, kind, name, Box::new(a), Box::new(b))
     }
 
@@ -102,7 +69,7 @@ impl Abs {
         Abs::Snd(info, Box::new(of))
     }
 
-    pub fn lam(whole_info: SyntaxInfo, param: Ident, name: Name, body: Self) -> Self {
+    pub fn lam(whole_info: SyntaxInfo, param: Ident, name: UID, body: Self) -> Self {
         Abs::Lam(whole_info, param, name, Box::new(body))
     }
 
@@ -114,11 +81,11 @@ impl Abs {
         Abs::Lift(info, lift_count, Box::new(expr))
     }
 
-    pub fn pi(info: SyntaxInfo, name: Name, input: Self, output: Self) -> Self {
+    pub fn pi(info: SyntaxInfo, name: UID, input: Self, output: Self) -> Self {
         Self::dependent_type(info, DtKind::Pi, name, input, output)
     }
 
-    pub fn sig(info: SyntaxInfo, name: Name, first: Self, second: Self) -> Self {
+    pub fn sig(info: SyntaxInfo, name: UID, first: Self, second: Self) -> Self {
         Self::dependent_type(info, DtKind::Sigma, name, first, second)
     }
 }

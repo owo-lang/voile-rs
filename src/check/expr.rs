@@ -93,7 +93,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
         (Lam(full_info, param_info, name, body), Val::Dt(Pi, ret_ty)) => {
             let param_type = ret_ty.param_type.clone().into_info(param_info.info);
             tcs.local_gamma.push(param_type.clone());
-            let mocked = Val::axiom_with_uid(name.uid);
+            let mocked = Val::axiom_with_uid(*name);
             let mocked_term = mocked.clone().into_info(param_info.info);
             tcs.local_env.push(mocked_term);
             let ret_ty_body = ret_ty.instantiate_cloned(mocked);
@@ -119,7 +119,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             // TODO: level checking
             let (param, mut tcs) = tcs.check_type(&**param).map_err(|e| e.wrap(*info))?;
             tcs.local_gamma.push(param.clone());
-            let axiom = Val::axiom_with_uid(name.uid).into_info(param.to_info());
+            let axiom = Val::axiom_with_uid(*name).into_info(param.to_info());
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = tcs.check_type(&**ret).map_err(|e| e.wrap(*info))?;
             tcs.pop_local();
@@ -194,7 +194,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
     match expr {
         Type(_, level) => Ok((Val::Type(*level).into_info(info), tcs)),
         Local(_, name, dbi) if tcs.local_is_type(*dbi) => {
-            let axiom = Val::axiom_with_index(name.uid, *dbi).into_info(info);
+            let axiom = Val::axiom_with_index(*name, *dbi).into_info(info);
             Ok((axiom, tcs))
         }
         Lift(_, levels, expr) => {
@@ -204,7 +204,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
         Dt(_, kind, name, param, ret) => {
             let (param, mut tcs) = tcs.check_type(&**param).map_err(|e| e.wrap(info))?;
             tcs.local_gamma.push(param.clone());
-            let axiom = Val::axiom_with_uid(name.uid).into_info(param.to_info());
+            let axiom = Val::axiom_with_uid(*name).into_info(param.to_info());
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = tcs.check_type(&**ret).map_err(|e| e.wrap(info))?;
             tcs.pop_local();

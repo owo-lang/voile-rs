@@ -1,7 +1,7 @@
 use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::common::{DtKind, DtKind::*, Ident, ToSyntaxInfo, DBI};
+use crate::syntax::common::{next_uid, DtKind, DtKind::*, Ident, ToSyntaxInfo, DBI, UID};
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
@@ -51,7 +51,7 @@ fn trans_expr_inner(
     expr: &Expr,
     env: &[AbsDecl],
     global_map: &NamedDbi,
-    local_env: &[Name],
+    local_env: &[UID],
     local_map: &NamedDbi,
 ) -> TCM<Abs> {
     match expr {
@@ -131,9 +131,9 @@ fn trans_expr_inner(
 
 fn introduce_abstractions(
     params: &[Ident],
-    local_env: &mut Vec<Name>,
+    local_env: &mut Vec<UID>,
     local_map: &mut NamedDbi,
-    names: &mut Vec<Name>,
+    names: &mut Vec<UID>,
 ) {
     for param in params {
         let shadowing = local_map.get(&param.text).cloned();
@@ -145,7 +145,7 @@ fn introduce_abstractions(
             }
         }
         local_map.insert(param.text.clone(), 0);
-        let new_name = Name::default();
+        let new_name = unsafe { next_uid() };
         local_env.insert(0, new_name);
         names.push(new_name);
     }
@@ -154,7 +154,7 @@ fn introduce_abstractions(
 fn trans_dependent_type(
     env: &[AbsDecl],
     glob: &NamedDbi,
-    local_env: &[Name],
+    local_env: &[UID],
     local_map: &NamedDbi,
     params: &[Param],
     result: &Expr,
@@ -180,9 +180,9 @@ fn trans_dependent_type(
 fn introduce_telescope(
     env: &[AbsDecl],
     global_map: &NamedDbi,
-    dt_env: &mut Vec<Name>,
+    dt_env: &mut Vec<UID>,
     dt_map: &mut NamedDbi,
-    names: &mut Vec<Name>,
+    names: &mut Vec<UID>,
     mut dt_vec: Vec<Abs>,
     param: &Param,
 ) -> TCM<Vec<Abs>> {
@@ -203,13 +203,13 @@ fn introduce_telescope(
         }
         */
         dt_map.insert(param_name, 0);
-        let new_name = Name::default();
+        let new_name = unsafe { next_uid() };
         dt_env.insert(0, new_name);
         names.push(new_name);
         dt_vec.push(param_ty.clone());
     }
     if param.names.is_empty() {
-        let new_name = Name::default();
+        let new_name = unsafe { next_uid() };
         dt_map.iter_mut().for_each(|(_name, dbi)| *dbi += 1);
         dt_env.insert(0, new_name);
         names.push(new_name);
