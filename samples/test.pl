@@ -8,11 +8,11 @@ $|++;
 
 my $is_release = 0;
 say $is_release ? `cargo build --release --bin voilec --all-features`
-                : `cargo build --bin voilec --all-features`;
+    : `cargo build --bin voilec --all-features`;
 
 my $voilec = "../target/@{[ $is_release ? 'release' : 'debug' ]}/voilec";
 my $version = "$voilec --version";
-say "$version: @{[ `$version` ]}";
+say "$version: @{[ `$version` =~ s/[\n\r]//rg ]}, commit @{[ `git rev-parse --short HEAD` ]}";
 my @failure = ();
 my $success = 0;
 my $isCI = defined $ENV{'CI'};

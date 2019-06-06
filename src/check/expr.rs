@@ -357,8 +357,8 @@ fn check_subtype(mut tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
     use crate::syntax::core::Val::*;
     match (subtype, supertype) {
         (Type(sub_level), Type(super_level)) if sub_level <= super_level => Ok(tcs),
-        (Neut(Axi(sub_uid, _)), Neut(Axi(super_uid, _))) => {
-            if sub_uid == super_uid {
+        (Neut(Axi(sub)), Neut(Axi(sup))) => {
+            if sub.unique_id() == sup.unique_id() {
                 Ok(tcs)
             } else {
                 Err(TCE::NotSameType(subtype.clone(), supertype.clone()))

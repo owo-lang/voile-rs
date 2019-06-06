@@ -3,6 +3,9 @@
 # 0.0.9
 
 + Remove `Bot` in core (#78)
++ Introduce standalone `Axiom` type (#91)
++ Code cleanup, remove `compile` and `Name` (#84)
++ Introduce level lifting operation and level checking (#77)
 
 # 0.0.8
 

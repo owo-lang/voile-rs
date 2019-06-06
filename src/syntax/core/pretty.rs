@@ -2,14 +2,14 @@ use std::fmt::{Display, Error, Formatter};
 
 use crate::syntax::common::DtKind::*;
 
-use super::{Closure, Neutral, Val};
+use super::{Axiom, Closure, Neutral, Val};
 
 impl Display for Neutral {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             Neutral::Var(dbi) => write!(f, "[{:?}]", dbi),
-            Neutral::Axi(uid, None) => write!(f, "<{:?}>", uid),
-            Neutral::Axi(uid, Some(dbi)) => write!(f, "<{:?},{:?}>", uid, dbi),
+            Neutral::Axi(Axiom::Postulated(uid)) => write!(f, "<{:?}>", uid),
+            Neutral::Axi(Axiom::Generated(uid, dbi)) => write!(f, "<{:?} {:?}>", uid, dbi),
             Neutral::App(fun, a) => write!(f, "({} {})", fun, a),
             Neutral::Fst(p) => write!(f, "({}.1)", p),
             Neutral::Snd(p) => write!(f, "({}.2)", p),

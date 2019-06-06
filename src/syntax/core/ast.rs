@@ -79,9 +79,14 @@ impl Val {
         }
     }
 
-    pub fn attach_dbi(self, i: DBI) -> Self {
+    pub fn attach_dbi(self, dbi: DBI) -> Self {
         self.map_neutral(|neut: Neutral| {
-            neut.map_axiom(|uid, dbi| Neutral::Axi(uid, Some(dbi.unwrap_or(i))))
+            neut.map_axiom(|a| {
+                Neutral::Axi(match a {
+                    Axiom::Postulated(uid) => Axiom::Generated(uid, dbi),
+                    Axiom::Generated(_, _) => a,
+                })
+            })
         })
     }
 }
@@ -160,9 +165,7 @@ pub enum Neutral {
     /// Lifting self to a higher/lower level.
     Lift(Level, Box<Self>),
     /// Postulated value, aka axioms.
-    /// If the `Option<DBI>` value is `None`, then it's really postulated.
-    /// Otherwise it should be a generated lambda parameter.
-    Axi(UID, Option<DBI>),
+    Axi(Axiom),
     /// Function application.
     App(Box<Self>, Box<Val>),
     /// Projecting the first element of a pair.
@@ -171,14 +174,36 @@ pub enum Neutral {
     Snd(Box<Self>),
 }
 
+/// Postulated value, aka axioms.
+/// If the `Option<DBI>` value is `None`, then it's really postulated.
+/// Otherwise it should be a generated lambda parameter.
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub enum Axiom {
+    /// Unimplemented functions.
+    Postulated(UID),
+    /// Lambda parameters.
+    Generated(UID, DBI),
+}
+
+impl Axiom {
+    pub fn unique_id(&self) -> UID {
+        match self {
+            Axiom::Postulated(uid) | Axiom::Generated(uid, _) => *uid,
+        }
+    }
+}
+
 impl Neutral {
     pub fn axiom_to_var(self) -> Self {
-        self.map_axiom(|uid, dbi| dbi.map_or_else(|| Neutral::Axi(uid, None), Neutral::Var))
+        self.map_axiom(|a| match a {
+            Axiom::Postulated(_) => Neutral::Axi(a),
+            Axiom::Generated(_, dbi) => Neutral::Var(dbi),
+        })
     }
 
-    pub fn map_axiom<F: Fn(UID, Option<DBI>) -> Self + Copy>(self, f: F) -> Self {
+    pub fn map_axiom<F: Fn(Axiom) -> Self + Copy>(self, f: F) -> Self {
         match self {
-            Neutral::Axi(uid, dbi) => f(uid, dbi),
+            Neutral::Axi(a) => f(a),
             Neutral::App(fun, a) => Neutral::App(
                 Box::new(fun.map_axiom(f)),
                 Box::new(a.map_neutral(|n| n.map_axiom(f))),
@@ -197,7 +222,7 @@ impl RedEx for Neutral {
         match self {
             Var(n) if dbi == n => arg.attach_dbi(dbi),
             Var(n) => Val::var(n),
-            Axi(i, dbi) => Val::Neut(Axi(i, dbi)),
+            Axi(a) => Val::Neut(Axi(a)),
             App(function, argument) => function
                 .reduce_with_dbi(arg.clone(), dbi)
                 .apply(argument.reduce_with_dbi(arg, dbi)),
@@ -229,7 +254,7 @@ impl LiftEx for Neutral {
             Lift(n, expr) => expr.level() + *n,
             // Level is zero by default
             Var(_) => 0,
-            Axi(_, _) => 0,
+            Axi(_) => 0,
             Fst(expr) => expr.level(),
             Snd(expr) => expr.level(),
             App(f, a) => max(f.level(), a.level()),
@@ -316,11 +341,11 @@ impl Val {
     }
 
     pub(crate) fn axiom_with_uid(uid: UID) -> Self {
-        Val::Neut(Neutral::Axi(uid, None))
+        Val::Neut(Neutral::Axi(Axiom::Postulated(uid)))
     }
 
     pub(crate) fn axiom_with_index(uid: UID, dbi: DBI) -> Self {
-        Val::Neut(Neutral::Axi(uid, Some(dbi)))
+        Val::Neut(Neutral::Axi(Axiom::Generated(uid, dbi)))
     }
 
     pub fn app(function: Neutral, arg: Self) -> Self {
