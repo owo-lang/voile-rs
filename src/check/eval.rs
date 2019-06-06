@@ -98,7 +98,7 @@ fn compile(mut tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> 
         },
         Abs::Lift(info, levels, expr) => {
             let (expr, tcs) = compile(tcs, strategy, *expr, None);
-            (expr.map_ast(|expr| expr.lift(levels)), tcs)
+            (expr.ast.lift(levels).into_info(info), tcs)
         }
         e => panic!("Cannot compile `{}` at {}", e, e.syntax_info()),
     }

@@ -74,7 +74,7 @@ impl ToSyntaxInfo for Abs {
             | Abs::Fst(info, _)
             | Abs::Snd(info, _)
             | Abs::Sum(info, _)
-            | Abs::Lift(info,_, _)
+            | Abs::Lift(info, _, _)
             | Abs::Lam(info, _, _, _) => info,
             Abs::Local(info, _, _)
             | Abs::Var(info, _)

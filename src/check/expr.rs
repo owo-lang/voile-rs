@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::syntax::abs::Abs;
 use crate::syntax::common::DtKind::*;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
-use crate::syntax::core::{Closure, Val};
+use crate::syntax::core::{Closure, LiftEx, Val};
 
 use super::eval::{compile_cons, compile_variant};
 use super::monad::{ValTCM, TCE, TCM, TCS};
@@ -94,32 +94,40 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let mocked_term = mocked.clone().into_info(param_info.info);
             tcs.local_env.push(mocked_term);
             let ret_ty_body = ret_ty.instantiate_cloned(mocked);
-            let (lam_term, mut tcs) = tcs.check(body, &ret_ty_body)?;
+            let (lam_term, mut tcs) = tcs
+                .check(body, &ret_ty_body)
+                .map_err(|e| e.wrap(*full_info))?;
             tcs.pop_local();
             let lam = Val::lam(param_type.ast, lam_term.ast);
             Ok((lam.into_info(*full_info), tcs))
         }
         (Abs::Variant(info), Val::Dt(Pi, ret_ty)) => {
-            check_variant_or_cons(&info.info, ret_ty)?;
+            check_variant_or_cons(&info.info, ret_ty).map_err(|e| e.wrap(info.info))?;
             let variant = compile_variant(info.clone(), *ret_ty.param_type.clone());
             Ok((variant, tcs))
         }
         (Abs::Cons(info), Val::Dt(Pi, ret_ty)) => {
-            check_variant_or_cons(&info.info, ret_ty)?;
+            check_variant_or_cons(&info.info, ret_ty).map_err(|e| e.wrap(info.info))?;
             let cons = compile_cons(info.clone(), *ret_ty.param_type.clone());
             Ok((cons, tcs))
         }
         (Abs::Bot(info), Val::Type(level)) => Ok((Val::bot().into_info(*info), tcs)),
         (Abs::Dt(info, kind, name, param, ret), Val::Type(l)) => {
             // TODO: level checking
-            let (param, mut tcs) = tcs.check_type(&**param)?;
+            let (param, mut tcs) = tcs.check_type(&**param).map_err(|e| e.wrap(*info))?;
             tcs.local_gamma.push(param.clone());
             let axiom = Val::axiom_with_uid(name.uid).into_info(param.to_info());
             tcs.local_env.push(axiom);
-            let (ret, mut tcs) = tcs.check_type(&**ret)?;
+            let (ret, mut tcs) = tcs.check_type(&**ret).map_err(|e| e.wrap(*info))?;
             tcs.pop_local();
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(*info);
             Ok((dt, tcs))
+        }
+        (Abs::Lift(info, levels, expr), anything) => {
+            let (expr, tcs) = tcs
+                .check(&**expr, &anything.clone().lift(0 - *levels))
+                .map_err(|e| e.wrap(*info))?;
+            Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
         (expr, anything) => {
             let (inferred, tcs) = tcs.infer(expr)?;
@@ -185,6 +193,10 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
             let axiom = Val::axiom_with_index(name.uid, *dbi).into_info(info);
             Ok((axiom, tcs))
         }
+        Abs::Lift(_, levels, expr) => {
+            let (expr, tcs) = tcs.check_type(&**expr)?;
+            Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
+        }
         Abs::Dt(_, kind, name, param, ret) => {
             let (param, mut tcs) = tcs.check_type(&**param)?;
             tcs.local_gamma.push(param.clone());
@@ -245,6 +257,10 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
         Local(_, _, dbi) => {
             let local = tcs.local_type(*dbi).ast.clone().attach_dbi(*dbi);
             Ok((local.into_info(info), tcs))
+        }
+        Lift(_, levels, expr) => {
+            let (expr, tcs) = tcs.infer(&**expr)?;
+            Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
         Var(_, dbi) => Ok((tcs.glob_type(*dbi).ast.clone().into_info(info), tcs)),
         Pair(_, fst, snd) => {
