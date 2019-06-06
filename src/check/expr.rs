@@ -79,7 +79,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
         (Pair(info, fst, snd), Val::Dt(Sigma, param_ty, closure)) => {
             let (fst_term, mut tcs) = tcs.check(&**fst, &**param_ty).map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();
-            let snd_ty = closure.clone().instantiate(fst_term_ast.clone());
+            let snd_ty = closure.instantiate_cloned(fst_term_ast.clone());
             // This `fst_term.syntax_info()` is probably wrong, but I'm not sure how to fix
             let param_type = param_ty.clone().into_info(fst_term.syntax_info());
             tcs.local_gamma.push(param_type);
@@ -95,7 +95,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let mocked = Val::postulate(*uid);
             let mocked_term = mocked.clone().into_info(param_info.info);
             tcs.local_env.push(mocked_term);
-            let ret_ty_body = ret_ty.clone().instantiate(mocked);
+            let ret_ty_body = ret_ty.instantiate_cloned(mocked);
             let (lam_term, mut tcs) = tcs
                 .check(body, &ret_ty_body)
                 .map_err(|e| e.wrap(*full_info))?;
@@ -152,7 +152,7 @@ fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -
     if !param_ty.is_type() {
         Err(TCE::NotTypeVal(*info, param_ty.clone()))
     } else if !ret_ty.body.is_universe() {
-        let ret_ty = ret_ty.clone().instantiate(Default::default());
+        let ret_ty = ret_ty.instantiate_cloned(Default::default());
         Err(TCE::NotUniverseVal(*info, ret_ty))
     } else {
         Ok(())
@@ -200,9 +200,8 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
     let info = expr.syntax_info();
     match expr {
         Type(_, level) => Ok((Val::Type(*level).into_info(info), tcs)),
-        Local(_, name, dbi) if tcs.local_is_type(*dbi) => {
-            let axiom = Val::generate(*name, *dbi).into_info(info);
-            Ok((axiom, tcs))
+        Local(_, uid, dbi) if tcs.local_is_type(*dbi) => {
+            Ok((Val::generate(*uid, *dbi).into_info(info), tcs))
         }
         Lift(_, levels, expr) => {
             let (expr, tcs) = tcs.check_type(&**expr).map_err(|e| e.wrap(info))?;
@@ -283,7 +282,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
         Fst(_, pair) => {
             let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
-                Val::Dt(Sigma, param_type, _) => Ok((param_type.into_info(info), tcs)),
+                Val::Dt(Sigma, param_type, ..) => Ok((param_type.into_info(info), tcs)),
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
