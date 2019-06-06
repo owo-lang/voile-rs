@@ -3,7 +3,7 @@ use std::collections::btree_map::BTreeMap;
 use crate::check::monad::TCS;
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{Ident, ToSyntaxInfo};
-use crate::syntax::core::{Val, ValInfo};
+use crate::syntax::core::{LiftEx, Val, ValInfo};
 
 /// Term-producing strategy -- whether to produce
 /// dbi-based variables or uid-based variables.
@@ -96,6 +96,10 @@ fn compile(mut tcs: TCS, strategy: Strategy, abs: Abs, checked: Option<Val>) -> 
                 (body.ast.into_info(info), tcs)
             }
         },
+        Abs::Lift(info, levels, expr) => {
+            let (expr, tcs) = compile(tcs, strategy, *expr, None);
+            (expr.map_ast(|expr| expr.lift(levels)), tcs)
+        }
         e => panic!("Cannot compile `{}` at {}", e, e.syntax_info()),
     }
 }

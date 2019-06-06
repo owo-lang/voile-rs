@@ -12,7 +12,8 @@ impl Display for Abs {
             Abs::Local(info, name, dbi) => write!(f, "{}[{:?},{:?}]", info.text, name.uid, dbi),
             Abs::Var(_, dbi) => write!(f, "<{:?}>", dbi),
             Abs::Meta(info) => write!(f, "?{}", info.text),
-            Abs::Cons(_) => unimplemented!(),
+            Abs::Cons(name) => write!(f, "@{}", name.text),
+            Abs::Lift(_, levels, expr) => write!(f, "(^[{:?}] {})", levels, expr),
             Abs::Variant(info) => write!(f, "'{}", info.text),
             Abs::App(_, a, b) => write!(f, "({} {})", a, b),
             Abs::Dt(_, Pi, name, param, ret) => {

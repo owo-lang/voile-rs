@@ -13,6 +13,7 @@ impl Display for Neutral {
             Neutral::App(fun, a) => write!(f, "({} {})", fun, a),
             Neutral::Fst(p) => write!(f, "({}.1)", p),
             Neutral::Snd(p) => write!(f, "({}.2)", p),
+            Neutral::Lift(levels, p) => write!(f, "(^[{:?}] {})", levels, p),
         }
     }
 }

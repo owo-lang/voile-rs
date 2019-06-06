@@ -11,8 +11,8 @@ pub trait RedEx: Sized {
     fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val;
 }
 
-/// Expression with universe level.
-pub trait LeveledEx: Sized {
+/// Expression with universe level (which means they can be lifted).
+pub trait LiftEx: Sized {
     /// Lift the level of `self`.
     fn lift(self, levels: Level) -> Self;
 }
@@ -110,7 +110,7 @@ impl RedEx for Val {
     }
 }
 
-impl LeveledEx for TVal {
+impl LiftEx for TVal {
     fn lift(self, levels: Level) -> Val {
         match self {
             Val::Type(l) => Val::Type(l + levels),
@@ -134,6 +134,8 @@ impl LeveledEx for TVal {
 pub enum Neutral {
     /// Local variable, referred by de-bruijn index.
     Var(DBI),
+    /// Lifting self to a higher/lower level.
+    Lift(Level, Box<Self>),
     /// Postulated value, aka axioms.
     /// If the `Option<DBI>` value is `None`, then it's really postulated.
     /// Otherwise it should be a generated lambda parameter.
@@ -160,7 +162,8 @@ impl Neutral {
             ),
             Neutral::Fst(p) => Neutral::Fst(Box::new(p.map_axiom(f))),
             Neutral::Snd(p) => Neutral::Snd(Box::new(p.map_axiom(f))),
-            e => e,
+            Neutral::Var(n) => Neutral::Var(n),
+            Neutral::Lift(levels, expr) => Neutral::Lift(levels, Box::new(expr.map_axiom(f))),
         }
     }
 }
@@ -183,13 +186,18 @@ impl RedEx for Neutral {
                 .reduce_with_dbi(arg.clone(), dbi)
                 .second()
                 .reduce_with_dbi(arg, dbi),
+            Lift(levels, neut) => neut.reduce_with_dbi(arg, dbi).lift(levels),
         }
     }
 }
 
-impl LeveledEx for Neutral {
+impl LiftEx for Neutral {
     fn lift(self, levels: Level) -> Self {
-        unimplemented!()
+        use self::Neutral::*;
+        match self {
+            Lift(n, expr) => Lift(n + levels, expr),
+            e => Lift(levels, Box::new(e)),
+        }
     }
 }
 
@@ -249,6 +257,10 @@ impl Val {
 
     pub fn cons(name: String, param: Self) -> Self {
         Val::Cons(name, Box::new(param))
+    }
+
+    pub fn lift(levels: Level, expr: Neutral) -> Self {
+        Val::Neut(Neutral::Lift(levels, Box::new(expr)))
     }
 
     pub fn var(index: DBI) -> Self {
@@ -353,7 +365,7 @@ impl Closure {
     }
 }
 
-impl LeveledEx for Closure {
+impl LiftEx for Closure {
     fn lift(self, levels: Level) -> Self {
         Self::new(self.param_type.lift(levels), self.body.lift(levels))
     }
