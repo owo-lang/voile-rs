@@ -1,4 +1,5 @@
-use std::collections::btree_map::BTreeMap;
+use std::cmp::max;
+use std::collections::BTreeMap;
 
 use crate::syntax::common::{next_uid, DtKind, Level, DBI, UID};
 
@@ -15,6 +16,11 @@ pub trait RedEx: Sized {
 pub trait LiftEx: Sized {
     /// Lift the level of `self`.
     fn lift(self, levels: Level) -> Self;
+
+    /// Calculate the level of `self`,
+    /// like a normal value will have level 0,
+    /// a type expression will have level 1 (or higher).
+    fn level(&self) -> Level;
 }
 
 impl Val {
@@ -74,9 +80,9 @@ impl Val {
     }
 
     pub fn attach_dbi(self, i: DBI) -> Self {
-        let map_neut =
-            |neut: Neutral| neut.map_axiom(|uid, dbi| Neutral::Axi(uid, Some(dbi.unwrap_or(i))));
-        self.map_neutral(map_neut)
+        self.map_neutral(|neut: Neutral| {
+            neut.map_axiom(|uid, dbi| Neutral::Axi(uid, Some(dbi.unwrap_or(i))))
+        })
     }
 }
 
@@ -125,6 +131,23 @@ impl LiftEx for TVal {
             Val::Cons(name, e) => Val::cons(name, e.lift(levels)),
             Val::Pair(l, r) => Val::pair(l.lift(levels), r.lift(levels)),
             Val::Neut(neut) => Val::Neut(neut.lift(levels)),
+        }
+    }
+
+    fn level(&self) -> Level {
+        match self {
+            Val::Type(level) => *level + 1,
+            Val::Sum(variants) => variants
+                .values()
+                .into_iter()
+                .map(|v| v.level())
+                .max()
+                .unwrap_or(0),
+            Val::Dt(_, closure) => closure.level(),
+            Val::Lam(closure) => closure.level(),
+            Val::Neut(neut) => neut.level(),
+            Val::Pair(l, r) => max(l.level(), r.level()),
+            Val::Cons(_, e) => e.level(),
         }
     }
 }
@@ -197,6 +220,19 @@ impl LiftEx for Neutral {
         match self {
             Lift(n, expr) => Lift(n + levels, expr),
             e => Lift(levels, Box::new(e)),
+        }
+    }
+
+    fn level(&self) -> Level {
+        use self::Neutral::*;
+        match self {
+            Lift(n, expr) => expr.level() + *n,
+            // Level is zero by default
+            Var(_) => 0,
+            Axi(_, _) => 0,
+            Fst(expr) => expr.level(),
+            Snd(expr) => expr.level(),
+            App(f, a) => max(f.level(), a.level()),
         }
     }
 }
@@ -368,5 +404,11 @@ impl Closure {
 impl LiftEx for Closure {
     fn lift(self, levels: Level) -> Self {
         Self::new(self.param_type.lift(levels), self.body.lift(levels))
+    }
+
+    fn level(&self) -> Level {
+        let param_level = self.param_type.level();
+        let body_level = self.body.level();
+        max(param_level, body_level)
     }
 }

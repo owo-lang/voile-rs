@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::syntax::abs::Abs;
@@ -114,14 +115,21 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let cons = compile_cons(info.clone(), *ret_ty.param_type.clone());
             Ok((cons, tcs))
         }
-        (Bot(info), Val::Type(level)) => Ok((Val::bot().into_info(*info), tcs)),
+        (Bot(info), Val::Type(_)) => Ok((Val::bot().into_info(*info), tcs)),
         (Dt(info, kind, name, param, ret), Val::Type(l)) => {
-            // TODO: level checking
             let (param, mut tcs) = tcs.check_type(&**param).map_err(|e| e.wrap(*info))?;
+            let param_level = param.ast.level();
+            if param_level >= *l {
+                return Err(TCE::LevelMismatch(*info, param_level - 1, *l));
+            }
             tcs.local_gamma.push(param.clone());
             let axiom = Val::axiom_with_uid(*name).into_info(param.to_info());
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = tcs.check_type(&**ret).map_err(|e| e.wrap(*info))?;
+            let ret_level = ret.ast.level();
+            if ret_level >= *l {
+                return Err(TCE::LevelMismatch(*info, ret_level - 1, *l));
+            }
             tcs.pop_local();
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(*info);
             Ok((dt, tcs))
@@ -294,9 +302,11 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
         }
         Sum(_, variants) => {
             let mut known = BTreeSet::default();
+            let mut level = 0;
             for variant in variants {
                 let (variant, new_tcs) = tcs.check_type(variant).map_err(|e| e.wrap(info))?;
                 tcs = new_tcs;
+                level = max(level, variant.ast.level());
                 let info = variant.info;
                 match variant.ast.try_into_sum() {
                     Ok(variants) => {
@@ -311,14 +321,12 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
                     Err(e) => return Err(TCE::NotSumVal(info, e)),
                 }
             }
-            // TODO: level
-            Ok((Val::Type(0).into_info(info), tcs))
+            Ok((Val::Type(level).into_info(info), tcs))
         }
         App(_, f, a) => match &**f {
             Variant(_) => {
-                let (_, tcs) = tcs.check_type(a).map_err(|e| e.wrap(info))?;
-                // TODO: level
-                Ok((Val::Type(0).into_info(info), tcs))
+                let (e, tcs) = tcs.check_type(a).map_err(|e| e.wrap(info))?;
+                Ok((Val::Type(e.ast.level()).into_info(info), tcs))
             }
             Cons(variant_info) => {
                 let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap(info))?;
