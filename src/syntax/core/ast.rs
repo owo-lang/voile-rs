@@ -337,14 +337,14 @@ impl Val {
     }
 
     pub fn axiom() -> Self {
-        Self::axiom_with_uid(unsafe { next_uid() })
+        Self::postulate(unsafe { next_uid() })
     }
 
-    pub(crate) fn axiom_with_uid(uid: UID) -> Self {
+    pub(crate) fn postulate(uid: UID) -> Self {
         Val::Neut(Neutral::Axi(Axiom::Postulated(uid)))
     }
 
-    pub(crate) fn axiom_with_index(uid: UID, dbi: DBI) -> Self {
+    pub(crate) fn generate(uid: UID, dbi: DBI) -> Self {
         Val::Neut(Neutral::Axi(Axiom::Generated(uid, dbi)))
     }
 
