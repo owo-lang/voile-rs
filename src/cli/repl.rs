@@ -64,14 +64,14 @@ impl Highlighter for VoileHelper {}
 
 impl Helper for VoileHelper {}
 
-const PROMPT: &'static str = "=> ";
-const QUIT_CMD: &'static str = ":quit";
-const GAMMA_CMD: &'static str = ":gamma";
-const CTX_CMD: &'static str = ":context";
-const HELP_CMD: &'static str = ":help";
-const LOAD_CMD: &'static str = ":load";
+const PROMPT: &str = "=> ";
+const QUIT_CMD: &str = ":quit";
+const GAMMA_CMD: &str = ":gamma";
+const CTX_CMD: &str = ":context";
+const HELP_CMD: &str = ":help";
+const LOAD_CMD: &str = ":load";
 
-const LOAD_PFX: &'static str = ":load ";
+const LOAD_PFX: &str = ":load ";
 
 fn show_gamma(tcs: &TCS) {
     for val in &tcs.0.gamma {
@@ -128,6 +128,7 @@ fn update_tcs(tcs: TCS, decls: Vec<Decl>) -> TCS {
     (tcs, (abs_decls, name_ctx))
 }
 
+#[allow(clippy::print_literal)]
 fn help(current_mode: &str) {
     repl_welcome_message(current_mode);
     println!(
