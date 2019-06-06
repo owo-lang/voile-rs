@@ -76,14 +76,16 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             }
         }
         (Pair(info, fst, snd), Val::Dt(Sigma, closure)) => {
-            let (fst_term, mut tcs) = tcs.check(&**fst, &*closure.param_type)?;
+            let (fst_term, mut tcs) = tcs
+                .check(&**fst, &*closure.param_type)
+                .map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();
             let snd_ty = closure.instantiate_cloned(fst_term_ast.clone());
             // This `fst_term.to_info()` is probably wrong, but I'm not sure how to fix
             let param_type = closure.param_type.clone().into_info(fst_term.to_info());
             tcs.local_gamma.push(param_type);
             tcs.local_env.push(fst_term);
-            let (snd_term, mut tcs) = tcs.check(&**snd, &snd_ty)?;
+            let (snd_term, mut tcs) = tcs.check(&**snd, &snd_ty).map_err(|e| e.wrap(*info))?;
             tcs.pop_local();
             let pair = Val::pair(fst_term_ast, snd_term.ast).into_info(*info);
             Ok((pair, tcs))
@@ -196,15 +198,15 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
             Ok((axiom, tcs))
         }
         Lift(_, levels, expr) => {
-            let (expr, tcs) = tcs.check_type(&**expr)?;
+            let (expr, tcs) = tcs.check_type(&**expr).map_err(|e| e.wrap(info))?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
         Dt(_, kind, name, param, ret) => {
-            let (param, mut tcs) = tcs.check_type(&**param)?;
+            let (param, mut tcs) = tcs.check_type(&**param).map_err(|e| e.wrap(info))?;
             tcs.local_gamma.push(param.clone());
             let axiom = Val::axiom_with_uid(name.uid).into_info(param.to_info());
             tcs.local_env.push(axiom);
-            let (ret, mut tcs) = tcs.check_type(&**ret)?;
+            let (ret, mut tcs) = tcs.check_type(&**ret).map_err(|e| e.wrap(info))?;
             tcs.pop_local();
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(info);
             Ok((dt, tcs))
@@ -212,7 +214,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
         Sum(_, variants) => {
             let mut sum = BTreeMap::default();
             for variant in variants {
-                let (variant, new_tcs) = tcs.check_type(variant)?;
+                let (variant, new_tcs) = tcs.check_type(variant).map_err(|e| e.wrap(info))?;
                 tcs = new_tcs;
                 let info = variant.info;
                 let mut new = match variant.ast.try_into_sum() {
@@ -229,7 +231,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
             Ok((Val::Sum(sum).into_info(info), tcs))
         }
         e => {
-            let (ty, tcs) = tcs.infer(e)?;
+            let (ty, tcs) = tcs.infer(e).map_err(|e| e.wrap(info))?;
             if ty.ast.is_universe() {
                 Ok(tcs.evaluate(e.clone()))
             } else {
@@ -261,25 +263,25 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
             Ok((local.into_info(info), tcs))
         }
         Lift(_, levels, expr) => {
-            let (expr, tcs) = tcs.infer(&**expr)?;
+            let (expr, tcs) = tcs.infer(&**expr).map_err(|e| e.wrap(info))?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
         Var(_, dbi) => Ok((tcs.glob_type(*dbi).ast.clone().into_info(info), tcs)),
         Pair(_, fst, snd) => {
-            let (fst_ty, tcs) = tcs.infer(&**fst)?;
-            let (snd_ty, tcs) = tcs.infer(&**snd)?;
+            let (fst_ty, tcs) = tcs.infer(&**fst).map_err(|e| e.wrap(info))?;
+            let (snd_ty, tcs) = tcs.infer(&**snd).map_err(|e| e.wrap(info))?;
             let sigma = Val::sig(fst_ty.ast, snd_ty.ast).into_info(info);
             Ok((sigma, tcs))
         }
         Fst(_, pair) => {
-            let (pair_ty, tcs) = tcs.infer(&**pair)?;
+            let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
                 Val::Dt(Sigma, closure) => Ok((closure.param_type.into_info(info), tcs)),
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
         Snd(_, pair) => {
-            let (pair_ty, tcs) = tcs.infer(&**pair)?;
+            let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
                 Val::Dt(Sigma, closure) => {
                     // Since we can infer the type of `pair`, it has to be well-typed
@@ -293,7 +295,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
         Sum(_, variants) => {
             let mut known = BTreeSet::default();
             for variant in variants {
-                let (variant, new_tcs) = tcs.check_type(variant)?;
+                let (variant, new_tcs) = tcs.check_type(variant).map_err(|e| e.wrap(info))?;
                 tcs = new_tcs;
                 let info = variant.info;
                 match variant.ast.try_into_sum() {
@@ -314,21 +316,23 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
         }
         App(_, f, a) => match &**f {
             Variant(_) => {
-                let (_, tcs) = tcs.check_type(a)?;
+                let (_, tcs) = tcs.check_type(a).map_err(|e| e.wrap(info))?;
                 // TODO: level
                 Ok((Val::Type(0).into_info(info), tcs))
             }
             Cons(variant_info) => {
-                let (a, tcs) = tcs.infer(a)?;
+                let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap(info))?;
                 let mut variant = BTreeMap::default();
                 variant.insert(variant_info.text[1..].to_owned(), a.ast);
                 Ok((Val::Sum(variant).into_info(info), tcs))
             }
             f => {
-                let (f_ty, tcs) = tcs.infer(f)?;
+                let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap(info))?;
                 match f_ty.ast {
                     Val::Dt(Pi, closure) => {
-                        let (new_a, tcs) = tcs.check(&**a, &closure.param_type)?;
+                        let (new_a, tcs) = tcs
+                            .check(&**a, &closure.param_type)
+                            .map_err(|e| e.wrap(info))?;
                         Ok((closure.instantiate(new_a.ast).into_info(info), tcs))
                     }
                     other => Err(TCE::NotPi(info, other)),
