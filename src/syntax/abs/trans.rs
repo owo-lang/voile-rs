@@ -71,7 +71,7 @@ fn trans_expr_inner(
             trans_expr_inner(applied, env, global_map, local_env, local_map)?,
             |result, each_expr| -> TCM<_> {
                 let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                let info = result.to_info() + abs.to_info();
+                let info = result.syntax_info() + abs.syntax_info();
                 Ok(Abs::app(info, result, abs))
             },
         ),
@@ -80,7 +80,7 @@ fn trans_expr_inner(
             trans_expr_inner(startup, env, global_map, local_env, local_map)?,
             |result, each_expr| -> TCM<_> {
                 let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
-                let info = result.to_info() + abs.to_info();
+                let info = result.syntax_info() + abs.syntax_info();
                 Ok(Abs::app(info, result, abs))
             },
         ),
@@ -92,7 +92,9 @@ fn trans_expr_inner(
             let f = |expr: &Expr| trans_expr_inner(expr, env, global_map, local_env, local_map);
             let mut abs_vec: Vec<Abs> = variants.iter().map(f).collect::<TCM<_>>()?;
             let first = trans_expr_inner(first, env, global_map, local_env, local_map)?;
-            let info = abs_vec.iter().fold(first.to_info(), |l, r| l + r.to_info());
+            let info = abs_vec
+                .iter()
+                .fold(first.syntax_info(), |l, r| l + r.syntax_info());
             abs_vec.push(first);
             Ok(Abs::Sum(info, abs_vec))
         }
@@ -100,7 +102,7 @@ fn trans_expr_inner(
             trans_expr_inner(first, env, global_map, local_env, local_map)?,
             |pair, expr| {
                 let abs = trans_expr_inner(expr, env, global_map, local_env, local_map)?;
-                Ok(Abs::pair(abs.to_info(), pair, abs))
+                Ok(Abs::pair(abs.syntax_info(), pair, abs))
             },
         ),
         Expr::Sig(initial, last) => trans_dependent_type(
@@ -170,7 +172,7 @@ fn trans_dependent_type(
     Ok(pi_vec.into_iter().rev().fold(
         trans_expr_inner(result, env, glob, &pi, &pi_map)?,
         |pi_abs, param| {
-            let info = param.to_info() + pi_abs.to_info();
+            let info = param.syntax_info() + pi_abs.syntax_info();
             let pop_empty = "The stack `names` is empty. Please report this as a bug.";
             Abs::dependent_type(info, kind, names.pop().expect(pop_empty), param, pi_abs)
         },

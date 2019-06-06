@@ -73,7 +73,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             if *upper > *lower {
                 Ok((Val::Type(*lower).into_info(*info), tcs))
             } else {
-                Err(TCE::LevelMismatch(expr.to_info(), lower + 1, *upper))
+                Err(TCE::LevelMismatch(expr.syntax_info(), lower + 1, *upper))
             }
         }
         (Pair(info, fst, snd), Val::Dt(Sigma, closure)) => {
@@ -82,8 +82,8 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 .map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();
             let snd_ty = closure.instantiate_cloned(fst_term_ast.clone());
-            // This `fst_term.to_info()` is probably wrong, but I'm not sure how to fix
-            let param_type = closure.param_type.clone().into_info(fst_term.to_info());
+            // This `fst_term.syntax_info()` is probably wrong, but I'm not sure how to fix
+            let param_type = closure.param_type.clone().into_info(fst_term.syntax_info());
             tcs.local_gamma.push(param_type);
             tcs.local_env.push(fst_term);
             let (snd_term, mut tcs) = tcs.check(&**snd, &snd_ty).map_err(|e| e.wrap(*info))?;
@@ -123,7 +123,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 return Err(TCE::LevelMismatch(*info, param_level - 1, *l));
             }
             tcs.local_gamma.push(param.clone());
-            let axiom = Val::axiom_with_uid(*name).into_info(param.to_info());
+            let axiom = Val::axiom_with_uid(*name).into_info(param.syntax_info());
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = tcs.check_type(&**ret).map_err(|e| e.wrap(*info))?;
             let ret_level = ret.ast.level();
@@ -198,7 +198,7 @@ Check if an expression is a valid type expression.
 */
 fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
     use Abs::*;
-    let info = expr.to_info();
+    let info = expr.syntax_info();
     match expr {
         Type(_, level) => Ok((Val::Type(*level).into_info(info), tcs)),
         Local(_, name, dbi) if tcs.local_is_type(*dbi) => {
@@ -212,7 +212,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
         Dt(_, kind, name, param, ret) => {
             let (param, mut tcs) = tcs.check_type(&**param).map_err(|e| e.wrap(info))?;
             tcs.local_gamma.push(param.clone());
-            let axiom = Val::axiom_with_uid(*name).into_info(param.to_info());
+            let axiom = Val::axiom_with_uid(*name).into_info(param.syntax_info());
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = tcs.check_type(&**ret).map_err(|e| e.wrap(info))?;
             tcs.pop_local();
@@ -263,7 +263,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
 /// Infer type of a value.
 fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
     use Abs::*;
-    let info = value.to_info();
+    let info = value.syntax_info();
     match value {
         Type(_, level) => Ok((Val::Type(level + 1).into_info(info), tcs)),
         Local(_, _, dbi) => {

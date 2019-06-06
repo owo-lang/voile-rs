@@ -31,7 +31,7 @@ pub enum Abs {
 }
 
 impl ToSyntaxInfo for Abs {
-    fn syntax_info(&self) -> &SyntaxInfo {
+    fn syntax_info(&self) -> SyntaxInfo {
         match self {
             Abs::Type(info, _)
             | Abs::Bot(info)
@@ -42,12 +42,12 @@ impl ToSyntaxInfo for Abs {
             | Abs::Snd(info, _)
             | Abs::Sum(info, _)
             | Abs::Lift(info, _, _)
-            | Abs::Lam(info, _, _, _) => info,
-            Abs::Local(info, _, _)
-            | Abs::Var(info, _)
-            | Abs::Meta(info)
-            | Abs::Cons(info)
-            | Abs::Variant(info) => &info.info,
+            | Abs::Lam(info, _, _, _) => *info,
+            Abs::Local(ident, _, _)
+            | Abs::Var(ident, _)
+            | Abs::Meta(ident)
+            | Abs::Cons(ident)
+            | Abs::Variant(ident) => ident.info,
         }
     }
 }

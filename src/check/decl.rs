@@ -29,7 +29,7 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         }
         AbsDecl::Sign(sign_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let syntax_info = sign_abs.to_info();
+            let syntax_info = sign_abs.syntax_info();
             let (sign_fake, mut tcs) = tcs.check_type(&sign_abs)?;
             let sign = sign_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
             tcs.env.push(Val::axiom().into_info(syntax_info));
