@@ -42,8 +42,9 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         }
         AbsDecl::Impl(impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let (inferred, mut tcs) = tcs.infer(&impl_abs)?;
-            let compiled = sign_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
+            let (inferred, tcs) = tcs.infer(&impl_abs)?;
+            let (compiled, mut tcs) = tcs.evaluate(impl_abs);
+            let compiled = compiled.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
             tcs.env.push(compiled);
             tcs.gamma.push(inferred);
 

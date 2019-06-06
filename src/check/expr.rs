@@ -66,15 +66,16 @@ $$
 $$
 */
 fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
+    use Abs::*;
     match (expr, expected_type) {
-        (&Abs::Type(ref info, lower), Val::Type(upper)) => {
-            if *upper > lower {
-                Ok((Val::Type(lower).into_info(*info), tcs))
+        (Abs::Type(info, lower), Val::Type(upper)) => {
+            if *upper > *lower {
+                Ok((Val::Type(*lower).into_info(*info), tcs))
             } else {
                 Err(TCE::LevelMismatch(expr.to_info(), lower + 1, *upper))
             }
         }
-        (Abs::Pair(info, fst, snd), Val::Dt(Sigma, closure)) => {
+        (Pair(info, fst, snd), Val::Dt(Sigma, closure)) => {
             let (fst_term, mut tcs) = tcs.check(&**fst, &*closure.param_type)?;
             let fst_term_ast = fst_term.ast.clone();
             let snd_ty = closure.instantiate_cloned(fst_term_ast.clone());
@@ -87,7 +88,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let pair = Val::pair(fst_term_ast, snd_term.ast).into_info(*info);
             Ok((pair, tcs))
         }
-        (Abs::Lam(full_info, param_info, name, body), Val::Dt(Pi, ret_ty)) => {
+        (Lam(full_info, param_info, name, body), Val::Dt(Pi, ret_ty)) => {
             let param_type = ret_ty.param_type.clone().into_info(param_info.info);
             tcs.local_gamma.push(param_type.clone());
             let mocked = Val::axiom_with_uid(name.uid);
@@ -101,18 +102,18 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let lam = Val::lam(param_type.ast, lam_term.ast);
             Ok((lam.into_info(*full_info), tcs))
         }
-        (Abs::Variant(info), Val::Dt(Pi, ret_ty)) => {
+        (Variant(info), Val::Dt(Pi, ret_ty)) => {
             check_variant_or_cons(&info.info, ret_ty).map_err(|e| e.wrap(info.info))?;
             let variant = compile_variant(info.clone(), *ret_ty.param_type.clone());
             Ok((variant, tcs))
         }
-        (Abs::Cons(info), Val::Dt(Pi, ret_ty)) => {
+        (Cons(info), Val::Dt(Pi, ret_ty)) => {
             check_variant_or_cons(&info.info, ret_ty).map_err(|e| e.wrap(info.info))?;
             let cons = compile_cons(info.clone(), *ret_ty.param_type.clone());
             Ok((cons, tcs))
         }
-        (Abs::Bot(info), Val::Type(level)) => Ok((Val::bot().into_info(*info), tcs)),
-        (Abs::Dt(info, kind, name, param, ret), Val::Type(l)) => {
+        (Bot(info), Val::Type(level)) => Ok((Val::bot().into_info(*info), tcs)),
+        (Dt(info, kind, name, param, ret), Val::Type(l)) => {
             // TODO: level checking
             let (param, mut tcs) = tcs.check_type(&**param).map_err(|e| e.wrap(*info))?;
             tcs.local_gamma.push(param.clone());
@@ -123,7 +124,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(*info);
             Ok((dt, tcs))
         }
-        (Abs::Lift(info, levels, expr), anything) => {
+        (Lift(info, levels, expr), anything) => {
             let (expr, tcs) = tcs
                 .check(&**expr, &anything.clone().lift(0 - *levels))
                 .map_err(|e| e.wrap(*info))?;
@@ -186,18 +187,19 @@ $$
 Check if an expression is a valid type expression.
 */
 fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
+    use Abs::*;
     let info = expr.to_info();
     match expr {
-        Abs::Type(_, level) => Ok((Val::Type(*level).into_info(info), tcs)),
-        Abs::Local(_, name, dbi) if tcs.local_is_type(*dbi) => {
+        Type(_, level) => Ok((Val::Type(*level).into_info(info), tcs)),
+        Local(_, name, dbi) if tcs.local_is_type(*dbi) => {
             let axiom = Val::axiom_with_index(name.uid, *dbi).into_info(info);
             Ok((axiom, tcs))
         }
-        Abs::Lift(_, levels, expr) => {
+        Lift(_, levels, expr) => {
             let (expr, tcs) = tcs.check_type(&**expr)?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
-        Abs::Dt(_, kind, name, param, ret) => {
+        Dt(_, kind, name, param, ret) => {
             let (param, mut tcs) = tcs.check_type(&**param)?;
             tcs.local_gamma.push(param.clone());
             let axiom = Val::axiom_with_uid(name.uid).into_info(param.to_info());
@@ -207,7 +209,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(info);
             Ok((dt, tcs))
         }
-        Abs::Sum(_, variants) => {
+        Sum(_, variants) => {
             let mut sum = BTreeMap::default();
             for variant in variants {
                 let (variant, new_tcs) = tcs.check_type(variant)?;
@@ -250,7 +252,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
 /// $$
 /// Infer type of a value.
 fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
-    use crate::syntax::abs::Abs::*;
+    use Abs::*;
     let info = value.to_info();
     match value {
         Type(_, level) => Ok((Val::Type(level + 1).into_info(info), tcs)),

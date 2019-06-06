@@ -8,28 +8,29 @@ use crate::syntax::core::{LiftEx, Val, ValInfo};
 /// Ensure `abs` is well-typed before invoking this,
 /// otherwise this function may panic or produce ill-typed core term.
 fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
+    use Abs::*;
     match abs {
-        Abs::Type(info, level) => (Val::Type(level).into_info(info), tcs),
-        Abs::Bot(info) => (Val::bot().into_info(info), tcs),
-        Abs::Local(info, _, i) => (tcs.local_val(i).ast.attach_dbi(i).into_info(info.info), tcs),
-        Abs::Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info.info), tcs),
+        Type(info, level) => (Val::Type(level).into_info(info), tcs),
+        Bot(info) => (Val::bot().into_info(info), tcs),
+        Local(info, _, i) => (tcs.local_val(i).ast.attach_dbi(i).into_info(info.info), tcs),
+        Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info.info), tcs),
         // Because I don't know what else can I output.
-        Abs::Variant(info) => (compile_variant(info, Val::axiom()), tcs),
-        Abs::Cons(info) => (compile_cons(info, Val::axiom()), tcs),
-        Abs::App(info, f, a) => {
+        Variant(info) => (compile_variant(info, Val::axiom()), tcs),
+        Cons(info) => (compile_cons(info, Val::axiom()), tcs),
+        App(info, f, a) => {
             // The function should always be compiled to DBI-based terms
             let (f, tcs) = evaluate(tcs, *f);
             let (a, tcs) = evaluate(tcs, *a);
             let applied = f.ast.apply(a.ast);
             (applied.into_info(info), tcs)
         }
-        Abs::Dt(info, kind, _, param_ty, ret_ty) => {
+        Dt(info, kind, _, param_ty, ret_ty) => {
             let (param_ty, tcs) = evaluate(tcs, *param_ty);
             let (ret_ty, tcs) = evaluate(tcs, *ret_ty);
             let term = Val::dependent_type(kind, param_ty.ast, ret_ty.ast);
             (term.into_info(info), tcs)
         }
-        Abs::Sum(info, sums) => {
+        Sum(info, sums) => {
             let mut variants = BTreeMap::default();
             for sum in sums {
                 let (val, new_tcs) = evaluate(tcs, sum);
@@ -42,25 +43,25 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             }
             (Val::Sum(variants).into_info(info), tcs)
         }
-        Abs::Pair(info, a, b) => {
+        Pair(info, a, b) => {
             let (a, tcs) = evaluate(tcs, *a);
             let (b, tcs) = evaluate(tcs, *b);
             (Val::pair(a.ast, b.ast).into_info(info), tcs)
         }
-        Abs::Fst(info, p) => {
+        Fst(info, p) => {
             let (p, tcs) = evaluate(tcs, *p);
             (p.ast.first().into_info(info), tcs)
         }
-        Abs::Snd(info, p) => {
+        Snd(info, p) => {
             let (p, tcs) = evaluate(tcs, *p);
             (p.ast.second().into_info(info), tcs)
         }
         // This branch is not likely to be reached.
-        Abs::Lam(info, _, _, body) => {
+        Lam(info, _, _, body) => {
             let (body, tcs) = evaluate(tcs, *body);
             (body.ast.into_info(info), tcs)
         }
-        Abs::Lift(info, levels, expr) => {
+        Lift(info, levels, expr) => {
             let (expr, tcs) = evaluate(tcs, *expr);
             (expr.ast.lift(levels).into_info(info), tcs)
         }
