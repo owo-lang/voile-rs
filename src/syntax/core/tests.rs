@@ -82,8 +82,8 @@ fn test_issue_47() {
         from_str("(lam 114514)")
     );
     assert_eq!(
-        from_str("(app (lam (lam (lam 1) 1) 1) 514)"),
-        from_str("(app (lam 514 1) 514)")
+        from_str("(app (lam (pair (lam (pair (lam 1) 1)) 1)) 514)"),
+        from_str("(pair (lam (pair (lam 1) 514)) 1)")
     );
 }
 
