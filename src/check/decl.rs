@@ -30,10 +30,10 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         AbsDecl::Sign(sign_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
             let syntax_info = sign_abs.to_info();
-            let (sign_fake, tcs) = tcs.check_type(&sign_abs)?;
-            let (val, mut tcs) = tcs.compile(sign_abs, Some(sign_fake.ast));
+            let (sign_fake, mut tcs) = tcs.check_type(&sign_abs)?;
+            let sign = sign_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
             tcs.env.push(Val::axiom().into_info(syntax_info));
-            tcs.gamma.push(val);
+            tcs.gamma.push(sign);
 
             debug_assert!(tcs.local_env.is_empty());
             debug_assert!(tcs.local_gamma.is_empty());
@@ -42,8 +42,8 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         }
         AbsDecl::Impl(impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let (inferred, tcs) = tcs.infer(&impl_abs)?;
-            let (compiled, mut tcs) = tcs.compile(impl_abs, None);
+            let (inferred, mut tcs) = tcs.infer(&impl_abs)?;
+            let compiled = sign_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
             tcs.env.push(compiled);
             tcs.gamma.push(inferred);
 
