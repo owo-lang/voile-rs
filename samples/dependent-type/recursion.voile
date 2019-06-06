@@ -1,0 +1,8 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-06-06
+// recursion
+// Author: ice10
+//
+
+val recursion : (A : Type) -> A;
+let recursion = \A. recursion A;

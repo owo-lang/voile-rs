@@ -79,15 +79,19 @@ impl Val {
         }
     }
 
-    pub fn attach_dbi(self, dbi: DBI) -> Self {
+    pub(crate) fn attach_dbi(self, dbi: DBI) -> Self {
         self.map_neutral(|neut: Neutral| {
-            neut.map_axiom(|a| {
+            Val::Neut(neut.map_axiom(|a| {
                 Neutral::Axi(match a {
                     Axiom::Postulated(uid) => Axiom::Generated(uid, dbi),
-                    Axiom::Generated(..) => a,
+                    Axiom::Generated(uid, dbi) => Axiom::Generated(uid, dbi),
                 })
-            })
+            }))
         })
+    }
+
+    pub fn axiom_to_var(self) -> Self {
+        self.map_neutral(|neut| Val::Neut(neut.axiom_to_var()))
     }
 }
 
@@ -112,8 +116,7 @@ impl RedEx for Val {
                     .collect(),
             ),
             Val::Cons(name, a) => Self::cons(name, a.reduce_with_dbi(arg, dbi)),
-            // Cannot reduce
-            e => e,
+            Val::Type(n) => Val::Type(n),
         }
     }
 }
@@ -163,6 +166,8 @@ impl LiftEx for TVal {
 pub enum Neutral {
     /// Local variable, referred by de-bruijn index.
     Var(DBI),
+    /// Global variable, referred by index. Needed for recursive definitions.
+    Ref(DBI),
     /// Lifting self to a higher/lower level.
     Lift(Level, Box<Self>),
     /// Postulated value, aka axioms.
@@ -207,11 +212,12 @@ impl Neutral {
             Neutral::Axi(a) => f(a),
             Neutral::App(fun, a) => Neutral::App(
                 Box::new(fun.map_axiom(f)),
-                Box::new(a.map_neutral(|n| n.map_axiom(f))),
+                Box::new(a.map_neutral(|n| Val::Neut(n.map_axiom(f)))),
             ),
             Neutral::Fst(p) => Neutral::Fst(Box::new(p.map_axiom(f))),
             Neutral::Snd(p) => Neutral::Snd(Box::new(p.map_axiom(f))),
             Neutral::Var(n) => Neutral::Var(n),
+            Neutral::Ref(n) => Neutral::Ref(n),
             Neutral::Lift(levels, expr) => Neutral::Lift(levels, Box::new(expr.map_axiom(f))),
         }
     }
@@ -223,6 +229,7 @@ impl RedEx for Neutral {
         match self {
             Var(n) if dbi == n => arg.attach_dbi(dbi),
             Var(n) => Val::var(n),
+            Ref(n) => Val::global(n),
             Axi(a) => Val::Neut(Axi(a)),
             App(function, argument) => function
                 .reduce_with_dbi(arg.clone(), dbi)
@@ -254,7 +261,7 @@ impl LiftEx for Neutral {
         match self {
             Lift(n, expr) => expr.level() + *n,
             // Level is zero by default
-            Var(..) | Axi(..) => 0,
+            Var(..) | Axi(..) | Ref(..) => 0,
             Fst(expr) => expr.level(),
             Snd(expr) => expr.level(),
             App(f, a) => max(f.level(), a.level()),
@@ -331,6 +338,10 @@ impl Val {
         Val::Sum(Default::default())
     }
 
+    pub fn global(index: DBI) -> Self {
+        Val::Neut(Neutral::Ref(index))
+    }
+
     pub fn axiom() -> Self {
         Self::postulate(unsafe { next_uid() })
     }
@@ -374,9 +385,9 @@ impl Val {
         }
     }
 
-    pub fn map_neutral<F: Fn(Neutral) -> Neutral + Copy>(self, f: F) -> Self {
+    pub fn map_neutral<F: Fn(Neutral) -> Self + Copy>(self, f: F) -> Self {
         match self {
-            Val::Neut(n) => Val::Neut(f(n)),
+            Val::Neut(n) => f(n),
             Val::Pair(a, b) => Self::pair(a.map_neutral(f), b.map_neutral(f)),
             Val::Sum(v) => Val::Sum(v.into_iter().map(|(k, v)| (k, v.map_neutral(f))).collect()),
             Val::Lam(Closure { body }) => Self::lam(body.map_neutral(f)),

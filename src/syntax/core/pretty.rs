@@ -6,14 +6,17 @@ use super::{Axiom, Closure, Neutral, Val};
 
 impl Display for Neutral {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        use Neutral::*;
         match self {
-            Neutral::Var(dbi) => write!(f, "[{:?}]", dbi),
-            Neutral::Axi(Axiom::Postulated(uid)) => write!(f, "<{:?}>", uid),
-            Neutral::Axi(Axiom::Generated(uid, dbi)) => write!(f, "<{:?} {:?}>", uid, dbi),
-            Neutral::App(fun, a) => write!(f, "({} {})", fun, a),
-            Neutral::Fst(p) => write!(f, "({}.1)", p),
-            Neutral::Snd(p) => write!(f, "({}.2)", p),
-            Neutral::Lift(levels, p) => write!(f, "(^[{:?}] {})", levels, p),
+            Var(dbi) => write!(f, "[{:?}]", dbi),
+            // This might be conflict with other syntax.
+            Ref(dbi) => write!(f, "[|{:?}|]", dbi),
+            Axi(Axiom::Postulated(uid)) => write!(f, "<{:?}>", uid),
+            Axi(Axiom::Generated(uid, dbi)) => write!(f, "<{:?} {:?}>", uid, dbi),
+            App(fun, a) => write!(f, "({} {})", fun, a),
+            Fst(p) => write!(f, "({}.1)", p),
+            Snd(p) => write!(f, "({}.2)", p),
+            Lift(levels, p) => write!(f, "(^[{:?}] {})", levels, p),
         }
     }
 }

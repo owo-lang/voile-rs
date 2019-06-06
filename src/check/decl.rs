@@ -1,26 +1,29 @@
 use crate::syntax::abs::AbsDecl;
-use crate::syntax::common::ToSyntaxInfo;
+use crate::syntax::common::{ToSyntaxInfo, DBI};
 use crate::syntax::core::Val;
 
 use super::monad::{TCM, TCS};
 
 pub fn check_decls(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
-    for decl in decls.into_iter() {
-        tcs = tcs.check_decl(decl)?;
+    for (index, decl) in decls.into_iter().enumerate() {
+        tcs = tcs.check_decl(decl, index)?;
     }
     Ok(tcs)
 }
 
-fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
+fn check_decl(tcs: TCS, decl: AbsDecl, index: DBI) -> TCM {
     match decl {
         AbsDecl::Both(sign_abs, impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let (sign_fake, tcs) = tcs.check_type(&sign_abs)?;
-            let sign = sign_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
+            let (sign_fake, mut tcs) = tcs.check_type(&sign_abs)?;
+            let sign = sign_fake.map_ast(|ast| ast.axiom_to_var());
+            tcs.env.push(Val::global(index).into_info(sign.info));
+            // I didn't find a way to eliminate this clone.
+            tcs.gamma.push(sign.clone());
             let (val_fake, mut tcs) = tcs.check(&impl_abs, &sign.ast)?;
-            let val = val_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
+            let val = val_fake.map_ast(|ast| ast.axiom_to_var());
 
-            tcs.gamma.push(sign);
+            tcs.env.pop().unwrap();
             tcs.env.push(val);
             debug_assert!(tcs.local_env.is_empty());
             debug_assert!(tcs.local_gamma.is_empty());
@@ -31,7 +34,7 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
             let syntax_info = sign_abs.syntax_info();
             let (sign_fake, mut tcs) = tcs.check_type(&sign_abs)?;
-            let sign = sign_fake.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
+            let sign = sign_fake.map_ast(|ast| ast.axiom_to_var());
             tcs.env.push(Val::axiom().into_info(syntax_info));
             tcs.gamma.push(sign);
 
@@ -44,7 +47,7 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
             let (inferred, tcs) = tcs.infer(&impl_abs)?;
             let (compiled, mut tcs) = tcs.evaluate(impl_abs);
-            let compiled = compiled.map_ast(|ast| ast.map_neutral(|neut| neut.axiom_to_var()));
+            let compiled = compiled.map_ast(|ast| ast.axiom_to_var());
             tcs.env.push(compiled);
             tcs.gamma.push(inferred);
 
@@ -62,7 +65,7 @@ impl TCS {
     }
 
     #[inline]
-    pub fn check_decl(self, decl: AbsDecl) -> TCM {
-        check_decl(self, decl)
+    pub fn check_decl(self, decl: AbsDecl, index: DBI) -> TCM {
+        check_decl(self, decl, index)
     }
 }

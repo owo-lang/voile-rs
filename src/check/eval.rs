@@ -3,7 +3,7 @@ use std::collections::btree_map::BTreeMap;
 use crate::check::monad::TCS;
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{Ident, ToSyntaxInfo};
-use crate::syntax::core::{LiftEx, Val, ValInfo};
+use crate::syntax::core::{LiftEx, Neutral, Val, ValInfo};
 
 /// Ensure `abs` is well-typed before invoking this,
 /// otherwise this function may panic or produce ill-typed core term.
@@ -21,7 +21,8 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             // The function should always be compiled to DBI-based terms
             let (f, tcs) = evaluate(tcs, *f);
             let (a, tcs) = evaluate(tcs, *a);
-            let applied = f.ast.apply(a.ast);
+            let (f, tcs) = tcs.expand_global(f.ast);
+            let applied = f.apply(a.ast);
             (applied.into_info(info), tcs)
         }
         Dt(info, kind, _, param_ty, ret_ty) => {
@@ -69,6 +70,14 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
     }
 }
 
+pub fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
+    let val = expr.map_neutral(|neut| match neut {
+        Neutral::Ref(index) => tcs.glob_val(index).ast,
+        neut => Val::Neut(neut),
+    });
+    (val, tcs)
+}
+
 pub fn compile_variant(info: Ident) -> ValInfo {
     let mut variant = BTreeMap::default();
     let mut text = info.text;
@@ -90,5 +99,10 @@ impl TCS {
     #[inline]
     pub fn evaluate(self, abs: Abs) -> (ValInfo, Self) {
         evaluate(self, abs)
+    }
+
+    #[inline]
+    pub fn expand_global(self, expr: Val) -> (Val, TCS) {
+        expand_global(self, expr)
     }
 }

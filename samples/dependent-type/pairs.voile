@@ -6,3 +6,6 @@
 
 val pairs : Type1 * Type2;
 let pairs = Type, Type1;
+
+val dependent_pairs : (a : Type2) * a;
+let dependent_pairs = Type1, Type;
