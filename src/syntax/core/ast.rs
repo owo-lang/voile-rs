@@ -84,7 +84,7 @@ impl Val {
             neut.map_axiom(|a| {
                 Neutral::Axi(match a {
                     Axiom::Postulated(uid) => Axiom::Generated(uid, dbi),
-                    Axiom::Generated(_, _) => a,
+                    Axiom::Generated(..) => a,
                 })
             })
         })
@@ -99,11 +99,8 @@ impl RedEx for Val {
                 b.reduce_with_dbi(arg, dbi),
             ),
             Val::Neut(neutral_value) => neutral_value.reduce_with_dbi(arg, dbi),
-            Val::Lam(Closure { param_type, body }) => Val::lam(
-                param_type.reduce_with_dbi(arg.clone(), dbi),
-                body.reduce_with_dbi(arg, dbi + 1),
-            ),
-            Val::Dt(kind, Closure { param_type, body }) => Val::dependent_type(
+            Val::Lam(Closure { body }) => Val::lam(body.reduce_with_dbi(arg, dbi + 1)),
+            Val::Dt(kind, param_type, Closure { body }) => Val::dependent_type(
                 kind,
                 param_type.reduce_with_dbi(arg.clone(), dbi),
                 body.reduce_with_dbi(arg, dbi + 1),
@@ -126,7 +123,11 @@ impl LiftEx for TVal {
         match self {
             Val::Type(l) => Val::Type(l + levels),
             Val::Lam(closure) => Val::Lam(closure.lift(levels)),
-            Val::Dt(kind, closure) => Val::Dt(kind, closure.lift(levels)),
+            Val::Dt(kind, param_type, closure) => Val::Dt(
+                kind,
+                Box::new(param_type.lift(levels)),
+                closure.lift(levels),
+            ),
             Val::Sum(variants) => Val::Sum(
                 variants
                     .into_iter()
@@ -148,7 +149,7 @@ impl LiftEx for TVal {
                 .map(|v| v.level())
                 .max()
                 .unwrap_or(0),
-            Val::Dt(_, closure) => closure.level(),
+            Val::Dt(_, param_ty, closure) => max(param_ty.level(), closure.level()),
             Val::Lam(closure) => closure.level(),
             Val::Neut(neut) => neut.level(),
             Val::Pair(l, r) => max(l.level(), r.level()),
@@ -196,7 +197,7 @@ impl Axiom {
 impl Neutral {
     pub fn axiom_to_var(self) -> Self {
         self.map_axiom(|a| match a {
-            Axiom::Postulated(_) => Neutral::Axi(a),
+            Axiom::Postulated(..) => Neutral::Axi(a),
             Axiom::Generated(_, dbi) => Neutral::Var(dbi),
         })
     }
@@ -253,8 +254,7 @@ impl LiftEx for Neutral {
         match self {
             Lift(n, expr) => expr.level() + *n,
             // Level is zero by default
-            Var(_) => 0,
-            Axi(_) => 0,
+            Var(..) | Axi(..) => 0,
             Fst(expr) => expr.level(),
             Snd(expr) => expr.level(),
             App(f, a) => max(f.level(), a.level()),
@@ -273,8 +273,8 @@ pub enum Val {
     /// Closure with parameter typed.
     /// For untyped closures, it can be represented as `Neut` directly.
     Lam(Closure),
-    /// Pi-like types (dependent types).
-    Dt(DtKind, Closure),
+    /// Pi-like types (dependent types), with parameter explicitly typed.
+    Dt(DtKind, Box<Self>, Closure),
     /// Sum type literal.
     Sum(Variants),
     /// Constructor invocation.
@@ -287,14 +287,9 @@ pub enum Val {
 impl Val {
     pub fn is_type(&self) -> bool {
         match self {
-            Val::Type(_) => true,
-            Val::Lam(_) => false,
-            Val::Dt(_, _) => true,
-            Val::Cons(_, _) => false,
-            Val::Sum(_) => true,
-            Val::Pair(_, _) => false,
+            Val::Type(..) | Val::Dt(..) | Val::Sum(..) => true,
             // In case it's neutral, we use `is_universe` on its type.
-            Val::Neut(_) => false,
+            Val::Lam(..) | Val::Cons(..) | Val::Pair(..) | Val::Neut(..) => false,
         }
     }
 
@@ -328,8 +323,8 @@ impl Val {
         Val::Neut(Neutral::Var(index))
     }
 
-    pub fn lam(arg_type: TVal, body: Self) -> Self {
-        Val::Lam(Closure::new(arg_type, body))
+    pub fn lam(body: Self) -> Self {
+        Val::Lam(Closure::new(body))
     }
 
     pub fn bot() -> TVal {
@@ -361,7 +356,7 @@ impl Val {
     }
 
     pub fn dependent_type(kind: DtKind, param_type: TVal, body: TVal) -> TVal {
-        Val::Dt(kind, Closure::new(param_type, body))
+        Val::Dt(kind, Box::new(param_type), Closure::new(body))
     }
 
     pub fn pi(param_type: TVal, body: TVal) -> TVal {
@@ -384,10 +379,8 @@ impl Val {
             Val::Neut(n) => Val::Neut(f(n)),
             Val::Pair(a, b) => Self::pair(a.map_neutral(f), b.map_neutral(f)),
             Val::Sum(v) => Val::Sum(v.into_iter().map(|(k, v)| (k, v.map_neutral(f))).collect()),
-            Val::Lam(Closure { param_type, body }) => {
-                Self::lam(param_type.map_neutral(f), body.map_neutral(f))
-            }
-            Val::Dt(kind, Closure { param_type, body }) => {
+            Val::Lam(Closure { body }) => Self::lam(body.map_neutral(f)),
+            Val::Dt(kind, param_type, Closure { body }) => {
                 Self::dependent_type(kind, param_type.map_neutral(f), body.map_neutral(f))
             }
             Val::Cons(name, a) => Self::cons(name, a.map_neutral(f)),
@@ -405,14 +398,12 @@ impl Default for Val {
 /// A closure with parameter type explicitly specified.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Closure {
-    pub param_type: Box<TVal>,
     pub body: Box<Val>,
 }
 
 impl Closure {
-    pub fn new(param_type: TVal, body: Val) -> Self {
+    pub fn new(body: Val) -> Self {
         Self {
-            param_type: Box::new(param_type),
             body: Box::new(body),
         }
     }
@@ -428,12 +419,10 @@ impl Closure {
 
 impl LiftEx for Closure {
     fn lift(self, levels: Level) -> Self {
-        Self::new(self.param_type.lift(levels), self.body.lift(levels))
+        Self::new(self.body.lift(levels))
     }
 
     fn level(&self) -> Level {
-        let param_level = self.param_type.level();
-        let body_level = self.body.level();
-        max(param_level, body_level)
+        self.body.level()
     }
 }

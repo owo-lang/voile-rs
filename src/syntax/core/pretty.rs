@@ -20,7 +20,7 @@ impl Display for Neutral {
 
 impl Display for Closure {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        write!(f, "{} -> {}", self.param_type, self.body)
+        self.body.fmt(f)
     }
 }
 
@@ -28,7 +28,7 @@ impl Display for Val {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             Val::Type(l) => write!(f, "set{:?}", l),
-            Val::Lam(clos) => write!(f, "({} . {})", clos.param_type, clos.body),
+            Val::Lam(clos) => write!(f, "(\\ {})", clos),
             Val::Sum(variants) => {
                 let mut started = false;
                 for (name, param) in variants {
@@ -44,8 +44,8 @@ impl Display for Val {
                 }
                 Ok(())
             }
-            Val::Dt(Pi, clos) => write!(f, "({} -> {})", clos.param_type, clos.body),
-            Val::Dt(Sigma, clos) => write!(f, "({} * {})", clos.param_type, clos.body),
+            Val::Dt(Pi, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
+            Val::Dt(Sigma, param_ty, clos) => write!(f, "({} * {})", param_ty, clos),
             Val::Pair(fst, snd) => write!(f, "({}, {})", fst, snd),
             Val::Neut(neut) => neut.fmt(f),
             Val::Cons(name, a) => write!(f, "(@{} {})", name, a),

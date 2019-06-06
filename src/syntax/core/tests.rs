@@ -26,7 +26,7 @@ fn many_to_val(block: &[Lisp], lisp: &Lisp) -> Val {
         [Sym("type"), arg] => Val::Type(arg.as_dbi().unwrap() as _),
         [Sym("app"), fst, snd] => lisp_to_val(fst).apply(lisp_to_val(snd)),
         [Sym("pair"), fst, snd] => Val::pair(lisp_to_val(fst), lisp_to_val(snd)),
-        [Sym("lam"), fst, snd] => Val::lam(lisp_to_val(fst), lisp_to_val(snd)),
+        [Sym("lam"), snd] => Val::lam(lisp_to_val(snd)),
         _ => panic!("Bad block: `{}`.", lisp),
     }
 }
@@ -45,7 +45,7 @@ fn test_parsing() {
     let _ = from_str("(pair 114 514)");
     let _ = from_str("(fst 1919810)");
     let _ = from_str("(lift 1919810)");
-    let _ = from_str("(lam () 0)");
+    let _ = from_str("(lam 0)");
 }
 
 #[test]
@@ -67,8 +67,8 @@ fn test_pair_reduction() {
 #[test]
 fn test_app_reduction() {
     assert_eq!(&format!("{}", from_str("(app 114 514)")), "([114] [514])");
-    assert_eq!(from_str("(app (lam () 0) 514)"), from_str("514"));
-    assert_eq!(from_str("(app (lam () 1) 514)"), from_str("1"));
+    assert_eq!(from_str("(app (lam 0) 514)"), from_str("514"));
+    assert_eq!(from_str("(app (lam 1) 514)"), from_str("1"));
 }
 
 /**
@@ -76,16 +76,13 @@ fn test_app_reduction() {
  */
 #[test]
 fn test_issue_47() {
+    assert_eq!(from_str("(app (lam (lam 0)) 114514)"), from_str("(lam 0)"));
     assert_eq!(
-        from_str("(app (lam () (lam () 0)) 114514)"),
-        from_str("(lam () 0)")
+        from_str("(app (lam (lam 1)) 114514)"),
+        from_str("(lam 114514)")
     );
     assert_eq!(
-        from_str("(app (lam () (lam () 1)) 114514)"),
-        from_str("(lam () 114514)")
-    );
-    assert_eq!(
-        from_str("(app (lam (lam (lam () 1) 1) 1) 514)"),
+        from_str("(app (lam (lam (lam 1) 1) 1) 514)"),
         from_str("(app (lam 514 1) 514)")
     );
 }

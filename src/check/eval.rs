@@ -15,8 +15,8 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
         Local(info, _, i) => (tcs.local_val(i).ast.attach_dbi(i).into_info(info.info), tcs),
         Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info.info), tcs),
         // Because I don't know what else can I output.
-        Variant(info) => (compile_variant(info, Val::axiom()), tcs),
-        Cons(info) => (compile_cons(info, Val::axiom()), tcs),
+        Variant(info) => (compile_variant(info), tcs),
+        Cons(info) => (compile_cons(info), tcs),
         App(info, f, a) => {
             // The function should always be compiled to DBI-based terms
             let (f, tcs) = evaluate(tcs, *f);
@@ -69,18 +69,18 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
     }
 }
 
-pub fn compile_variant(info: Ident, ret_ty: Val) -> ValInfo {
+pub fn compile_variant(info: Ident) -> ValInfo {
     let mut variant = BTreeMap::default();
     let mut text = info.text;
     text.remove(0);
     variant.insert(text, Val::var(0));
-    Val::lam(ret_ty, Val::Sum(variant)).into_info(info.info)
+    Val::lam(Val::Sum(variant)).into_info(info.info)
 }
 
-pub fn compile_cons(info: Ident, ret_ty: Val) -> ValInfo {
+pub fn compile_cons(info: Ident) -> ValInfo {
     let mut text = info.text;
     text.remove(0);
-    Val::lam(ret_ty, Val::cons(text, Val::var(0))).into_info(info.info)
+    Val::lam(Val::cons(text, Val::var(0))).into_info(info.info)
 }
 
 /// So you can do some functional programming based on method call chains.

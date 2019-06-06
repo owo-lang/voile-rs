@@ -4,7 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::syntax::abs::Abs;
 use crate::syntax::common::DtKind::*;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
-use crate::syntax::core::{Closure, LiftEx, Val};
+use crate::syntax::core::{Closure, LiftEx, TVal, Val};
 
 use super::eval::{compile_cons, compile_variant};
 use super::monad::{ValTCM, TCE, TCM, TCS};
@@ -76,14 +76,12 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 Err(TCE::LevelMismatch(expr.syntax_info(), lower + 1, *upper))
             }
         }
-        (Pair(info, fst, snd), Val::Dt(Sigma, closure)) => {
-            let (fst_term, mut tcs) = tcs
-                .check(&**fst, &*closure.param_type)
-                .map_err(|e| e.wrap(*info))?;
+        (Pair(info, fst, snd), Val::Dt(Sigma, param_ty, closure)) => {
+            let (fst_term, mut tcs) = tcs.check(&**fst, &**param_ty).map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();
-            let snd_ty = closure.instantiate_cloned(fst_term_ast.clone());
+            let snd_ty = closure.clone().instantiate(fst_term_ast.clone());
             // This `fst_term.syntax_info()` is probably wrong, but I'm not sure how to fix
-            let param_type = closure.param_type.clone().into_info(fst_term.syntax_info());
+            let param_type = param_ty.clone().into_info(fst_term.syntax_info());
             tcs.local_gamma.push(param_type);
             tcs.local_env.push(fst_term);
             let (snd_term, mut tcs) = tcs.check(&**snd, &snd_ty).map_err(|e| e.wrap(*info))?;
@@ -91,28 +89,28 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let pair = Val::pair(fst_term_ast, snd_term.ast).into_info(*info);
             Ok((pair, tcs))
         }
-        (Lam(full_info, param_info, uid, body), Val::Dt(Pi, ret_ty)) => {
-            let param_type = ret_ty.param_type.clone().into_info(param_info.info);
-            tcs.local_gamma.push(param_type.clone());
+        (Lam(full_info, param_info, uid, body), Val::Dt(Pi, param_ty, ret_ty)) => {
+            let param_type = param_ty.clone().into_info(param_info.info);
+            tcs.local_gamma.push(param_type);
             let mocked = Val::postulate(*uid);
             let mocked_term = mocked.clone().into_info(param_info.info);
             tcs.local_env.push(mocked_term);
-            let ret_ty_body = ret_ty.instantiate_cloned(mocked);
+            let ret_ty_body = ret_ty.clone().instantiate(mocked);
             let (lam_term, mut tcs) = tcs
                 .check(body, &ret_ty_body)
                 .map_err(|e| e.wrap(*full_info))?;
             tcs.pop_local();
-            let lam = Val::lam(param_type.ast, lam_term.ast);
+            let lam = Val::lam(lam_term.ast);
             Ok((lam.into_info(*full_info), tcs))
         }
-        (Variant(info), Val::Dt(Pi, ret_ty)) => {
-            check_variant_or_cons(&info.info, ret_ty).map_err(|e| e.wrap(info.info))?;
-            let variant = compile_variant(info.clone(), *ret_ty.param_type.clone());
+        (Variant(info), Val::Dt(Pi, param_ty, ret_ty)) => {
+            check_variant_or_cons(&info.info, param_ty, ret_ty).map_err(|e| e.wrap(info.info))?;
+            let variant = compile_variant(info.clone());
             Ok((variant, tcs))
         }
-        (Cons(info), Val::Dt(Pi, ret_ty)) => {
-            check_variant_or_cons(&info.info, ret_ty).map_err(|e| e.wrap(info.info))?;
-            let cons = compile_cons(info.clone(), *ret_ty.param_type.clone());
+        (Cons(info), Val::Dt(Pi, param_ty, ret_ty)) => {
+            check_variant_or_cons(&info.info, param_ty, ret_ty).map_err(|e| e.wrap(info.info))?;
+            let cons = compile_cons(info.clone());
             Ok((cons, tcs))
         }
         (Bot(info), Val::Type(_)) => Ok((Val::bot().into_info(*info), tcs)),
@@ -150,11 +148,12 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     }
 }
 
-fn check_variant_or_cons(info: &SyntaxInfo, ret_ty: &Closure) -> TCM<()> {
-    if !ret_ty.param_type.is_type() {
-        Err(TCE::NotTypeVal(*info, *ret_ty.param_type.clone()))
+fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -> TCM<()> {
+    if !param_ty.is_type() {
+        Err(TCE::NotTypeVal(*info, param_ty.clone()))
     } else if !ret_ty.body.is_universe() {
-        Err(TCE::NotUniverseVal(*info, *ret_ty.body.clone()))
+        let ret_ty = ret_ty.clone().instantiate(Default::default());
+        Err(TCE::NotUniverseVal(*info, ret_ty))
     } else {
         Ok(())
     }
@@ -284,14 +283,14 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
         Fst(_, pair) => {
             let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
-                Val::Dt(Sigma, closure) => Ok((closure.param_type.into_info(info), tcs)),
+                Val::Dt(Sigma, param_type, _) => Ok((param_type.into_info(info), tcs)),
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
         Snd(_, pair) => {
             let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
-                Val::Dt(Sigma, closure) => {
+                Val::Dt(Sigma, _, closure) => {
                     // Since we can infer the type of `pair`, it has to be well-typed
                     let (pair_compiled, tcs) = tcs.evaluate(*pair.clone());
                     let fst = pair_compiled.ast.first();
@@ -337,10 +336,9 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
             f => {
                 let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap(info))?;
                 match f_ty.ast {
-                    Val::Dt(Pi, closure) => {
-                        let (new_a, tcs) = tcs
-                            .check(&**a, &closure.param_type)
-                            .map_err(|e| e.wrap(info))?;
+                    Val::Dt(Pi, param_type, closure) => {
+                        let (new_a, tcs) =
+                            tcs.check(&**a, &*param_type).map_err(|e| e.wrap(info))?;
                         Ok((closure.instantiate(new_a.ast).into_info(info), tcs))
                     }
                     other => Err(TCE::NotPi(info, other)),
