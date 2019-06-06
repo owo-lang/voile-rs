@@ -1,0 +1,8 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-06-06
+// pairs
+// Author: ice10
+//
+
+val pairs : Type1 * Type2;
+let pairs = Type, Type1;

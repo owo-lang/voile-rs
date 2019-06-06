@@ -26,6 +26,7 @@ sums and records.
 + [Doc.rs][doc-rs] documentation (a tutorial is included)
 + [Change Log](CHANGELOG.md)
 + [IntelliJ Plugin][plugin]
++ [Code examples](samples)
 
 ## Install
 
