@@ -9,8 +9,8 @@ impl Display for Abs {
         match self {
             Abs::Type(_, level) => write!(f, "set{:?}", level),
             Abs::Bot(_) => write!(f, "Bot"),
-            Abs::Local(info, name, dbi) => write!(f, "{}[{:?},{:?}]", info.text, name, dbi),
-            Abs::Var(_, dbi) => write!(f, "<{:?}>", dbi),
+            Abs::Var(info, name, dbi) => write!(f, "{}[{:?},{:?}]", info.text, name, dbi),
+            Abs::Ref(_, dbi) => write!(f, "<{:?}>", dbi),
             Abs::Meta(info) => write!(f, "?{}", info.text),
             Abs::Cons(name) => write!(f, "@{}", name.text),
             Abs::Lift(_, levels, expr) => write!(f, "(^[{:?}] {})", levels, expr),

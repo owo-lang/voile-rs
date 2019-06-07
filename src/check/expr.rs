@@ -200,7 +200,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
     let info = expr.syntax_info();
     match expr {
         Type(_, level) => Ok((Val::Type(*level).into_info(info), tcs)),
-        Local(_, uid, dbi) if tcs.local_is_type(*dbi) => {
+        Var(_, uid, dbi) if tcs.local_is_type(*dbi) => {
             Ok((Val::generate(*uid, *dbi).into_info(info), tcs))
         }
         Lift(_, levels, expr) => {
@@ -264,7 +264,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
     let info = value.syntax_info();
     match value {
         Type(_, level) => Ok((Val::Type(level + 1).into_info(info), tcs)),
-        Local(_, _, dbi) => {
+        Var(_, _, dbi) => {
             let local = tcs.local_type(*dbi).ast.clone().attach_dbi(*dbi);
             Ok((local.into_info(info), tcs))
         }
@@ -272,7 +272,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
             let (expr, tcs) = tcs.infer(&**expr).map_err(|e| e.wrap(info))?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
-        Var(_, dbi) => Ok((tcs.glob_type(*dbi).ast.clone().into_info(info), tcs)),
+        Ref(_, dbi) => Ok((tcs.glob_type(*dbi).ast.clone().into_info(info), tcs)),
         Pair(_, fst, snd) => {
             let (fst_ty, tcs) = tcs.infer(&**fst).map_err(|e| e.wrap(info))?;
             let (snd_ty, tcs) = tcs.infer(&**snd).map_err(|e| e.wrap(info))?;

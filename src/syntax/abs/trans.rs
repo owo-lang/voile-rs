@@ -76,9 +76,9 @@ fn trans_expr_inner(
             let name = &ident.text;
             if local_map.contains_key(name) {
                 let dbi = local_map[name];
-                Ok(Abs::Local(ident.clone(), local_env[dbi], dbi))
+                Ok(Abs::Var(ident.clone(), local_env[dbi], dbi))
             } else if global_map.contains_key(name) {
-                Ok(Abs::Var(ident.clone(), global_map[name]))
+                Ok(Abs::Ref(ident.clone(), global_map[name]))
             } else {
                 Err(TCE::LookUpFailed(ident.clone()))
             }

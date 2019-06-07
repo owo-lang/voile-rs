@@ -6,9 +6,9 @@ pub enum Abs {
     /// Bottom type
     Bot(SyntaxInfo),
     /// Local variable
-    Local(Ident, UID, DBI),
+    Var(Ident, UID, DBI),
     /// Global variable
-    Var(Ident, DBI),
+    Ref(Ident, DBI),
     /// Meta variable
     Meta(Ident),
     /// Lift an expression many times
@@ -43,8 +43,8 @@ impl ToSyntaxInfo for Abs {
             | Abs::Sum(info, _)
             | Abs::Lift(info, _, _)
             | Abs::Lam(info, _, _, _) => *info,
-            Abs::Local(ident, _, _)
-            | Abs::Var(ident, _)
+            Abs::Var(ident, _, _)
+            | Abs::Ref(ident, _)
             | Abs::Meta(ident)
             | Abs::Cons(ident)
             | Abs::Variant(ident) => ident.info,

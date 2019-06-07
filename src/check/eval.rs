@@ -12,11 +12,11 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
     match abs {
         Type(info, level) => (Val::Type(level).into_info(info), tcs),
         Bot(info) => (Val::bot().into_info(info), tcs),
-        Local(ident, _, i) => {
+        Var(ident, _, i) => {
             let resolved = tcs.local_val(i).ast.clone().attach_dbi(i);
             (resolved.into_info(ident.info), tcs)
         }
-        Var(ident, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(ident.info), tcs),
+        Ref(ident, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(ident.info), tcs),
         // Because I don't know what else can I output.
         Variant(info) => (compile_variant(info), tcs),
         Cons(info) => (compile_cons(info), tcs),

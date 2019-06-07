@@ -80,7 +80,7 @@ fn must_be_lam(abs: Abs) -> Abs {
 
 fn must_be_local(abs: Abs) -> DBI {
     match abs {
-        Abs::Local(_, _, dbi) => dbi,
+        Abs::Var(_, _, dbi) => dbi,
         e => panic!("`{:?}` is not an `Abs::Local(_, _, _)`.", e),
     }
 }
@@ -183,7 +183,7 @@ fn trans_lam_global() {
     println!("{}", lam_abs);
     match lam_abs {
         Abs::Lam(_, _, _, global_b) => match *global_b {
-            Abs::Var(_, b_index) => assert_eq!(b_index, 0),
+            Abs::Ref(_, b_index) => assert_eq!(b_index, 0),
             _ => panic!(),
         },
         _ => panic!(),
