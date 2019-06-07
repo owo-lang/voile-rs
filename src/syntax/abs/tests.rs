@@ -13,7 +13,7 @@ fn trans_bot() {
     )
     .unwrap();
     let mut ctx = trans_decls(surf).unwrap();
-    assert_eq!(1, ctx.len());
+    assert_eq!(2, ctx.len());
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
@@ -35,7 +35,7 @@ fn many_decls() {
     )
     .unwrap();
     let mut ctx = trans_decls(surf).unwrap();
-    assert_eq!(2, ctx.len());
+    assert_eq!(4, ctx.len());
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
@@ -45,6 +45,7 @@ fn many_decls() {
         }
         _ => panic!(),
     };
+    ctx.pop().unwrap();
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
@@ -54,6 +55,7 @@ fn many_decls() {
         }
         _ => panic!(),
     };
+    ctx.pop().unwrap();
     assert!(ctx.is_empty());
 }
 
