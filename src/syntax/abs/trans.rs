@@ -38,7 +38,7 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         // Re-defining something, should give error
         (_, Some(AbsDecl::Impl(..))) | (_, Some(AbsDecl::Decl(..))) => unimplemented!(),
         (DeclKind::Impl, None) => AbsDecl::Decl(abs),
-        (DeclKind::Impl, Some(AbsDecl::Sign(sign_abs))) => AbsDecl::Impl(abs, dbi),
+        (DeclKind::Impl, Some(AbsDecl::Sign(_))) => AbsDecl::Impl(abs, dbi),
     };
     result.push(modified);
     Ok((result, name_map))
