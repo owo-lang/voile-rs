@@ -6,3 +6,11 @@
 
 val recursion : (A : Type) -> A;
 let recursion = \A. recursion A;
+
+val mut_rec_a : (A : Type) -> A;
+val mut_rec_b : (A : Type) -> A;
+// This will be compiled as `(\ ([|2|] [0]))` because why not
+let mut_rec_a = \A . mut_rec_b A;
+// This will be compiled as `(\ ([|2|] [0]))`
+// because [|1|] is reduced to [|2|]
+let mut_rec_b = \A . mut_rec_a A;

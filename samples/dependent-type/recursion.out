@@ -1,4 +1,8 @@
 Parse successful.
 sign: (set0 -> [0])
 body: (\ ([|0|] [0]))
+sign: (set0 -> [0])
+body: (\ ([|2|] [0]))
+sign: (set0 -> [0])
+body: (\ ([|2|] [0]))
 Checkmate, dram!

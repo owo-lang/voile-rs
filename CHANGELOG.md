@@ -7,6 +7,9 @@
 + Code cleanup, remove `compile` and `Name` (#84)
 + Introduce level lifting operation and level checking (#77)
 + Remove lambda parameter (#89)
++ Rename `Abs::Var` and `Abs::Local` to `Abs::Ref` and `Abs::Var`
+  respectively to fit `Val`'s naming convention
++ Redesigned global references (#96)
 
 # 0.0.8
 
