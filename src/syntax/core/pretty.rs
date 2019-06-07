@@ -42,7 +42,7 @@ impl Display for Val {
                     }
                     write!(f, "'{} {}", name, param)?;
                 }
-                if variants.is_empty() {
+                if !started {
                     f.write_str("!")?;
                 }
                 Ok(())

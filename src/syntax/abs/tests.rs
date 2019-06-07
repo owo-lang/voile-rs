@@ -17,8 +17,8 @@ fn trans_bot() {
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
-        AbsDecl::Both(ty_abs, abs) => {
-            println!("val {};", ty_abs);
+        AbsDecl::Impl(abs, ty_dbi) => {
+            println!("val {};", ty_dbi);
             println!("let {};", abs);
         }
         _ => panic!(),
@@ -39,8 +39,8 @@ fn many_decls() {
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
-        AbsDecl::Both(ty_abs, abs) => {
-            println!("val {};", ty_abs);
+        AbsDecl::Impl(abs, ty_dbi) => {
+            println!("val {};", ty_dbi);
             println!("let {};", abs);
         }
         _ => panic!(),
@@ -48,8 +48,8 @@ fn many_decls() {
     let decl = ctx.pop().unwrap();
     println!("{:?}", decl);
     match decl {
-        AbsDecl::Both(ty_abs, abs) => {
-            println!("val {};", ty_abs);
+        AbsDecl::Impl(abs, ty_dbi) => {
+            println!("val {};", ty_dbi);
             println!("let {};", abs);
         }
         _ => panic!(),
@@ -173,7 +173,7 @@ fn trans_lam_global() {
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let lam_abs = trans_expr(
         &lam_expr,
-        &[AbsDecl::Impl(Abs::Meta(Ident {
+        &[AbsDecl::Decl(Abs::Meta(Ident {
             text: "".to_owned(),
             info: Default::default(),
         }))],

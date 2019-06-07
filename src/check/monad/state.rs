@@ -21,16 +21,16 @@ impl TCS {
         self.local_gamma[self.local_gamma.len() - dbi - 1].clone()
     }
 
-    pub fn glob_type(&self, dbi: DBI) -> ValInfo {
-        self.gamma[dbi].clone()
+    pub fn glob_type(&self, dbi: DBI) -> &ValInfo {
+        &self.gamma[dbi]
     }
 
     pub fn local_val(&self, dbi: DBI) -> ValInfo {
         self.local_env[self.local_env.len() - dbi - 1].clone()
     }
 
-    pub fn glob_val(&self, dbi: DBI) -> ValInfo {
-        self.env[dbi].clone()
+    pub fn glob_val(&self, dbi: DBI) -> &ValInfo {
+        &self.env[dbi]
     }
 
     pub fn local_is_type(&self, dbi: DBI) -> bool {

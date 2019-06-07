@@ -84,7 +84,7 @@ impl Val {
             Val::Neut(neut.map_axiom(|a| {
                 Neutral::Axi(match a {
                     Axiom::Postulated(uid) => Axiom::Generated(uid, dbi),
-                    Axiom::Generated(uid, dbi) => Axiom::Generated(uid, dbi),
+                    e => e,
                 })
             }))
         })
@@ -185,51 +185,55 @@ pub enum Neutral {
 /// Otherwise it should be a generated lambda parameter.
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum Axiom {
-    /// Unimplemented functions.
+    /// Functions without implementation.
     Postulated(UID),
     /// Lambda parameters.
+    /// (usually will be replaced with `Val::var` after the expression is type-checked).
     Generated(UID, DBI),
 }
 
 impl Axiom {
     pub fn unique_id(&self) -> UID {
+        use Axiom::*;
         match self {
-            Axiom::Postulated(uid) | Axiom::Generated(uid, _) => *uid,
+            Postulated(uid) | Generated(uid, ..) => *uid,
         }
     }
 }
 
 impl Neutral {
     pub fn axiom_to_var(self) -> Self {
+        use {Axiom::*, Neutral::*};
         self.map_axiom(|a| match a {
-            Axiom::Postulated(..) => Neutral::Axi(a),
-            Axiom::Generated(_, dbi) => Neutral::Var(dbi),
+            Postulated(..) => Axi(a),
+            Generated(_, dbi) => Var(dbi),
         })
     }
 
     pub fn map_axiom<F: Fn(Axiom) -> Self + Copy>(self, f: F) -> Self {
+        use Neutral::*;
         match self {
-            Neutral::Axi(a) => f(a),
-            Neutral::App(fun, a) => Neutral::App(
+            Axi(a) => f(a),
+            App(fun, a) => App(
                 Box::new(fun.map_axiom(f)),
                 Box::new(a.map_neutral(|n| Val::Neut(n.map_axiom(f)))),
             ),
-            Neutral::Fst(p) => Neutral::Fst(Box::new(p.map_axiom(f))),
-            Neutral::Snd(p) => Neutral::Snd(Box::new(p.map_axiom(f))),
-            Neutral::Var(n) => Neutral::Var(n),
-            Neutral::Ref(n) => Neutral::Ref(n),
-            Neutral::Lift(levels, expr) => Neutral::Lift(levels, Box::new(expr.map_axiom(f))),
+            Fst(p) => Fst(Box::new(p.map_axiom(f))),
+            Snd(p) => Snd(Box::new(p.map_axiom(f))),
+            Var(n) => Var(n),
+            Ref(n) => Ref(n),
+            Lift(levels, expr) => Lift(levels, Box::new(expr.map_axiom(f))),
         }
     }
 }
 
 impl RedEx for Neutral {
     fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val {
-        use self::Neutral::*;
+        use Neutral::*;
         match self {
             Var(n) if dbi == n => arg.attach_dbi(dbi),
             Var(n) => Val::var(n),
-            Ref(n) => Val::global(n),
+            Ref(n) => Val::glob(n),
             Axi(a) => Val::Neut(Axi(a)),
             App(function, argument) => function
                 .reduce_with_dbi(arg.clone(), dbi)
@@ -293,10 +297,11 @@ pub enum Val {
 
 impl Val {
     pub fn is_type(&self) -> bool {
+        use Val::*;
         match self {
-            Val::Type(..) | Val::Dt(..) | Val::Sum(..) => true,
+            Type(..) | Dt(..) | Sum(..) => true,
             // In case it's neutral, we use `is_universe` on its type.
-            Val::Lam(..) | Val::Cons(..) | Val::Pair(..) | Val::Neut(..) => false,
+            Lam(..) | Cons(..) | Pair(..) | Neut(..) => false,
         }
     }
 
@@ -338,7 +343,7 @@ impl Val {
         Val::Sum(Default::default())
     }
 
-    pub fn global(index: DBI) -> Self {
+    pub fn glob(index: DBI) -> Self {
         Val::Neut(Neutral::Ref(index))
     }
 

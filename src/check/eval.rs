@@ -13,7 +13,7 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
         Type(info, level) => (Val::Type(level).into_info(info), tcs),
         Bot(info) => (Val::bot().into_info(info), tcs),
         Local(info, _, i) => (tcs.local_val(i).ast.attach_dbi(i).into_info(info.info), tcs),
-        Var(info, dbi) => (tcs.glob_val(dbi).ast.into_info(info.info), tcs),
+        Var(info, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(info.info), tcs),
         // Because I don't know what else can I output.
         Variant(info) => (compile_variant(info), tcs),
         Cons(info) => (compile_cons(info), tcs),
@@ -72,7 +72,7 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
 
 pub fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
     let val = expr.map_neutral(|neut| match neut {
-        Neutral::Ref(index) => tcs.glob_val(index).ast,
+        Neutral::Ref(index) => tcs.glob_val(index).ast.clone(),
         neut => Val::Neut(neut),
     });
     (val, tcs)

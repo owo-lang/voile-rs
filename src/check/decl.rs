@@ -11,22 +11,22 @@ pub fn check_decls(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
     Ok(tcs)
 }
 
+fn require_local_emptiness(tcs: &TCS) {
+    debug_assert!(tcs.local_env.is_empty());
+    debug_assert!(tcs.local_gamma.is_empty());
+}
+
 fn check_decl(tcs: TCS, decl: AbsDecl, index: DBI) -> TCM {
     match decl {
-        AbsDecl::Both(sign_abs, impl_abs) => {
+        AbsDecl::Impl(impl_abs, sign_dbi) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let (sign_fake, mut tcs) = tcs.check_type(&sign_abs)?;
-            let sign = sign_fake.map_ast(|ast| ast.axiom_to_var());
-            tcs.env.push(Val::global(index).into_info(sign.info));
-            // I didn't find a way to eliminate this clone.
-            tcs.gamma.push(sign.clone());
-            let (val_fake, mut tcs) = tcs.check(&impl_abs, &sign.ast)?;
+            let sign = tcs.glob_val(sign_dbi);
+            let sign_cloned = sign.ast.clone();
+            let (val_fake, mut tcs) = tcs.check(&impl_abs, &sign_cloned)?;
             let val = val_fake.map_ast(|ast| ast.axiom_to_var());
 
-            tcs.env.pop().unwrap();
-            tcs.env.push(val);
-            debug_assert!(tcs.local_env.is_empty());
-            debug_assert!(tcs.local_gamma.is_empty());
+            tcs.env[sign_dbi] = val;
+            require_local_emptiness(&tcs);
             // Err(TCE::DbiOverflow(tcs.env.len(), new_dbi))
             Ok(tcs)
         }
@@ -38,12 +38,11 @@ fn check_decl(tcs: TCS, decl: AbsDecl, index: DBI) -> TCM {
             tcs.env.push(Val::axiom().into_info(syntax_info));
             tcs.gamma.push(sign);
 
-            debug_assert!(tcs.local_env.is_empty());
-            debug_assert!(tcs.local_gamma.is_empty());
+            require_local_emptiness(&tcs);
             // Give warning on axiom?
             Ok(tcs)
         }
-        AbsDecl::Impl(impl_abs) => {
+        AbsDecl::Decl(impl_abs) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
             let (inferred, tcs) = tcs.infer(&impl_abs)?;
             let (compiled, mut tcs) = tcs.evaluate(impl_abs);
@@ -51,8 +50,7 @@ fn check_decl(tcs: TCS, decl: AbsDecl, index: DBI) -> TCM {
             tcs.env.push(compiled);
             tcs.gamma.push(inferred);
 
-            debug_assert!(tcs.local_env.is_empty());
-            debug_assert!(tcs.local_gamma.is_empty());
+            require_local_emptiness(&tcs);
             Ok(tcs)
         }
     }

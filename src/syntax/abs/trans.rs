@@ -27,19 +27,20 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         .entry(name.text.clone())
         .or_insert_with(|| result.len());
     let original = if result.len() > dbi {
-        Some(result.remove(dbi))
+        Some(&result[dbi])
     } else {
         None
     };
     let modified = match (decl.kind, original) {
-        (DeclKind::Sign, None) | (DeclKind::Sign, Some(AbsDecl::Sign(_))) => AbsDecl::Sign(abs),
-        (DeclKind::Impl, None) | (DeclKind::Impl, Some(AbsDecl::Impl(_))) => AbsDecl::Impl(abs),
-        (DeclKind::Sign, Some(AbsDecl::Impl(impl_abs)))
-        | (DeclKind::Sign, Some(AbsDecl::Both(_, impl_abs))) => AbsDecl::Both(abs, impl_abs),
-        (DeclKind::Impl, Some(AbsDecl::Sign(sign_abs)))
-        | (DeclKind::Impl, Some(AbsDecl::Both(sign_abs, _))) => AbsDecl::Both(sign_abs, abs),
+        (DeclKind::Sign, None) => AbsDecl::Sign(abs),
+        // Re-type-signaturing something, should give error
+        (DeclKind::Sign, Some(..)) => AbsDecl::Sign(abs),
+        // Re-defining something, should give error
+        (_, Some(AbsDecl::Impl(..))) | (_, Some(AbsDecl::Decl(..))) => unimplemented!(),
+        (DeclKind::Impl, None) => AbsDecl::Decl(abs),
+        (DeclKind::Impl, Some(AbsDecl::Sign(sign_abs))) => AbsDecl::Impl(abs, dbi),
     };
-    result.insert(dbi, modified);
+    result.push(modified);
     Ok((result, name_map))
 }
 
