@@ -12,15 +12,11 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
     match abs {
         Type(info, level) => (Val::Type(level).into_info(info), tcs),
         Bot(info) => (Val::bot().into_info(info), tcs),
-        Local(info, _, i) => (
-            tcs.local_val(i)
-                .ast
-                .clone()
-                .attach_dbi(i)
-                .into_info(info.info),
-            tcs,
-        ),
-        Var(info, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(info.info), tcs),
+        Local(ident, _, i) => {
+            let resolved = tcs.local_val(i).ast.clone().attach_dbi(i);
+            (resolved.into_info(ident.info), tcs)
+        }
+        Var(ident, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(ident.info), tcs),
         // Because I don't know what else can I output.
         Variant(info) => (compile_variant(info), tcs),
         Cons(info) => (compile_cons(info), tcs),
@@ -58,11 +54,13 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
         }
         Fst(info, p) => {
             let (p, tcs) = evaluate(tcs, *p);
-            (p.ast.first().into_info(info), tcs)
+            let (p, tcs) = tcs.expand_global(p.ast);
+            (p.first().into_info(info), tcs)
         }
         Snd(info, p) => {
             let (p, tcs) = evaluate(tcs, *p);
-            (p.ast.second().into_info(info), tcs)
+            let (p, tcs) = tcs.expand_global(p.ast);
+            (p.second().into_info(info), tcs)
         }
         // This branch is not likely to be reached.
         Lam(info, _, _, body) => {
@@ -71,7 +69,8 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
         }
         Lift(info, levels, expr) => {
             let (expr, tcs) = evaluate(tcs, *expr);
-            (expr.ast.lift(levels).into_info(info), tcs)
+            let (expr, tcs) = tcs.expand_global(expr.ast);
+            (expr.lift(levels).into_info(info), tcs)
         }
         e => panic!("Cannot compile `{}` at {}", e, e.syntax_info()),
     }
