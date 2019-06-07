@@ -11,12 +11,22 @@ impl Display for Neutral {
             Var(dbi) => write!(f, "[{:?}]", dbi),
             // This might be conflict with other syntax.
             Ref(dbi) => write!(f, "[|{:?}|]", dbi),
-            Axi(Axiom::Postulated(uid)) => write!(f, "<{:?}>", uid),
-            Axi(Axiom::Generated(uid, dbi)) => write!(f, "<{:?} {:?}>", uid, dbi),
+            Axi(a) => a.fmt(f),
             App(fun, a) => write!(f, "({} {})", fun, a),
             Fst(p) => write!(f, "({}.1)", p),
             Snd(p) => write!(f, "({}.2)", p),
             Lift(levels, p) => write!(f, "(^[{:?}] {})", levels, p),
+        }
+    }
+}
+
+impl Display for Axiom {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        use Axiom::*;
+        match self {
+            Postulated(uid) => write!(f, "<{:?}>", uid),
+            Generated(uid, dbi) => write!(f, "<{:?} {:?}>", uid, dbi),
+            Unimplemented(uid, dbi) => write!(f, "[|{:?} {:?}|]", uid, dbi),
         }
     }
 }

@@ -23,6 +23,11 @@ pub trait LiftEx: Sized {
     fn level(&self) -> Level;
 }
 
+pub trait AxiomEx: Sized {
+    fn generated_to_var(self) -> Self;
+    fn unimplemented_to_glob(self) -> Self;
+}
+
 impl Val {
     /**
     $$
@@ -89,9 +94,15 @@ impl Val {
             }))
         })
     }
+}
 
-    pub fn axiom_to_var(self) -> Self {
-        self.map_neutral(|neut| Val::Neut(neut.axiom_to_var()))
+impl AxiomEx for Val {
+    fn generated_to_var(self) -> Self {
+        self.map_neutral(|neut| Val::Neut(neut.generated_to_var()))
+    }
+
+    fn unimplemented_to_glob(self) -> Self {
+        self.map_neutral(|neut| Val::Neut(neut.unimplemented_to_glob()))
     }
 }
 
@@ -182,29 +193,24 @@ pub enum Neutral {
 pub enum Axiom {
     /// Functions without implementation.
     Postulated(UID),
-    /// Lambda parameters.
+    /// Lambda parameters during type-checking.
     /// (usually will be replaced with `Val::var` after the expression is type-checked).
     Generated(UID, DBI),
+    /// Usages of definitions when they're not yet implemented.
+    /// (usually will be replaced with `Val::glob` after implemented).
+    Unimplemented(UID, DBI),
 }
 
 impl Axiom {
     pub fn unique_id(&self) -> UID {
         use Axiom::*;
         match self {
-            Postulated(uid) | Generated(uid, ..) => *uid,
+            Postulated(uid) | Generated(uid, ..) | Unimplemented(uid, ..) => *uid,
         }
     }
 }
 
 impl Neutral {
-    pub fn axiom_to_var(self) -> Self {
-        use {Axiom::*, Neutral::*};
-        self.map_axiom(|a| match a {
-            Postulated(..) => Axi(a),
-            Generated(_, dbi) => Var(dbi),
-        })
-    }
-
     pub fn map_axiom<F: Fn(Axiom) -> Self + Copy>(self, f: F) -> Self {
         use Neutral::*;
         match self {
@@ -219,6 +225,24 @@ impl Neutral {
             Ref(n) => Ref(n),
             Lift(levels, expr) => Lift(levels, Box::new(expr.map_axiom(f))),
         }
+    }
+}
+
+impl AxiomEx for Neutral {
+    fn generated_to_var(self) -> Self {
+        use {Axiom::*, Neutral::*};
+        self.map_axiom(|a| match a {
+            Postulated(..) | Unimplemented(..) => Axi(a),
+            Generated(_, dbi) => Var(dbi),
+        })
+    }
+
+    fn unimplemented_to_glob(self) -> Self {
+        use {Axiom::*, Neutral::*};
+        self.map_axiom(|a| match a {
+            Postulated(..) | Generated(..) => Axi(a),
+            Unimplemented(_, dbi) => Ref(dbi),
+        })
     }
 }
 
@@ -352,6 +376,11 @@ impl Val {
 
     pub(crate) fn generate(uid: UID, dbi: DBI) -> Self {
         Val::Neut(Neutral::Axi(Axiom::Generated(uid, dbi)))
+    }
+
+    pub fn unimplemented(dbi: DBI) -> Self {
+        let axiom = Axiom::Unimplemented(unsafe { next_uid() }, dbi);
+        Val::Neut(Neutral::Axi(axiom))
     }
 
     pub fn app(function: Neutral, arg: Self) -> Self {

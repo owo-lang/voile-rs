@@ -1,6 +1,8 @@
+use std::mem::swap;
+
 use crate::syntax::abs::AbsDecl;
-use crate::syntax::common::ToSyntaxInfo;
-use crate::syntax::core::Val;
+use crate::syntax::common::{ToSyntaxInfo, DBI};
+use crate::syntax::core::{AxiomEx, Val, ValInfo};
 
 use super::monad::{TCM, TCS};
 
@@ -30,9 +32,26 @@ fn check_decl(tcs: TCS, decl: AbsDecl, disappearing_decl_count: &mut usize) -> T
             let sign = tcs.glob_type(actual_index);
             let sign_cloned = sign.ast.clone();
             let (val_fake, mut tcs) = tcs.check(&impl_abs, &sign_cloned)?;
-            let val = val_fake.map_ast(|ast| ast.axiom_to_var());
+            // We generate axioms for lambda parameters during type-checking.
+            // Now it's time to change them back to `var` references.
+            let val = val_fake.map_ast(|ast| ast.generated_to_var());
 
             tcs.env[actual_index] = val;
+            // Every references to me are now actually valid (they were axioms before),
+            // replace them with a global reference.
+            for i in actual_index..tcs.glob_size() {
+                fn unimplemented_to_glob(v: &mut [ValInfo], i: DBI) {
+                    let mut placeholder = Default::default();
+                    swap(&mut v[i], &mut placeholder);
+                    placeholder = placeholder.map_ast(|ast| ast.unimplemented_to_glob());
+                    swap(&mut placeholder, &mut v[i]);
+                }
+                unimplemented_to_glob(tcs.gamma.as_mut_slice(), i);
+                unimplemented_to_glob(tcs.env.as_mut_slice(), i);
+            }
+
+            // Now this definition disappears because it is used to replace an exiting definition.
+            // The existing definition is supposed to be
             *disappearing_decl_count += 1;
             require_local_emptiness(&tcs);
             // Err(TCE::DbiOverflow(tcs.env.len(), new_dbi))
@@ -42,8 +61,9 @@ fn check_decl(tcs: TCS, decl: AbsDecl, disappearing_decl_count: &mut usize) -> T
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
             let syntax_info = sign_abs.syntax_info();
             let (sign_fake, mut tcs) = tcs.check_type(&sign_abs)?;
-            let sign = sign_fake.map_ast(|ast| ast.axiom_to_var());
-            tcs.env.push(Val::axiom().into_info(syntax_info));
+            let sign = sign_fake.map_ast(|ast| ast.generated_to_var());
+            let val_info = Val::unimplemented(tcs.glob_size()).into_info(syntax_info);
+            tcs.env.push(val_info);
             tcs.gamma.push(sign);
 
             require_local_emptiness(&tcs);
@@ -54,7 +74,7 @@ fn check_decl(tcs: TCS, decl: AbsDecl, disappearing_decl_count: &mut usize) -> T
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
             let (inferred, tcs) = tcs.infer(&impl_abs)?;
             let (compiled, mut tcs) = tcs.evaluate(impl_abs);
-            let compiled = compiled.map_ast(|ast| ast.axiom_to_var());
+            let compiled = compiled.map_ast(|ast| ast.generated_to_var());
             tcs.env.push(compiled);
             tcs.gamma.push(inferred);
 
