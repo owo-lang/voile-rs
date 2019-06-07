@@ -9,7 +9,7 @@
 + Remove lambda parameter (#89)
 + Rename `Abs::Var` and `Abs::Local` to `Abs::Ref` and `Abs::Var`
   respectively to fit `Val`'s naming convention
-+ Redesigned global references (#96)
++ Redesigned global references (#96) to support mutual recursion
 
 # 0.0.8
 

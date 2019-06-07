@@ -4,6 +4,9 @@
 // Author: ice10
 //
 
+// All of these definitions are non-terminating.
+// They're just for demonstration and testing for mutual recursion.
+
 val recursion : (A : Type) -> A;
 let recursion = \A. recursion A;
 
