@@ -10,34 +10,39 @@ use super::ast::*;
 type NamedDbi = BTreeMap<String, DBI>;
 
 pub fn trans_decls(decls: Vec<Decl>) -> TCM<Vec<AbsDecl>> {
-    trans_decls_contextual(Default::default(), decls).map(|tcs| tcs.0)
+    trans_decls_contextual(Default::default(), decls).map(|tcs| tcs.decls)
 }
 
-pub fn trans_decls_contextual(tcs: DeclTCS, decls: Vec<Decl>) -> TCM<DeclTCS> {
+pub fn trans_decls_contextual(tcs: TransState, decls: Vec<Decl>) -> TCM<TransState> {
     decls.iter().try_fold(tcs, trans_one_decl)
 }
 
-pub type DeclTCS = (Vec<AbsDecl>, NamedDbi, DBI);
+/// Translation state.
+#[derive(Debug, Clone, Default)]
+pub struct TransState {
+    pub decls: Vec<AbsDecl>,
+    pub context_mapping: NamedDbi,
+    pub decl_count: DBI,
+}
 
-fn trans_one_decl(
-    (mut result, mut name_map, mut decl_count): DeclTCS,
-    decl: &Decl,
-) -> TCM<DeclTCS> {
+fn trans_one_decl(mut tcs: TransState, decl: &Decl) -> TCM<TransState> {
     let name = &decl.name;
-    let abs = trans_expr(&decl.body, &result, &name_map)?;
+    let abs = trans_expr(&decl.body, &tcs.decls, &tcs.context_mapping)?;
 
-    let dbi = *name_map
+    let decl_total = tcs.decls.len();
+    let dbi = *tcs
+        .context_mapping
         .entry(name.text.clone())
-        .or_insert_with(|| result.len());
-    let original = if result.len() > dbi {
-        Some(&result[dbi])
+        .or_insert_with(|| decl_total);
+    let original = if decl_total > dbi {
+        Some(&tcs.decls[dbi])
     } else {
         None
     };
     let modified = match (decl.kind, original) {
         (DeclKind::Sign, None) => {
-            let abs = AbsDecl::Sign(abs, decl_count);
-            decl_count += 1;
+            let abs = AbsDecl::Sign(abs, tcs.decl_count);
+            tcs.decl_count += 1;
             abs
         }
         // Re-type-signaturing something, should give error
@@ -45,13 +50,13 @@ fn trans_one_decl(
         // Re-defining something, should give error
         (_, Some(AbsDecl::Impl(..))) | (_, Some(AbsDecl::Decl(..))) => unimplemented!(),
         (DeclKind::Impl, None) => {
-            decl_count += 1;
+            tcs.decl_count += 1;
             AbsDecl::Decl(abs)
         }
         (DeclKind::Impl, Some(AbsDecl::Sign(_, dbi))) => AbsDecl::Impl(abs, *dbi),
     };
-    result.push(modified);
-    Ok((result, name_map, decl_count))
+    tcs.decls.push(modified);
+    Ok(tcs)
 }
 
 pub fn trans_expr(expr: &Expr, env: &[AbsDecl], map: &NamedDbi) -> TCM<Abs> {

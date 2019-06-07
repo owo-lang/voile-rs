@@ -29,7 +29,7 @@ fn main() {
                     });
 
                 // Type Check
-                let checked = check_main(abs_decls.0.clone())
+                let checked = check_main(abs_decls.decls.clone())
                     .map_err(|err| eprintln!("{}", err))
                     .unwrap_or_else(|()| {
                         eprintln!("Type-Check failed.");

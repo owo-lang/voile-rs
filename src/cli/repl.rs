@@ -8,12 +8,12 @@ use rustyline::{CompletionType, Config, Context, Editor, Helper};
 
 use voile::check::check_main;
 use voile::check::monad::TCS as TCMS;
-use voile::syntax::abs::{trans_decls_contextual, DeclTCS};
+use voile::syntax::abs::{trans_decls_contextual, TransState};
 use voile::syntax::surf::{parse_str_err_printed, Decl};
 
 use crate::util::parse_file;
 
-type TCS = (TCMS, DeclTCS);
+type TCS = (TCMS, TransState);
 
 struct VoileHelper {
     all_cmd: Vec<String>,
@@ -119,13 +119,13 @@ fn repl_work(tcs: TCS, current_mode: &str, line: &str) -> Option<TCS> {
 }
 
 fn update_tcs(tcs: TCS, decls: Vec<Decl>) -> TCS {
-    let (abs_decls, name_ctx, count) = trans_decls_contextual(tcs.1, decls)
+    let state = trans_decls_contextual(tcs.1, decls)
         .map_err(|err| eprintln!("{}", err))
         .unwrap_or_default();
-    let tcs = check_main(abs_decls.clone())
+    let tcs = check_main(state.decls.clone())
         .map_err(|err| eprintln!("{}", err))
         .unwrap_or_default();
-    (tcs, (abs_decls, name_ctx, count))
+    (tcs, state)
 }
 
 #[allow(clippy::print_literal)]
