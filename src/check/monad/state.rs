@@ -17,16 +17,16 @@ pub struct TCS {
 }
 
 impl TCS {
-    pub fn local_type(&self, dbi: DBI) -> ValInfo {
-        self.local_gamma[self.local_gamma.len() - dbi - 1].clone()
+    pub fn local_type(&self, dbi: DBI) -> &ValInfo {
+        &self.local_gamma[self.local_gamma.len() - dbi - 1]
     }
 
     pub fn glob_type(&self, dbi: DBI) -> &ValInfo {
         &self.gamma[dbi]
     }
 
-    pub fn local_val(&self, dbi: DBI) -> ValInfo {
-        self.local_env[self.local_env.len() - dbi - 1].clone()
+    pub fn local_val(&self, dbi: DBI) -> &ValInfo {
+        &self.local_env[self.local_env.len() - dbi - 1]
     }
 
     pub fn glob_val(&self, dbi: DBI) -> &ValInfo {

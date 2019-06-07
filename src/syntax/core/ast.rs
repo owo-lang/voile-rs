@@ -146,12 +146,7 @@ impl LiftEx for TVal {
     fn level(&self) -> Level {
         match self {
             Val::Type(level) => *level + 1,
-            Val::Sum(variants) => variants
-                .values()
-                .into_iter()
-                .map(|v| v.level())
-                .max()
-                .unwrap_or(0),
+            Val::Sum(variants) => variants.iter().map(|(_, v)| v.level()).max().unwrap_or(0),
             Val::Dt(_, param_ty, closure) => max(param_ty.level(), closure.level()),
             Val::Lam(closure) => closure.level(),
             Val::Neut(neut) => neut.level(),
