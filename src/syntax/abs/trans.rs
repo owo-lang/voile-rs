@@ -17,9 +17,12 @@ pub fn trans_decls_contextual(tcs: DeclTCS, decls: Vec<Decl>) -> TCM<DeclTCS> {
     decls.iter().try_fold(tcs, trans_one_decl)
 }
 
-pub type DeclTCS = (Vec<AbsDecl>, NamedDbi);
+pub type DeclTCS = (Vec<AbsDecl>, NamedDbi, DBI);
 
-fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclTCS> {
+fn trans_one_decl(
+    (mut result, mut name_map, mut decl_count): DeclTCS,
+    decl: &Decl,
+) -> TCM<DeclTCS> {
     let name = &decl.name;
     let abs = trans_expr(&decl.body, &result, &name_map)?;
 
@@ -32,16 +35,23 @@ fn trans_one_decl((mut result, mut name_map): DeclTCS, decl: &Decl) -> TCM<DeclT
         None
     };
     let modified = match (decl.kind, original) {
-        (DeclKind::Sign, None) => AbsDecl::Sign(abs),
+        (DeclKind::Sign, None) => {
+            let abs = AbsDecl::Sign(abs, decl_count);
+            decl_count += 1;
+            abs
+        }
         // Re-type-signaturing something, should give error
-        (DeclKind::Sign, Some(..)) => AbsDecl::Sign(abs),
+        (DeclKind::Sign, Some(..)) => unimplemented!(),
         // Re-defining something, should give error
         (_, Some(AbsDecl::Impl(..))) | (_, Some(AbsDecl::Decl(..))) => unimplemented!(),
-        (DeclKind::Impl, None) => AbsDecl::Decl(abs),
-        (DeclKind::Impl, Some(AbsDecl::Sign(_))) => AbsDecl::Impl(abs, dbi),
+        (DeclKind::Impl, None) => {
+            decl_count += 1;
+            AbsDecl::Decl(abs)
+        }
+        (DeclKind::Impl, Some(AbsDecl::Sign(_, dbi))) => AbsDecl::Impl(abs, *dbi),
     };
     result.push(modified);
-    Ok((result, name_map))
+    Ok((result, name_map, decl_count))
 }
 
 pub fn trans_expr(expr: &Expr, env: &[AbsDecl], map: &NamedDbi) -> TCM<Abs> {

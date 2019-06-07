@@ -41,7 +41,7 @@ impl Display for Abs {
 impl Display for AbsDecl {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
-            AbsDecl::Sign(abs) => write!(f, "{}", abs),
+            AbsDecl::Sign(abs, dbi) => write!(f, "[{}] {}", dbi, abs),
             AbsDecl::Decl(abs) => write!(f, "_ : {}", abs),
             AbsDecl::Impl(abs, ty_dbi) => write!(f, "{} : [{}]", abs, ty_dbi),
         }

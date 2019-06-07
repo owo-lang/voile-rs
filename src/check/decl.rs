@@ -7,14 +7,8 @@ use crate::syntax::core::{AxiomEx, Val, ValInfo};
 use super::monad::{TCM, TCS};
 
 pub fn check_decls(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
-    // `AbsDecl::Impl` uses an index to indicate which signature it's corresponding to.
-    // However, in `check_decl`, we **replace** an existing definition with type-check `Impl`
-    // (instead of adding it to the context, like `Sign` or `Decl`).
-    // This causes a difference between the actual index of the definition and the index we've
-    // recorded in `AbsDecl::Impl`.
-    let mut disappearing_decl_count = 0usize;
     for decl in decls.into_iter() {
-        tcs = tcs.check_decl(decl, &mut disappearing_decl_count)?;
+        tcs = tcs.check_decl(decl)?;
     }
     Ok(tcs)
 }
@@ -24,22 +18,21 @@ fn require_local_emptiness(tcs: &TCS) {
     debug_assert!(tcs.local_gamma.is_empty());
 }
 
-fn check_decl(tcs: TCS, decl: AbsDecl, disappearing_decl_count: &mut usize) -> TCM {
+fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
     match decl {
         AbsDecl::Impl(impl_abs, sign_dbi) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
-            let actual_index = sign_dbi - *disappearing_decl_count;
-            let sign = tcs.glob_type(actual_index);
+            let sign = tcs.glob_type(sign_dbi);
             let sign_cloned = sign.ast.clone();
             let (val_fake, mut tcs) = tcs.check(&impl_abs, &sign_cloned)?;
             // We generate axioms for lambda parameters during type-checking.
             // Now it's time to change them back to `var` references.
             let val = val_fake.map_ast(|ast| ast.generated_to_var());
 
-            tcs.env[actual_index] = val;
+            tcs.env[sign_dbi] = val;
             // Every references to me are now actually valid (they were axioms before),
             // replace them with a global reference.
-            for i in actual_index..tcs.glob_size() {
+            for i in sign_dbi..tcs.glob_size() {
                 fn unimplemented_to_glob(v: &mut [ValInfo], i: DBI) {
                     let mut placeholder = Default::default();
                     swap(&mut v[i], &mut placeholder);
@@ -50,14 +43,11 @@ fn check_decl(tcs: TCS, decl: AbsDecl, disappearing_decl_count: &mut usize) -> T
                 unimplemented_to_glob(tcs.env.as_mut_slice(), i);
             }
 
-            // Now this definition disappears because it is used to replace an exiting definition.
-            // The existing definition is supposed to be
-            *disappearing_decl_count += 1;
             require_local_emptiness(&tcs);
             // Err(TCE::DbiOverflow(tcs.env.len(), new_dbi))
             Ok(tcs)
         }
-        AbsDecl::Sign(sign_abs) => {
+        AbsDecl::Sign(sign_abs, ..) => {
             debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
             let syntax_info = sign_abs.syntax_info();
             let (sign_fake, mut tcs) = tcs.check_type(&sign_abs)?;
@@ -91,7 +81,7 @@ impl TCS {
     }
 
     #[inline]
-    pub fn check_decl(self, decl: AbsDecl, disappearing_decl_count: &mut usize) -> TCM {
-        check_decl(self, decl, disappearing_decl_count)
+    pub fn check_decl(self, decl: AbsDecl) -> TCM {
+        check_decl(self, decl)
     }
 }

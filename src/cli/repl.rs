@@ -119,13 +119,13 @@ fn repl_work(tcs: TCS, current_mode: &str, line: &str) -> Option<TCS> {
 }
 
 fn update_tcs(tcs: TCS, decls: Vec<Decl>) -> TCS {
-    let (abs_decls, name_ctx) = trans_decls_contextual(tcs.1, decls)
+    let (abs_decls, name_ctx, count) = trans_decls_contextual(tcs.1, decls)
         .map_err(|err| eprintln!("{}", err))
         .unwrap_or_default();
     let tcs = check_main(abs_decls.clone())
         .map_err(|err| eprintln!("{}", err))
         .unwrap_or_default();
-    (tcs, (abs_decls, name_ctx))
+    (tcs, (abs_decls, name_ctx, count))
 }
 
 #[allow(clippy::print_literal)]

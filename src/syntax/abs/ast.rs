@@ -94,7 +94,8 @@ impl Abs {
 /// with abstract syntax.
 #[derive(Debug, Clone)]
 pub enum AbsDecl {
-    Sign(Abs),
+    /// Signature.
+    Sign(Abs, DBI),
     /// Function body without a signature.
     Decl(Abs),
     /// Function body with a signature.
