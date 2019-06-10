@@ -1,3 +1,7 @@
+pub use self::ast::*;
+pub use self::pretty::*;
+pub use self::trans::*;
+
 /// Abstract syntax tree.
 ///
 /// The abstract syntax tree is supposed to be representing a higher level syntax, where there
@@ -9,10 +13,6 @@ mod trans;
 
 /// Pretty-print AST.
 mod pretty;
-
-pub use self::ast::*;
-pub use self::pretty::*;
-pub use self::trans::*;
 
 #[cfg(test)]
 mod tests;

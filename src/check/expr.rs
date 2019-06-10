@@ -1,4 +1,3 @@
-use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::syntax::abs::Abs;
@@ -8,6 +7,7 @@ use crate::syntax::core::{Closure, LiftEx, TVal, Val};
 
 use super::eval::{compile_cons, compile_variant};
 use super::monad::{ValTCM, TCE, TCM, TCS};
+use crate::syntax::level::Level;
 
 /**
 $$
@@ -73,7 +73,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             if *upper > *lower {
                 Ok((Val::Type(*lower).into_info(*info), tcs))
             } else {
-                Err(TCE::LevelMismatch(expr.syntax_info(), lower + 1, *upper))
+                Err(TCE::LevelMismatch(expr.syntax_info(), *lower + 1, *upper))
             }
         }
         (Pair(info, fst, snd), Val::Dt(Sigma, param_ty, closure)) => {
@@ -263,7 +263,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
     use Abs::*;
     let info = value.syntax_info();
     match value {
-        Type(_, level) => Ok((Val::Type(level + 1).into_info(info), tcs)),
+        Type(_, level) => Ok((Val::Type(*level + 1).into_info(info), tcs)),
         Var(_, _, dbi) => {
             let local = tcs.local_type(*dbi).ast.clone().attach_dbi(*dbi);
             Ok((local.into_info(info), tcs))
@@ -300,11 +300,11 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
         }
         Sum(_, variants) => {
             let mut known = BTreeSet::default();
-            let mut level = 0;
+            let mut level = Level::default();
             for variant in variants {
                 let (variant, new_tcs) = tcs.check_type(variant).map_err(|e| e.wrap(info))?;
                 tcs = new_tcs;
-                level = max(level, variant.ast.level());
+                level = level.max(variant.ast.level());
                 let info = variant.info;
                 match variant.ast.try_into_sum() {
                     Ok(variants) => {

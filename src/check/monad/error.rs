@@ -1,8 +1,9 @@
 use std::fmt::{Display, Error as FmtError, Formatter};
 
 use crate::syntax::abs::Abs;
-use crate::syntax::common::{Ident, Level, SyntaxInfo, DBI};
+use crate::syntax::common::{Ident, SyntaxInfo, DBI};
 use crate::syntax::core::{TVal, Val};
+use crate::syntax::level::Level;
 
 /// Type-Checking Error.
 #[derive(Debug, PartialEq, Eq, Clone)]

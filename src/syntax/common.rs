@@ -1,5 +1,6 @@
-use pest::Span;
 use std::ops::Add;
+
+use pest::Span;
 
 /// Various kinds of dependent types
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
@@ -7,9 +8,6 @@ pub enum DtKind {
     Pi,
     Sigma,
 }
-
-/// Level literals (the `233` part of `Type233` literals)
-pub type Level = u32;
 
 /// De Bruijn Indices. Checkout [Wikipedia](https://en.wikipedia.org/wiki/De_Bruijn_index) if you
 /// are curious but have no idea about it.

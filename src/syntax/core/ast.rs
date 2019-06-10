@@ -1,7 +1,8 @@
 use std::cmp::max;
 use std::collections::BTreeMap;
 
-use crate::syntax::common::{next_uid, DtKind, Level, DBI, UID};
+use crate::syntax::common::{next_uid, DtKind, DBI, UID};
+use crate::syntax::level::Level;
 
 pub type Variants = BTreeMap<String, TVal>;
 
@@ -15,7 +16,7 @@ pub trait RedEx: Sized {
 /// Expression with universe level (which means they can be lifted).
 pub trait LiftEx: Sized {
     /// Lift the level of `self`.
-    fn lift(self, levels: Level) -> Self;
+    fn lift(self, levels: u32) -> Self;
 
     /// Calculate the level of `self`,
     /// like a normal value will have level 0,
@@ -133,7 +134,7 @@ impl RedEx for Val {
 }
 
 impl LiftEx for TVal {
-    fn lift(self, levels: Level) -> Val {
+    fn lift(self, levels: u32) -> Val {
         match self {
             Val::Type(l) => Val::Type(l + levels),
             Val::Lam(closure) => Val::Lam(closure.lift(levels)),
@@ -157,7 +158,11 @@ impl LiftEx for TVal {
     fn level(&self) -> Level {
         match self {
             Val::Type(level) => *level + 1,
-            Val::Sum(variants) => variants.iter().map(|(_, v)| v.level()).max().unwrap_or(0),
+            Val::Sum(variants) => variants
+                .iter()
+                .map(|(_, v)| v.level())
+                .max()
+                .unwrap_or_default(),
             Val::Dt(_, param_ty, closure) => max(param_ty.level(), closure.level()),
             Val::Lam(closure) => closure.level(),
             Val::Neut(neut) => neut.level(),
@@ -175,7 +180,7 @@ pub enum Neutral {
     /// Global variable, referred by index. Needed for recursive definitions.
     Ref(DBI),
     /// Lifting self to a higher/lower level.
-    Lift(Level, Box<Self>),
+    Lift(u32, Box<Self>),
     /// Postulated value, aka axioms.
     Axi(Axiom),
     /// Function application.
@@ -271,7 +276,7 @@ impl RedEx for Neutral {
 }
 
 impl LiftEx for Neutral {
-    fn lift(self, levels: Level) -> Self {
+    fn lift(self, levels: u32) -> Self {
         use self::Neutral::*;
         match self {
             Lift(n, expr) => Lift(n + levels, expr),
@@ -284,7 +289,9 @@ impl LiftEx for Neutral {
         match self {
             Lift(n, expr) => expr.level() + *n,
             // Level is zero by default
-            Var(..) | Axi(..) | Ref(..) => 0,
+            Var(..) | Axi(..) => Default::default(),
+            // !!Not sure!! how do we determine the level of recursive definitions?
+            Ref(..) => Level::Omega,
             Fst(expr) => expr.level(),
             Snd(expr) => expr.level(),
             App(f, a) => max(f.level(), a.level()),
@@ -346,7 +353,7 @@ impl Val {
         Val::Cons(name, Box::new(param))
     }
 
-    pub fn lift(levels: Level, expr: Neutral) -> Self {
+    pub fn lift(levels: u32, expr: Neutral) -> Self {
         Val::Neut(Neutral::Lift(levels, Box::new(expr)))
     }
 
@@ -458,7 +465,7 @@ impl Closure {
 }
 
 impl LiftEx for Closure {
-    fn lift(self, levels: Level) -> Self {
+    fn lift(self, levels: u32) -> Self {
         Self::new(self.body.lift(levels))
     }
 

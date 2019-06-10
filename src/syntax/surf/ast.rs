@@ -1,4 +1,5 @@
-use crate::syntax::common::{Ident, Level, SyntaxInfo};
+use crate::syntax::common::{Ident, SyntaxInfo};
+use crate::syntax::level::Level;
 
 /// Surface syntax tree node: Parameter.
 ///
@@ -26,7 +27,7 @@ pub enum Expr {
     /// Explicit meta variable
     Meta(Ident),
     /// Lift an expression many times
-    Lift(SyntaxInfo, Level, Box<Self>),
+    Lift(SyntaxInfo, u32, Box<Self>),
     /// `Type` literal, with levels
     Type(SyntaxInfo, Level),
     /// Function application.<br/>

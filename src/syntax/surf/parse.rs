@@ -1,7 +1,8 @@
 use pest::Parser;
 use pest_derive::Parser;
 
-use crate::syntax::common::{Ident, Level, SyntaxInfo};
+use crate::syntax::common::{Ident, SyntaxInfo};
+use crate::syntax::level::Level;
 use crate::syntax::pest_util::end_of_rule;
 
 use super::ast::Param;
@@ -199,7 +200,7 @@ fn type_keyword(rules: Tok) -> Expr {
     let mut inner: Tik = rules.into_inner();
     let level_ast_node: Tok = inner.next().unwrap();
     debug_assert_eq!(level_ast_node.as_rule(), Rule::type_level);
-    let level: Level = level_ast_node.as_str().parse().unwrap_or(0);
+    let level: Level = Level::Num(level_ast_node.as_str().parse().unwrap_or(0));
     end_of_rule(&mut inner);
     Expr::Type(syntax_info, level)
 }

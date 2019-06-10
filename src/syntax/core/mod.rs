@@ -1,10 +1,10 @@
-mod ast;
-mod pretty;
+use super::common::{SyntaxInfo, ToSyntaxInfo};
 
 pub use self::ast::*;
 pub use self::pretty::*;
 
-use super::common::{SyntaxInfo, ToSyntaxInfo};
+mod ast;
+mod pretty;
 
 impl Val {
     pub fn into_info(self, syntax_info: SyntaxInfo) -> ValInfo {

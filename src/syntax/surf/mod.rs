@@ -1,3 +1,6 @@
+pub use self::ast::*;
+pub use self::parse::parse_str;
+
 /// Surface syntax tree.
 ///
 /// The surface syntax tree is intended to be very close to the surface syntax so it may look a bit
@@ -9,9 +12,6 @@ mod ast;
 ///
 /// Macro is used for code reusing.
 mod parse;
-
-pub use self::ast::*;
-pub use self::parse::parse_str;
 
 /// Parse a string into an optional expression and print error to stderr.
 #[inline]

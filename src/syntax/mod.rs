@@ -1,5 +1,8 @@
-/// General definitions, like `Level`, `DBI`, etc.
+/// General definitions, `DBI`, etc.
 pub mod common;
+
+/// `Level`-related definitions, extracted from [`common`](self::common).
+pub mod level;
 
 /// Helper functions for pest.
 #[macro_use]

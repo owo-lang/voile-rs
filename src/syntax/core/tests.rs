@@ -23,7 +23,7 @@ fn many_to_val(block: &[Lisp], lisp: &Lisp) -> Val {
         [Sym("lift"), arg] => lisp_to_val(arg).lift(1),
         [Sym("fst"), arg] => lisp_to_val(arg).first(),
         [Sym("snd"), arg] => lisp_to_val(arg).second(),
-        [Sym("type"), arg] => Val::Type(arg.as_dbi().unwrap() as _),
+        [Sym("type"), arg] => Val::Type(From::from(arg.as_dbi().unwrap())),
         [Sym("app"), fst, snd] => lisp_to_val(fst).apply(lisp_to_val(snd)),
         [Sym("pair"), fst, snd] => Val::pair(lisp_to_val(fst), lisp_to_val(snd)),
         [Sym("lam"), snd] => Val::lam(lisp_to_val(snd)),

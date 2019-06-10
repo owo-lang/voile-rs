@@ -1,4 +1,5 @@
 use crate::syntax::common::*;
+use crate::syntax::level::Level;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Abs {
@@ -12,7 +13,7 @@ pub enum Abs {
     /// Meta variable
     Meta(Ident),
     /// Lift an expression many times
-    Lift(SyntaxInfo, Level, Box<Self>),
+    Lift(SyntaxInfo, u32, Box<Self>),
     /// Constructor call
     Cons(Ident),
     /// One variant inside of a sum type
@@ -77,7 +78,7 @@ impl Abs {
         Abs::Pair(info, Box::new(first), Box::new(second))
     }
 
-    pub fn lift(info: SyntaxInfo, lift_count: Level, expr: Self) -> Self {
+    pub fn lift(info: SyntaxInfo, lift_count: u32, expr: Self) -> Self {
         Abs::Lift(info, lift_count, Box::new(expr))
     }
 
