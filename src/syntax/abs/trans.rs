@@ -76,7 +76,7 @@ fn trans_expr_inner(
     local_map: &NamedDbi,
 ) -> TCM<Abs> {
     match expr {
-        Expr::Type(syntax, level) => Ok(Abs::Type(syntax.clone(), *level)),
+        Expr::Type(syntax, level) => Ok(Abs::Type(*syntax, *level)),
         Expr::Var(ident) => {
             let name = &ident.text;
             if local_map.contains_key(name) {

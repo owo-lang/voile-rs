@@ -40,7 +40,7 @@ impl Display for Closure {
 impl Display for Val {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
-            Val::Type(l) => write!(f, "set{:?}", l),
+            Val::Type(l) => write!(f, "set{}", l),
             Val::Lam(clos) => write!(f, "(\\ {})", clos),
             Val::Sum(variants) => {
                 let mut started = false;
