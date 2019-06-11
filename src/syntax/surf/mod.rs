@@ -1,5 +1,6 @@
 pub use self::ast::*;
 pub use self::parse::parse_str;
+use crate::syntax::surf::parse::parse_str_expr;
 
 /// Surface syntax tree.
 ///
@@ -14,6 +15,12 @@ mod ast;
 mod parse;
 
 /// Parse a string into an optional expression and print error to stderr.
+#[inline]
+pub fn parse_expr_err_printed(code: &str) -> Result<Expr, ()> {
+    parse_str_expr(code).map_err(|err| eprintln!("{}", err))
+}
+
+/// Parse a string into an optional declaration list and print error to stderr.
 #[inline]
 pub fn parse_str_err_printed(code: &str) -> Result<Vec<Decl>, ()> {
     parse_str(code).map_err(|err| eprintln!("{}", err))

@@ -48,7 +48,7 @@ impl<'a> std::fmt::Display for Lisp<'a> {
 
 tik_tok!();
 
-define_parse_str!(CoreParser, element, element, Lisp);
+define_parse_str!(parse_str, CoreParser, element, element, Lisp);
 
 fn element(rules: Tok) -> Lisp {
     let mut inner: Tik = rules.into_inner();

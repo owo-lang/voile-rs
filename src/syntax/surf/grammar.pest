@@ -111,3 +111,4 @@ declaration =
 
 // File
 file = { WHITESPACE* ~ declaration* ~ WHITESPACE* }
+standalone_expr = { WHITESPACE* ~ sig_expr ~ WHITESPACE* }

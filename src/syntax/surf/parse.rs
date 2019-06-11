@@ -15,7 +15,8 @@ struct VoileParser;
 
 tik_tok!();
 
-define_parse_str!(VoileParser, file, declarations, Vec<Decl>);
+define_parse_str!(parse_str, VoileParser, file, declarations, Vec<Decl>);
+define_parse_str!(parse_str_expr, VoileParser, standalone_expr, expr, Expr);
 
 macro_rules! expr_parser {
     ($name:ident,$smaller:ident,$cons:ident) => {

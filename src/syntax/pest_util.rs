@@ -21,9 +21,9 @@ macro_rules! next_rule {
 
 #[macro_export]
 macro_rules! define_parse_str {
-    ($parser:ident, $root_rule:ident, $root_trans:ident, $ret:ty) => {
+    ($name:ident, $parser:ident, $root_rule:ident, $root_trans:ident, $ret:ty) => {
         /// Parse a string into an optional expr based on the `$root_rule` rule:
-        pub fn parse_str(input: &str) -> Result<$ret, String> {
+        pub fn $name(input: &str) -> Result<$ret, String> {
             let the_rule: Tok = $parser::parse(Rule::$root_rule, input)
                 .map_err(|err| format!("Parse failed at:{}", err))?
                 .next()

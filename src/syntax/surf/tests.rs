@@ -1,4 +1,5 @@
 use super::parse_str_err_printed;
+use crate::syntax::surf::parse::parse_str_expr;
 
 #[test]
 fn simple_declaration_parsing() {
@@ -27,6 +28,12 @@ fn pi_type_parsing() {
     parse_str_err_printed("val star : platinum * (a: A) * F;")
         .map(|ast| println!("{:?}", ast))
         .unwrap();
+}
+
+#[test]
+fn standalone_expr_parsing() {
+    parse_str_expr("Agda").unwrap();
+    parse_str_expr("Idris + Coq").unwrap();
 }
 
 #[test]
