@@ -20,7 +20,7 @@ pub trait LiftEx: Sized {
     /// like a normal value will have level 0,
     /// a type expression will have level 1 (or higher).
     fn level(&self) -> Level {
-        self.calc_level().unwrap_or(Level::Omega)
+        self.calc_level().unwrap_or_default()
     }
 }
 
@@ -78,7 +78,11 @@ impl LiftEx for Neutral {
     fn calc_level(&self) -> LevelCalcState {
         use self::Neutral::*;
         match self {
-            Lift(n, expr) => expr.calc_level().map(|m| m + *n),
+            Lift(n, expr) => match expr.calc_level() {
+                Some(m) => Some(m + *n),
+                // Trying to lift yourself makes you omega.
+                None => Some(Level::Omega),
+            },
             // Level is zero by default
             Var(..) | Axi(..) => Some(Default::default()),
             Ref(..) => None,
