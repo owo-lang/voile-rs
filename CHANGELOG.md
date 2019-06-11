@@ -13,7 +13,8 @@
 + Introduce omega level (#99)
 + Support inferring omega level (#101). This does not look like
   something that will be used in the near future.
-+ Add `-e` option for `voilec` and `:infer` command (#90)
++ Add `-e` option for `voilec`,
+  add `:infer`, `:eval`, and `:level` REPL commands (#90)
 
 # 0.0.8
 

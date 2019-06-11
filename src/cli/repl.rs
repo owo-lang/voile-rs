@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::io::{stdin, stdout, Write};
 
 use rustyline::completion::{Completer, FilenameCompleter, Pair};
@@ -7,8 +8,9 @@ use rustyline::hint::Hinter;
 use rustyline::{CompletionType, Config, Context, Editor, Helper};
 
 use voile::check::check_main;
-use voile::check::monad::TCS as TCMS;
+use voile::check::monad::{TCM, TCS as TCMS};
 use voile::syntax::abs::{trans_decls_contextual, trans_expr, Abs, TransState};
+use voile::syntax::core::LiftEx;
 use voile::syntax::surf::{parse_expr_err_printed, parse_str_err_printed, Decl};
 
 use crate::util::parse_file;
@@ -70,9 +72,13 @@ const CTX_CMD: &str = ":context";
 const HELP_CMD: &str = ":help";
 const LOAD_CMD: &str = ":load";
 const INFER_CMD: &str = ":infer";
+const EVAL_CMD: &str = ":eval";
+const LEVEL_CMD: &str = ":level";
 
 const LOAD_PFX: &str = ":load ";
 const INFER_PFX: &str = ":infer ";
+const EVAL_PFX: &str = ":eval ";
+const LEVEL_PFX: &str = ":level ";
 
 fn show_gamma(tcs: &TCS) {
     for val in &tcs.0.gamma {
@@ -108,19 +114,11 @@ fn repl_work(tcs: TCS, current_mode: &str, line: &str) -> Option<TCS> {
             },
         )
     } else if line.starts_with(INFER_PFX) {
-        Some(
-            if let Some(abs) = code_to_abs(&tcs, line.trim_start_matches(INFER_CMD).trim_start()) {
-                if let Ok((inferred, tcms)) = tcs.0.infer(&abs).map_err(|err| eprintln!("{}", err))
-                {
-                    println!("{}", inferred.ast);
-                    (tcms, tcs.1)
-                } else {
-                    Default::default()
-                }
-            } else {
-                tcs
-            },
-        )
+        Some(infer(tcs, line))
+    } else if line.starts_with(LEVEL_PFX) {
+        Some(level(tcs, line))
+    } else if line.starts_with(EVAL_PFX) {
+        Some(eval(tcs, line))
     } else if line.starts_with(':') {
         println!("Unrecognized command: {}", line);
         println!("Maybe you want to get some `:help`?");
@@ -130,6 +128,39 @@ fn repl_work(tcs: TCS, current_mode: &str, line: &str) -> Option<TCS> {
             Some(decls) => update_tcs(tcs, decls),
             None => tcs,
         })
+    }
+}
+
+fn infer(tcs: TCS, line: &str) -> TCS {
+    expression_thing(tcs, line, INFER_CMD, |tcms, abs| tcms.infer(&abs))
+}
+
+fn eval(tcs: TCS, line: &str) -> TCS {
+    expression_thing(tcs, line, EVAL_CMD, |tcms, abs| Ok(tcms.evaluate(abs)))
+}
+
+fn level(tcs: TCS, line: &str) -> TCS {
+    expression_thing(tcs, line, LEVEL_CMD, |tcms, abs| {
+        let (val, tcs) = tcms.evaluate(abs);
+        Ok((val.ast.level(), tcs))
+    })
+}
+
+fn expression_thing<T: Display>(
+    tcs: TCS,
+    line: &str,
+    cmd: &str,
+    f: impl FnOnce(TCMS, Abs) -> TCM<(T, TCMS)>,
+) -> TCS {
+    if let Some(abs) = code_to_abs(&tcs, line.trim_start_matches(cmd).trim_start()) {
+        if let Ok((show, tcms)) = f(tcs.0, abs).map_err(|err| eprintln!("{}", err)) {
+            println!("{}", show);
+            (tcms, tcs.1)
+        } else {
+            Default::default()
+        }
+    } else {
+        tcs
     }
 }
 
@@ -162,6 +193,8 @@ fn help(current_mode: &str) {
          {:<20} {}\n\
          {:<20} {}\n\
          {:<20} {}\n\
+         {:<20} {}\n\
+         {:<20} {}\n\
          ",
         QUIT_CMD,
         "Quit the REPL.",
@@ -171,6 +204,10 @@ fn help(current_mode: &str) {
         "Show current value context.",
         ":infer <EXPR>",
         "Infer the type of an expression.",
+        ":eval <EXPR>",
+        "Evaluate an expression, assuming it's well-typed.",
+        ":level <EXPR>",
+        "Find the universe level of an expression.",
         ":load <FILE>",
         "Load an external file.",
     );
@@ -211,10 +248,12 @@ pub fn repl_plain(mut tcs: TCS) {
 
 pub fn repl(mut tcs: TCS) {
     repl_welcome_message("RICH");
-    let all_cmd: Vec<_> = vec![QUIT_CMD, GAMMA_CMD, CTX_CMD, INFER_PFX, HELP_CMD, LOAD_CMD]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
+    let all_cmd: Vec<_> = vec![
+        QUIT_CMD, GAMMA_CMD, CTX_CMD, HELP_CMD, INFER_PFX, LOAD_PFX, EVAL_PFX, LEVEL_PFX,
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
     let mut r = Editor::with_config(
         Config::builder()
             .history_ignore_space(true)

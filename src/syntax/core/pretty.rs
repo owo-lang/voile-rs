@@ -2,7 +2,7 @@ use std::fmt::{Display, Error, Formatter};
 
 use crate::syntax::common::DtKind::*;
 
-use super::{Axiom, Closure, Neutral, Val};
+use super::{Axiom, Closure, Neutral, Val, ValInfo};
 
 impl Display for Neutral {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
@@ -34,6 +34,12 @@ impl Display for Axiom {
 impl Display for Closure {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         self.body.fmt(f)
+    }
+}
+
+impl Display for ValInfo {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        write!(f, "{} at {}", self.ast, self.info)
     }
 }
 
