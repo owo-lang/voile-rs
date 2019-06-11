@@ -69,8 +69,10 @@ const GAMMA_CMD: &str = ":gamma";
 const CTX_CMD: &str = ":context";
 const HELP_CMD: &str = ":help";
 const LOAD_CMD: &str = ":load";
+const INFER_CMD: &str = ":infer";
 
 const LOAD_PFX: &str = ":load ";
+const INFER_PFX: &str = ":infer ";
 
 fn show_gamma(tcs: &TCS) {
     for val in &tcs.0.gamma {
@@ -103,6 +105,20 @@ fn repl_work(tcs: TCS, current_mode: &str, line: &str) -> Option<TCS> {
             match parse_file(line.trim_start_matches(LOAD_CMD).trim_start()) {
                 Some(decls) => update_tcs(tcs, decls),
                 None => tcs,
+            },
+        )
+    } else if line.starts_with(INFER_PFX) {
+        Some(
+            if let Some(abs) = code_to_abs(&tcs, line.trim_start_matches(INFER_CMD).trim_start()) {
+                if let Ok((inferred, tcms)) = tcs.0.infer(&abs).map_err(|err| eprintln!("{}", err))
+                {
+                    println!("{}", inferred.ast);
+                    (tcms, tcs.1)
+                } else {
+                    Default::default()
+                }
+            } else {
+                tcs
             },
         )
     } else if line.starts_with(':') {
@@ -145,6 +161,7 @@ fn help(current_mode: &str) {
          {:<20} {}\n\
          {:<20} {}\n\
          {:<20} {}\n\
+         {:<20} {}\n\
          ",
         QUIT_CMD,
         "Quit the REPL.",
@@ -152,6 +169,8 @@ fn help(current_mode: &str) {
         "Show current typing context.",
         CTX_CMD,
         "Show current value context.",
+        ":infer <EXPR>",
+        "Infer the type of an expression.",
         ":load <FILE>",
         "Load an external file.",
     );
@@ -192,7 +211,7 @@ pub fn repl_plain(mut tcs: TCS) {
 
 pub fn repl(mut tcs: TCS) {
     repl_welcome_message("RICH");
-    let all_cmd: Vec<_> = vec![QUIT_CMD, GAMMA_CMD, CTX_CMD, HELP_CMD, LOAD_CMD]
+    let all_cmd: Vec<_> = vec![QUIT_CMD, GAMMA_CMD, CTX_CMD, INFER_PFX, HELP_CMD, LOAD_CMD]
         .iter()
         .map(|s| s.to_string())
         .collect();
