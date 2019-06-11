@@ -28,6 +28,10 @@ pub struct CliOptions {
     #[structopt(short = "q", long)]
     pub quiet: bool,
 
+    /// Evaluates a standalone expression
+    #[structopt(short = "e", long, name = "expression")]
+    pub evaluate: Option<String>,
+
     #[structopt(subcommand)]
     completion: Option<GenShellSubCommand>,
 }

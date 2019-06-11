@@ -8,8 +8,8 @@ use rustyline::{CompletionType, Config, Context, Editor, Helper};
 
 use voile::check::check_main;
 use voile::check::monad::TCS as TCMS;
-use voile::syntax::abs::{trans_decls_contextual, TransState};
-use voile::syntax::surf::{parse_str_err_printed, Decl};
+use voile::syntax::abs::{trans_decls_contextual, trans_expr, Abs, TransState};
+use voile::syntax::surf::{parse_expr_err_printed, parse_str_err_printed, Decl};
 
 use crate::util::parse_file;
 
@@ -32,17 +32,16 @@ impl Completer for VoileHelper {
         if line.starts_with(LOAD_PFX) {
             return self.file_completer.complete(line, pos, ctx);
         }
-        Ok((
-            0,
-            self.all_cmd
-                .iter()
-                .filter(|cmd| cmd.starts_with(line))
-                .map(|str| Pair {
-                    display: str.clone(),
-                    replacement: str.clone(),
-                })
-                .collect(),
-        ))
+        let vec = self
+            .all_cmd
+            .iter()
+            .filter(|cmd| cmd.starts_with(line))
+            .map(|str| Pair {
+                display: str.clone(),
+                replacement: str.clone(),
+            })
+            .collect();
+        Ok((0, vec))
     }
 }
 
@@ -126,6 +125,14 @@ fn update_tcs(tcs: TCS, decls: Vec<Decl>) -> TCS {
         .map_err(|err| eprintln!("{}", err))
         .unwrap_or_default();
     (tcs, state)
+}
+
+pub fn code_to_abs(tcs: &TCS, code: &str) -> Option<Abs> {
+    let trans_state = &tcs.1;
+    let expr = parse_expr_err_printed(code).ok()?;
+    trans_expr(&expr, &trans_state.decls, &trans_state.context_mapping)
+        .map_err(|err| eprintln!("{}", err))
+        .ok()
 }
 
 #[allow(clippy::print_literal)]

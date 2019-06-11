@@ -1,5 +1,6 @@
 extern crate voile;
 
+use crate::repl::code_to_abs;
 use voile::check::check_main;
 use voile::syntax::abs::trans_decls_contextual;
 
@@ -10,7 +11,7 @@ mod util;
 fn main() {
     let args = args::pre();
 
-    let checked = args
+    let mut checked = args
         .file
         .clone()
         .and_then(|s| util::parse_file(s.as_str()))
@@ -52,6 +53,13 @@ fn main() {
             }
         })
         .unwrap_or_else(Default::default);
+
+    if let Some(abs) = args.evaluate.and_then(|code| code_to_abs(&checked, &code)) {
+        let (tcs, trans_st) = checked;
+        let (core, tcs) = tcs.evaluate(abs);
+        println!("{}", core.ast);
+        checked = (tcs, trans_st);
+    }
 
     // REPL
     if args.interactive_plain {
