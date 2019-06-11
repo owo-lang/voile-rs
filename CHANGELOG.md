@@ -11,6 +11,8 @@
   respectively to fit `Val`'s naming convention
 + Redesigned global references (#96) to support mutual recursion
 + Introduce omega level (#99)
++ Support inferring omega level (#101). This does not look like
+  something that will be used in the near future.
 
 # 0.0.8
 

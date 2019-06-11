@@ -17,6 +17,18 @@ impl Level {
             _ => Omega,
         }
     }
+
+    pub fn map(self, f: impl FnOnce(u32) -> u32) -> Self {
+        self.and_then(|a| Level::Num(f(a)))
+    }
+
+    pub fn and_then(self, f: impl FnOnce(u32) -> Self) -> Self {
+        use Level::*;
+        match self {
+            Omega => Omega,
+            Num(n) => f(n),
+        }
+    }
 }
 
 impl From<u32> for Level {
@@ -74,11 +86,7 @@ impl Add<u32> for Level {
     type Output = Self;
 
     fn add(self, rhs: u32) -> Self::Output {
-        use Level::*;
-        match self {
-            Num(a) => Num(a + rhs),
-            Omega => Omega,
-        }
+        self.map(|a| a + rhs)
     }
 }
 
@@ -86,10 +94,6 @@ impl Sub<u32> for Level {
     type Output = Self;
 
     fn sub(self, rhs: u32) -> Self::Output {
-        use Level::*;
-        match self {
-            Num(a) => Num(a - rhs),
-            Omega => Omega,
-        }
+        self.map(|a| a - rhs)
     }
 }
