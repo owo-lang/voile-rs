@@ -1,6 +1,6 @@
-use std::cmp::max;
 use std::collections::BTreeMap;
 
+use super::level::*;
 use crate::syntax::common::{next_uid, DtKind, DBI, UID};
 use crate::syntax::level::Level;
 
@@ -11,17 +11,6 @@ pub trait RedEx: Sized {
     /// This is primarily a private implementation-related API.
     /// Use at your own risk.
     fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val;
-}
-
-/// Expression with universe level (which means they can be lifted).
-pub trait LiftEx: Sized {
-    /// Lift the level of `self`.
-    fn lift(self, levels: u32) -> Self;
-
-    /// Calculate the level of `self`,
-    /// like a normal value will have level 0,
-    /// a type expression will have level 1 (or higher).
-    fn level(&self) -> Level;
 }
 
 pub trait AxiomEx: Sized {
@@ -133,45 +122,6 @@ impl RedEx for Val {
     }
 }
 
-impl LiftEx for TVal {
-    fn lift(self, levels: u32) -> Val {
-        match self {
-            Val::Type(l) => Val::Type(l + levels),
-            Val::Lam(closure) => Val::Lam(closure.lift(levels)),
-            Val::Dt(kind, param_type, closure) => Val::Dt(
-                kind,
-                Box::new(param_type.lift(levels)),
-                closure.lift(levels),
-            ),
-            Val::Sum(variants) => Val::Sum(
-                variants
-                    .into_iter()
-                    .map(|(name, e)| (name, e.lift(levels)))
-                    .collect(),
-            ),
-            Val::Cons(name, e) => Val::cons(name, e.lift(levels)),
-            Val::Pair(l, r) => Val::pair(l.lift(levels), r.lift(levels)),
-            Val::Neut(neut) => Val::Neut(neut.lift(levels)),
-        }
-    }
-
-    fn level(&self) -> Level {
-        match self {
-            Val::Type(level) => *level + 1,
-            Val::Sum(variants) => variants
-                .iter()
-                .map(|(_, v)| v.level())
-                .max()
-                .unwrap_or_default(),
-            Val::Dt(_, param_ty, closure) => max(param_ty.level(), closure.level()),
-            Val::Lam(closure) => closure.level(),
-            Val::Neut(neut) => neut.level(),
-            Val::Pair(l, r) => max(l.level(), r.level()),
-            Val::Cons(_, e) => e.level(),
-        }
-    }
-}
-
 /// Irreducible because of the presence of generated value.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Neutral {
@@ -271,30 +221,6 @@ impl RedEx for Neutral {
                 .second()
                 .reduce_with_dbi(arg, dbi),
             Lift(levels, neut) => neut.reduce_with_dbi(arg, dbi).lift(levels),
-        }
-    }
-}
-
-impl LiftEx for Neutral {
-    fn lift(self, levels: u32) -> Self {
-        use self::Neutral::*;
-        match self {
-            Lift(n, expr) => Lift(n + levels, expr),
-            e => Lift(levels, Box::new(e)),
-        }
-    }
-
-    fn level(&self) -> Level {
-        use self::Neutral::*;
-        match self {
-            Lift(n, expr) => expr.level() + *n,
-            // Level is zero by default
-            Var(..) | Axi(..) => Default::default(),
-            // !!Not sure!! how do we determine the level of recursive definitions?
-            Ref(..) => Level::Omega,
-            Fst(expr) => expr.level(),
-            Snd(expr) => expr.level(),
-            App(f, a) => max(f.level(), a.level()),
         }
     }
 }
@@ -461,15 +387,5 @@ impl Closure {
 
     pub fn instantiate_cloned(&self, arg: Val) -> Val {
         self.body.clone().reduce_with_dbi(arg, 0)
-    }
-}
-
-impl LiftEx for Closure {
-    fn lift(self, levels: u32) -> Self {
-        Self::new(self.body.lift(levels))
-    }
-
-    fn level(&self) -> Level {
-        self.body.level()
     }
 }
