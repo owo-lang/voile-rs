@@ -31,8 +31,7 @@ We're pretty much inspired by the coexistence of guarded recursion, coinductive
 data types, sized types and inductive types in [Agda],
 which is nice to have all of them but they do not work very well
 as we can see in a discussion [here][agda-bad-bad]
-about guarded recursion checker
-or in [a GitHub issue][agda-bad] about the
+about guarded recursion checker or in [a GitHub issue][agda-bad] about the
 incompatibility between size and guarded recursion.
 We can observe that sums, records, and (dependent) pattern matching in Agda only
 work well when being top-level bindings.
@@ -43,8 +42,7 @@ work well when being top-level bindings.
 ## Features
 
 + First-class language components
-  + Sum
-  + Record
+  + Sum/Record
 + Dependent type goodies
   + Pi/Sigma
 
@@ -53,21 +51,24 @@ work well when being top-level bindings.
 Voile supports sum-types (coproduct), record-types (product) as first-class
 language components.
 
-First-class record support is known as [Record Calculus][rec-calc], or
-[Row Polymorphism][row-poly], or [Extensible Records][ext-rec], or "first-class
-labels".
+First-class record support is related to [Record Calculus][rec-calc], or
+ [Extensible Records][ext-rec], or "first-class labels".
 The idea of "extensible record" is that the creation, manipulation and
 destruction of "records" can be done locally as an expression, without
-the need of declaring a record type globally.
-In other words, the "record type" itself is a kind of expression.
+the need of declaring a record type globally,
+while for-all quantification should also support generalize over a part of the
+records (in other words, [row-polymorphism][row-poly]).
+In other words, the "record type"/"record value"
+themselves are first-class expressions.
 
 The study on extensible records has a long history.
 
-However, there isn't much research and implementations on extensible sums yet.
+However, there isn't much research and implementations on extensible sums
+and the combination of bidirectional type-checking and row-polymorphism yet.
 Extensible sums are quite complicated because it probably requires:
 
 + First-class pattern matching
-+ Subtyping on Sums
++ Subtyping on sums
 
 While currently, I can only find one programming language, [MLPolyR]
 (there's a [language spec][spec], a paper [first-class cases][fc-c],
@@ -75,16 +76,9 @@ a PhD thesis [type-safe extensible programming][tse] and an
 [IntelliJ plugin][ij-dtlc]), whose pattern matching is first-class
 (in the papers it's called "first-class cases").
 
-It is quite obvious that sums and records are dual to each other -- destructing
-a sum requires listing all the cases and so does constructing a record;
-constructing a sum only need one element to be mentioned and so does projecting
-a record element as well.
-The name, *product* and *coproduct* also expresses such duality.
-Duality is a very nice property to have because it implies
-similar implementations.
-
-Since first-class pattern matching solves the expression for free,
-library authors can split all their features into several libraries
+First-class pattern matching is useful because it solves the expression
+for free, which means that library authors using such languages
+can split their library features into several sub-libraries
 -- one core library with many extensions. Library users can
 combine the core with extensions they want like a Jigsaw
 and exclude everything else (to avoid unwanted dependencies) or create their

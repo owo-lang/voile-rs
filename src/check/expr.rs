@@ -247,18 +247,43 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
     }
 }
 
-/// $$
-/// \newcommand\U{\textsf{Type}}
-/// \newcommand\G[2]{\Gamma \vdash #1 : #2}
-/// \cfrac{}{\G{\U\_i}{\U\_{i+1}}}
-/// \quad
-/// \cfrac{}{\G{[n]}{\textsf{type}(\Gamma, n)}}
-/// \newline
-/// \cfrac{\G{a}{A} \quad \G{b}{B}}{\G{(a,b)}{\Sigma A.B}}
-/// \quad
-/// \cfrac{\G{a}{\Sigma A.B}}{\G{a\textsf{\.1}}{A}}
-/// $$
-/// Infer type of a value.
+/**
+$$
+\\newcommand{\\cL}{{\\cal L}}
+\\newcommand{\\xx}[0]{\\texttt{x}}
+\\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
+\\newcommand{\\Gistype}[0]{\\Gamma \\istype}
+\\newcommand{\\tyck}[0]{\\vdash_\\texttt{c}}
+\\newcommand{\\Gtyck}[0]{\\Gamma \\tyck}
+\\newcommand{\\infer}[0]{\\vdash_\\texttt{i}}
+\\newcommand{\\Ginfer}[0]{\\Gamma \\infer}
+\\newcommand{\\ty}[0]{\\textsf{Type}}
+\\newcommand{\\Sum}[0]{\\texttt{Sum}\\ }
+\\newcommand{\\merge}[0]{\\texttt{merge}}
+\\newcommand{\\inst}[0]{\\texttt{inst}}
+\\newcommand{\\cons}[0]{\\texttt{cons}\\ }
+\\newcommand{\\app}[0]{\\texttt{app}}
+\\newcommand{\\first}[0]{\\texttt{first}}
+\\cfrac{\\Gamma(\\xx) = o}{\\Ginfer \\xx \\Rightarrow o}
+\\quad
+\\cfrac{}{\\Ginfer \\ty \\Rightarrow \\ty}
+\\\\ \\space \\\\
+\\cfrac{\\Ginfer a \\Rightarrow \\Sigma \\lang n \\rightarrow m \\rang}
+      {\\Ginfer a\\ .1 \\Rightarrow n}
+\\quad
+\\cfrac{\\Ginfer a \\Rightarrow n \\quad \\Ginfer b \\Rightarrow m}
+      {\\Ginfer a,b \\Rightarrow \\Sigma \\lang n \\rightarrow m \\rang}
+\\\\ \\space \\\\
+\\cfrac{\\Gistype a \\Rightarrow o}{\\Ginfer \`\\cons a \\Rightarrow \\ty}
+\\\\ \\space \\\\
+\\cfrac{\\Ginfer a \\Rightarrow o}
+       {\\Ginfer \\cons a \\Rightarrow \\sum (\`\\cons o, ())}
+\\\\ \\space \\\\
+\\cfrac{\\Ginfer a \\Rightarrow \\Sigma \\lang n \\rightarrow m \\rang}
+      {\\Ginfer a\\ .2 \\Rightarrow \\inst(m, \\first(a))}
+$$
+Infer type of a value.
+*/
 fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
     use Abs::*;
     let info = value.syntax_info();
