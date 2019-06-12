@@ -279,6 +279,10 @@ $$
 \\cfrac{\\Ginfer a \\Rightarrow o}
        {\\Ginfer \\cons a \\Rightarrow \\sum (\`\\cons o, ())}
 \\\\ \\space \\\\
+\\cfrac{\\Gistype a \\Rightarrow \\Sum S\_1 \\quad
+       \\Gistype b \\Rightarrow \\Sum S\_2}
+      {\\Ginfer a+b \\Rightarrow \\ty}
+\\\\ \\space \\\\
 \\cfrac{\\Ginfer a \\Rightarrow \\Sigma \\lang n \\rightarrow m \\rang}
       {\\Ginfer a\\ .2 \\Rightarrow \\inst(m, \\first(a))}
 $$
