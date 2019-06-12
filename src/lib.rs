@@ -58,13 +58,13 @@ destruction of "records" can be done locally as an expression, without
 the need of declaring a record type globally,
 while for-all quantification should also support generalize over a part of the
 records (in other words, [row-polymorphism][row-poly]).
-Two variations of row-polymorphism support such generalization differently,
+Existing row-polymorphism implementation divides into two groups
+according to how they support such generalization,
 either by making "record type"/"record value" first-class expressions,
 or by introducing a standalone row type.
 
-The study on extensible records has a long history.
-
-However, there isn't much research and implementations on extensible sums
+The study on extensible records has a long history,
+but there isn't much research and implementations on extensible sums
 and the combination of bidirectional type-checking and row-polymorphism yet.
 Extensible sums are quite complicated because it probably requires:
 
@@ -104,15 +104,33 @@ looks like Java's `checked exceptions`, but with full type-inference.
 In this way, we can have cross-control-flow exceptions (instead of monadic)
 safely, because it's easy to ensure that an expression is exception-free
 simply by looking at its type.
+
+We can denote function from $A$ to $B$ that may throw exception $E$ like this:
+
+$$
+A \xrightarrow{E} B
+$$
+
+A higher-order function taking an exception-throwing function and handles the
+exception will have signature like this (convert langauge-level exceptions to
+monadic exceptions):
+
+$$
+(A \xrightarrow{E} B) \rarr (E \rarr B) \rarr (A \rarr B)
+$$
+
 However, without the help of dependent types, there can be false positives
-such as conditionally-thrown exceptions -- consider a function `f` like this:
+such as conditionally-thrown exceptions -- consider a function `f` like this
+(assume $e : E$):
 
 ```mlpolyr
-fun f a = if a then throw bla else 0
+fun f a = if a then throw e else 0
 ```
 
-Invoking it with `f false` will still enrage the compiler, treating this
-expression as exception-throwing.
+Invocation `f false` is not going to raise any exception, but the compiler
+disagrees because of the type of `f` inferred
+(something like $\\texttt{Bool} \xrightarrow{E} \\texttt{Int}$)
+is irrelevant to the argument applied.
 In the industry of dependent types, there isn't much development on
 exceptions. We might have a try here.
 

@@ -29,10 +29,6 @@ $$
 \\newcommand{\\second}[0]{\\texttt{second}}
 \\newcommand{\\ctor}[0]{\\texttt{Cons}\\ }
 \\newcommand{\\app}[0]{\\texttt{app}}
-\\cfrac{\\Gtyck a:\\Pi\\ C \\Rightarrow n \\quad
-        \\Gtyck b:o \\Rightarrow m}
-       {\\Gtyck a\\ b : \\inst(C, m) \\Rightarrow \\app(n, m)}
-\\\\ \\space \\\\
 \\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
         \\Gamma,n:o \\tyck b:\\inst(C, n) \\Rightarrow m}
        {\\Gtyck a, b : \\Sigma\\ C \\Rightarrow n, m}
