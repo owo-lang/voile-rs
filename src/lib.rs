@@ -55,23 +55,40 @@ First-class record support is related to [Record Calculus][rec-calc], or
  [Extensible Records][ext-rec], or "first-class labels".
 The idea of "extensible record" is that the creation, manipulation and
 destruction of "records" can be done locally as an expression, without
-the need of declaring a record type globally,
-while for-all quantification should also support generalize over a part of the
-records (in other words, [row-polymorphism][row-poly]).
+the need of declaring a record type globally, like:
+
+$$
+\newcommand{\Bool}[0]{(\texttt{True}\mid\texttt{False})}
+\begin{alignedat}{2}
+&\texttt{not}&&:\Bool \rarr \Bool \\\\
+&\texttt{ifThenElse}&&:\forall A. \Bool \rarr A \rarr A \rarr A
+\end{alignedat}
+$$
+
+For-all quantification should also support generalizing over a part of the
+records (in other words, [row-polymorphism][row-poly]), like:
+
+$$
+\newcommand{\xx}[0]{\texttt{X}}
+\newcommand{\T}[0]{\lBrace\xx:A, ...=r\rBrace}
+\begin{alignedat}{2}
+&\texttt{getX}&&:\forall A. \T \rarr A \\\\
+&\texttt{getX}&&=\lambda s. (s.\xx) \\\\
+&\texttt{setX}&&:\forall A. \T \rarr A \rarr \T \\\\
+&\texttt{setX}&&= [\textnormal{syntax undecided yet}]
+\end{alignedat}
+$$
+
 Existing row-polymorphism implementation divides into two groups
 according to how they support such generalization,
 either by making "record type"/"record value" first-class expressions,
-or by introducing a standalone row type.
+or by introducing a standalone "row" (the type of $r$ above) type.
 
 The study on extensible records has a long history,
 but there isn't much research and implementations on extensible sums
 and the combination of bidirectional type-checking and row-polymorphism yet.
-Extensible sums are quite complicated because it probably requires:
-
-+ First-class pattern matching
-+ Subtyping on sums
-
-While currently, I can only find one programming language, [MLPolyR]
+<br/>
+Currently, I can only find one programming language, [MLPolyR]
 (there's a [language spec][spec], a paper [first-class cases][fc-c],
 a PhD thesis [type-safe extensible programming][tse] and an
 [IntelliJ plugin][ij-dtlc]), whose pattern matching is first-class
@@ -111,12 +128,12 @@ $$
 A \xrightarrow{E} B
 $$
 
-A higher-order function taking an exception-throwing function and handles the
+A higher-order function taking an exception-throwing function and handles one
 exception will have signature like this (convert langauge-level exceptions to
 monadic exceptions):
 
 $$
-(A \xrightarrow{E} B) \rarr (E \rarr B) \rarr (A \rarr B)
+(A \xrightarrow{E \mid r} B) \rarr (E \rarr B) \rarr (A \xrightarrow{r} B)
 $$
 
 However, without the help of dependent types, there can be false positives
@@ -129,7 +146,7 @@ fun f a = if a then throw e else 0
 
 Invocation `f false` is not going to raise any exception, but the compiler
 disagrees because of the type of `f` inferred
-(something like $\\texttt{Bool} \xrightarrow{E} \\texttt{Int}$)
+(something like $\mathbb{B} \xrightarrow{E} \mathbb{Z}$)
 is irrelevant to the argument applied.
 In the industry of dependent types, there isn't much development on
 exceptions. We might have a try here.
@@ -152,9 +169,9 @@ which means reduction is still needed before checking some other terms against
 this sum-type-term.
 If there's recursion on a sum-type-term, like the natural number definition:
 
-```agda
-Nat = 'Zero | 'Suc Nat
-```
+$$
+\mathbb{N}=\texttt{Zero} \mid \texttt{Suc}\ \mathbb{N}
+$$
 
 The type-checker will infinitely loop on its reduction.
 
@@ -165,7 +182,24 @@ it for a long time -- we shouldn't sacrifice this fundamental language feature.
 We choose to annotate types with the so-called sized types
 (present in [MiniAgda]) to inform the compiler about how data size are changed
 in a function.
-This will also help recursive type definitions, because 
+This will also help recursive type definitions, because it acts as an
+argument to the recursive call in the type definition!
+
+$$
+\mathbb{N}^{(\texttt{s}\ i)}=\texttt{Zero} \mid \texttt{Suc}\ \mathbb{N}^i
+$$
+
+This function now perfectly terminates.
+We may also write it in a more inductive way:
+
+$$
+\begin{alignedat}{2}
+&\mathbb{N}^0&&=\texttt{Zero}\\\\
+&\mathbb{N}^{(\texttt{s}\ i)}&&=\texttt{Suc}\ \mathbb{N}^i
+\end{alignedat}
+$$
+
+Depends on how sized types are designed in Voile.
 
 # Implementation
 
