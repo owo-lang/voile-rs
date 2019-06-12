@@ -48,8 +48,8 @@ work well when being top-level bindings.
 
 ### Extensible ADTs
 
-Voile supports sum-types (coproduct), record-types (product) as first-class
-language components.
+Voile supports sum-types (coproduct), record-types (product) and their
+instances as first-class language components.
 
 First-class record support is related to [Record Calculus][rec-calc], or
  [Extensible Records][ext-rec], or "first-class labels".
@@ -58,8 +58,9 @@ destruction of "records" can be done locally as an expression, without
 the need of declaring a record type globally,
 while for-all quantification should also support generalize over a part of the
 records (in other words, [row-polymorphism][row-poly]).
-In other words, the "record type"/"record value"
-themselves are first-class expressions.
+Two variations of row-polymorphism support such generalization differently,
+either by making "record type"/"record value" first-class expressions,
+or by introducing a standalone row type.
 
 The study on extensible records has a long history.
 
@@ -100,6 +101,9 @@ are treated as first-class sums while `try`-`catch` clauses are pattern
 matching on them ("consumes" a variant in a sum).
 Putting exceptions into function signatures
 looks like Java's `checked exceptions`, but with full type-inference.
+In this way, we can have cross-control-flow exceptions (instead of monadic)
+safely, because it's easy to ensure that an expression is exception-free
+simply by looking at its type.
 However, without the help of dependent types, there can be false positives
 such as conditionally-thrown exceptions -- consider a function `f` like this:
 
@@ -140,9 +144,10 @@ The above definition will actually be rejected by the termination checker,
 but recursion on sum-types *have* to be supported because we have been using
 it for a long time -- we shouldn't sacrifice this fundamental language feature.
 
-<p style="color: yellowgreen;">
-TODO This chapter is not finished.
-</p>
+We choose to annotate types with the so-called sized types
+(present in [MiniAgda]) to inform the compiler about how data size are changed
+in a function.
+This will also help recursive type definitions, because 
 
 # Implementation
 

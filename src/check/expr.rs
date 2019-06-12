@@ -11,7 +11,6 @@ use crate::syntax::level::Level;
 
 /**
 $$
-\\newcommand{\\cL}{{\\cal L}}
 \\newcommand{\\xx}[0]{\\texttt{x}}
 \\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
 \\newcommand{\\Gistype}[0]{\\Gamma \\istype}
@@ -19,11 +18,16 @@ $$
 \\newcommand{\\Gtyck}[0]{\\Gamma \\tyck}
 \\newcommand{\\infer}[0]{\\vdash_\\texttt{i}}
 \\newcommand{\\Ginfer}[0]{\\Gamma \\infer}
+\\newcommand{\\subtype}[0]{\\vdash_{<:}}
+\\newcommand{\\Gsubtype}[0]{\\Gamma \\subtype}
 \\newcommand{\\ty}[0]{\\textsf{Type}}
 \\newcommand{\\Sum}[0]{\\texttt{Sum}\\ }
 \\newcommand{\\merge}[0]{\\texttt{merge}}
+\\newcommand{\\eval}[0]{\\texttt{eval}}
 \\newcommand{\\inst}[0]{\\texttt{inst}}
-\\newcommand{\\cons}[0]{\\texttt{cons}\\ }
+\\newcommand{\\first}[0]{\\texttt{first}}
+\\newcommand{\\second}[0]{\\texttt{second}}
+\\newcommand{\\ctor}[0]{\\texttt{Cons}\\ }
 \\newcommand{\\app}[0]{\\texttt{app}}
 \\cfrac{\\Gtyck a:\\Pi\\ C \\Rightarrow n \\quad
         \\Gtyck b:o \\Rightarrow m}
@@ -34,25 +38,29 @@ $$
        {\\Gtyck a, b : \\Sigma\\ C \\Rightarrow n, m}
 \\\\ \\space \\\\
 \\cfrac{\\Gamma,[\\xx]:o \\tyck a:\\app(n, [\\xx])}
-       {\\Gtyck \\lambda \\xx.a :\\Pi \\lang o \\rightarrow n \\rang
-           \\Rightarrow \\lambda \\lang o \\rightarrow n \\rang}
+       {\\Gtyck \\lambda \\xx.a :\\Pi o. \\lang n \\rang
+            \\Rightarrow \\lambda \\lang n \\rang}
 \\\\ \\space \\\\
 \\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
         \\Gistype c \\Rightarrow m}
        {\\Gtyck a:o+m \\Rightarrow n}
 \\\\ \\space \\\\
-\\cfrac{}{\\Gtyck `L:\\Pi \\lang o \\rightarrow n \\rang
-          \\Rightarrow \\lambda \\lang o \\rightarrow n \\rang}
+\\cfrac{}{\\Gtyck \`\\ctor:\\Pi o. \\lang n \\rang
+           \\Rightarrow \\lambda \\lang n \\rang}
 \\\\ \\space \\\\
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
-       \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
-      {\\Gtyck (\\Sigma \\xx:a.b):\\ty \\Rightarrow
-          \\Sigma \\lang n \\rightarrow m \\rang}
+        \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
+       {\\Gtyck (\\Sigma \\xx:a.b):\\ty \\Rightarrow
+            \\Sigma n. \\lang m \\rang}
 \\\\ \\space \\\\
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
-       \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
-      {\\Gtyck (\\Pi \\xx:a.b):\\ty \\Rightarrow
-          \\Pi \\lang n \\rightarrow m \\rang}
+        \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
+       {\\Gtyck (\\Pi \\xx:a.b):\\ty \\Rightarrow
+            \\Pi n. \\lang m \\rang}
+\\\\ \\space \\\\
+\\cfrac{\\Ginfer a \\Rightarrow n \\quad
+        \\Gsubtype n <: m}
+       {\\Gtyck a:m \\Rightarrow \\eval(a)}
 $$
 Abstract Term -> Core Term under an expected type.
 
@@ -161,7 +169,6 @@ fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -
 
 /**
 $$
-\\newcommand{\\cL}{{\\cal L}}
 \\newcommand{\\xx}[0]{\\texttt{x}}
 \\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
 \\newcommand{\\Gistype}[0]{\\Gamma \\istype}
@@ -169,11 +176,16 @@ $$
 \\newcommand{\\Gtyck}[0]{\\Gamma \\tyck}
 \\newcommand{\\infer}[0]{\\vdash_\\texttt{i}}
 \\newcommand{\\Ginfer}[0]{\\Gamma \\infer}
+\\newcommand{\\subtype}[0]{\\vdash_{<:}}
+\\newcommand{\\Gsubtype}[0]{\\Gamma \\subtype}
 \\newcommand{\\ty}[0]{\\textsf{Type}}
 \\newcommand{\\Sum}[0]{\\texttt{Sum}\\ }
 \\newcommand{\\merge}[0]{\\texttt{merge}}
+\\newcommand{\\eval}[0]{\\texttt{eval}}
 \\newcommand{\\inst}[0]{\\texttt{inst}}
-\\newcommand{\\cons}[0]{\\texttt{cons}\\ }
+\\newcommand{\\first}[0]{\\texttt{first}}
+\\newcommand{\\second}[0]{\\texttt{second}}
+\\newcommand{\\ctor}[0]{\\texttt{Cons}\\ }
 \\newcommand{\\app}[0]{\\texttt{app}}
 \\cfrac{}{\\Gistype \\ty \\Rightarrow \\ty}
 \\quad
@@ -182,16 +194,16 @@ $$
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gistype \\Sigma \\xx:a.b \\Rightarrow
-           \\Sigma \\lang n \\rightarrow m \\rang}
+            \\Sigma n. \\lang m \\rang}
 \\\\ \\space \\\\
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gistype \\Pi \\xx:a.b \\Rightarrow
-           \\Pi \\lang n \\rightarrow m \\rang}
+            \\Pi n. \\lang m \\rang}
 \\\\ \\space \\\\
 \\cfrac{\\Gistype a \\Rightarrow \\Sum S_1 \\quad
         \\Gistype b \\Rightarrow \\Sum S_2}
-       {\\Gistype a+b \\Rightarrow \\Sum \\merge(S\_1, S_2)}
+       {\\Gistype a+b \\Rightarrow \\Sum \\merge(S_1, S_2)}
 $$
 Check if an expression is a valid type expression.
 */
@@ -249,7 +261,6 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
 
 /**
 $$
-\\newcommand{\\cL}{{\\cal L}}
 \\newcommand{\\xx}[0]{\\texttt{x}}
 \\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
 \\newcommand{\\Gistype}[0]{\\Gamma \\istype}
@@ -257,34 +268,41 @@ $$
 \\newcommand{\\Gtyck}[0]{\\Gamma \\tyck}
 \\newcommand{\\infer}[0]{\\vdash_\\texttt{i}}
 \\newcommand{\\Ginfer}[0]{\\Gamma \\infer}
+\\newcommand{\\subtype}[0]{\\vdash_{<:}}
+\\newcommand{\\Gsubtype}[0]{\\Gamma \\subtype}
 \\newcommand{\\ty}[0]{\\textsf{Type}}
 \\newcommand{\\Sum}[0]{\\texttt{Sum}\\ }
 \\newcommand{\\merge}[0]{\\texttt{merge}}
+\\newcommand{\\eval}[0]{\\texttt{eval}}
 \\newcommand{\\inst}[0]{\\texttt{inst}}
-\\newcommand{\\cons}[0]{\\texttt{cons}\\ }
-\\newcommand{\\app}[0]{\\texttt{app}}
 \\newcommand{\\first}[0]{\\texttt{first}}
+\\newcommand{\\second}[0]{\\texttt{second}}
+\\newcommand{\\ctor}[0]{\\texttt{Cons}\\ }
+\\newcommand{\\app}[0]{\\texttt{app}}
 \\cfrac{\\Gamma(\\xx) = o}{\\Ginfer \\xx \\Rightarrow o}
 \\quad
 \\cfrac{}{\\Ginfer \\ty \\Rightarrow \\ty}
 \\\\ \\space \\\\
-\\cfrac{\\Ginfer a \\Rightarrow \\Sigma \\lang n \\rightarrow m \\rang}
-      {\\Ginfer a\\ .1 \\Rightarrow n}
-\\quad
+\\cfrac{\\Ginfer a \\Rightarrow \\Sigma n. \\lang m \\rang}
+       {\\Ginfer a\\ .1 \\Rightarrow n}
+\\\\ \\space \\\\
 \\cfrac{\\Ginfer a \\Rightarrow n \\quad \\Ginfer b \\Rightarrow m}
-      {\\Ginfer a,b \\Rightarrow \\Sigma \\lang n \\rightarrow m \\rang}
+       {\\Ginfer a,b \\Rightarrow \\Sigma n. \\lang m \\rang}
 \\\\ \\space \\\\
-\\cfrac{\\Gistype a \\Rightarrow o}{\\Ginfer \`\\cons a \\Rightarrow \\ty}
+\\cfrac{\\Gistype a \\Rightarrow o}{\\Ginfer \`\\ctor a \\Rightarrow \\ty}
 \\\\ \\space \\\\
-\\cfrac{\\Ginfer a \\Rightarrow o}
-       {\\Ginfer \\cons a \\Rightarrow \\sum (\`\\cons o, ())}
+\\cfrac{\\Ginfer a \\Rightarrow o}{\\Ginfer \\ctor a \\Rightarrow \\sum (\`\\ctor o, ())}
 \\\\ \\space \\\\
-\\cfrac{\\Gistype a \\Rightarrow \\Sum S\_1 \\quad
-       \\Gistype b \\Rightarrow \\Sum S\_2}
-      {\\Ginfer a+b \\Rightarrow \\ty}
+\\cfrac{\\Ginfer a \\Rightarrow \\Pi o. \\lang n \\rang \\quad
+        \\Gtyck b:o \\Rightarrow m}
+       {\\Ginfer a \\ b \\Rightarrow \\inst(n, m)}
 \\\\ \\space \\\\
-\\cfrac{\\Ginfer a \\Rightarrow \\Sigma \\lang n \\rightarrow m \\rang}
-      {\\Ginfer a\\ .2 \\Rightarrow \\inst(m, \\first(a))}
+\\cfrac{\\Gistype a \\Rightarrow \\Sum S_1 \\quad
+        \\Gistype b \\Rightarrow \\Sum S_2}
+       {\\Ginfer a+b \\Rightarrow \\ty}
+\\\\ \\space \\\\
+\\cfrac{\\Ginfer a \\Rightarrow \\Sigma n. \\lang m \\rang}
+       {\\Ginfer a\\ .2 \\Rightarrow \\inst(m, \\first(a))}
 $$
 Infer type of a value.
 */
