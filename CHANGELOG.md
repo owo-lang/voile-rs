@@ -1,5 +1,7 @@
 # Change Log
 
+# 0.0.10
+
 # 0.0.9
 
 + Remove `Bot` in core (#78)
@@ -15,6 +17,7 @@
   something that will be used in the near future.
 + Add `-e` option for `voilec`,
   add `:infer`, `:eval`, and `:level` REPL commands (#90)
++ Use more TeX in `lib.rs` comments
 
 # 0.0.8
 
