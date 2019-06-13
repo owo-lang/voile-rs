@@ -57,27 +57,27 @@ The idea of "extensible record" is that the creation, manipulation and
 destruction of "records" can be done locally as an expression, without
 the need of declaring a record type globally, like:
 
-<span>$$
+$$
 \newcommand{\Bool}[0]{(\texttt{True}\mid\texttt{False})}
 \begin{alignedat}{2}
-&\texttt{not}&&:\Bool \rarr \Bool \\\\
+&\texttt{not}&&:\Bool \rarr \Bool \\\\ \space
 &\texttt{ifThenElse}&&:\forall A. \Bool \rarr A \rarr A \rarr A
 \end{alignedat}
-$$</span>
+$$
 
 For-all quantification should also support generalizing over a part of the
 records (in other words, [row-polymorphism][row-poly]), like:
 
-<span>$$
+$$
 \newcommand{\xx}[0]{\texttt{X}}
 \newcommand{\T}[0]{\lBrace\xx:A, ...=r\rBrace}
 \begin{alignedat}{2}
-&\texttt{getX}&&:\forall A. \T \rarr A \\\\
-&\texttt{getX}&&=\lambda s. (s.\xx) \\\\
-&\texttt{setX}&&:\forall A. \T \rarr A \rarr \T \\\\
+&\texttt{getX}&&:\forall A. \T \rarr A \\\\ \space
+&\texttt{getX}&&=\lambda s. (s.\xx) \\\\ \space
+&\texttt{setX}&&:\forall A. \T \rarr A \rarr \T \\\\ \space
 &\texttt{setX}&&= [\textnormal{syntax undecided yet}]
 \end{alignedat}
-$$</span>
+$$
 
 Existing row-polymorphism implementation divides into two groups
 according to how they support such generalization,
@@ -124,15 +124,15 @@ simply by looking at its type.
 
 We can denote function from $A$ to $B$ that may throw exception $E$ like this:
 
-<span>$$
+$$
 A \xrightarrow{E} B
-$$</span>
+$$
 
 A higher-order function taking an exception-throwing function and handles one
 exception will have signature like this (convert langauge-level exceptions to
 monadic exceptions):
 
-<span>$$
+$$
 (A \xrightarrow{E \mid r} B) \rarr (E \rarr B) \rarr (A \xrightarrow{r} B)
 $$
 
@@ -194,7 +194,7 @@ We may also write it in a more inductive way:
 
 $$
 \begin{alignedat}{2}
-&\mathbb{N}^0&&=\texttt{Zero}\\\\
+&\mathbb{N}^0&&=\texttt{Zero}\\\\ \space
 &\mathbb{N}^{(\texttt{s}\ i)}&&=\texttt{Suc}\ \mathbb{N}^i
 \end{alignedat}
 $$

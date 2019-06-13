@@ -10,7 +10,7 @@ use super::monad::{ValTCM, TCE, TCM, TCS};
 use crate::syntax::level::Level;
 
 /**
-<span>$$
+$$
 \\newcommand{\\xx}[0]{\\texttt{x}}
 \\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
 \\newcommand{\\Gistype}[0]{\\Gamma \\istype}
@@ -32,43 +32,43 @@ use crate::syntax::level::Level;
 \\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
         \\Gamma,n:o \\tyck b:\\inst(C, n) \\Rightarrow m}
        {\\Gtyck a, b : \\Sigma\\ C \\Rightarrow n, m}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Gamma,[\\xx]:o \\tyck a:\\app(n, [\\xx])}
        {\\Gtyck \\lambda \\xx.a :\\Pi o. \\lang n \\rang
             \\Rightarrow \\lambda \\lang n \\rang}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
         \\Gistype c \\Rightarrow m}
        {\\Gtyck a:o+m \\Rightarrow n}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{}{\\Gtyck \`\\ctor:\\Pi o. \\lang n \\rang
            \\Rightarrow \\lambda \\lang n \\rang}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gtyck (\\Sigma \\xx:a.b):\\ty \\Rightarrow
             \\Sigma n. \\lang m \\rang}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gtyck (\\Pi \\xx:a.b):\\ty \\Rightarrow
             \\Pi n. \\lang m \\rang}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Ginfer a \\Rightarrow n \\quad
         \\Gsubtype n <: m}
        {\\Gtyck a:m \\Rightarrow \\eval(a)}
-$$</span>
+$$
 Abstract Term -> Core Term under an expected type.
 
 Some additional operations:
 
-<span>$$
+$$
 \\newcommand{\\merge}[0]{\\texttt{merge}}
 \\begin{alignedat}{1}
 \\merge((), S) &= S \\\\
 \\merge((\`L\\ a, S\_1), S\_2) &= \\merge(S\_1, (\`L a, S\_2))
 \\end{alignedat}
-$$</span>
+$$
 */
 fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     use Abs::*;
@@ -164,43 +164,43 @@ fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -
 }
 
 /**
-<span>$$
-\\newcommand{\\xx}[0]{\\texttt{x}}
-\\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
-\\newcommand{\\Gistype}[0]{\\Gamma \\istype}
-\\newcommand{\\tyck}[0]{\\vdash_\\texttt{c}}
-\\newcommand{\\Gtyck}[0]{\\Gamma \\tyck}
-\\newcommand{\\infer}[0]{\\vdash_\\texttt{i}}
-\\newcommand{\\Ginfer}[0]{\\Gamma \\infer}
-\\newcommand{\\subtype}[0]{\\vdash_{<:}}
-\\newcommand{\\Gsubtype}[0]{\\Gamma \\subtype}
-\\newcommand{\\ty}[0]{\\textsf{Type}}
-\\newcommand{\\Sum}[0]{\\texttt{Sum}\\ }
-\\newcommand{\\merge}[0]{\\texttt{merge}}
-\\newcommand{\\eval}[0]{\\texttt{eval}}
-\\newcommand{\\inst}[0]{\\texttt{inst}}
-\\newcommand{\\first}[0]{\\texttt{first}}
-\\newcommand{\\second}[0]{\\texttt{second}}
-\\newcommand{\\ctor}[0]{\\texttt{Cons}\\ }
-\\newcommand{\\app}[0]{\\texttt{app}}
+$$
+\newcommand{\xx}\\[0\\]{\texttt{x}}
+\newcommand{\istype}\\[0\\]{\vdash_\texttt{t}}
+\newcommand{\Gistype}\\[0\\]{\Gamma \istype}
+\newcommand{\tyck}\\[0\\]{\vdash_\texttt{c}}
+\newcommand{\Gtyck}\\[0\\]{\Gamma \tyck}
+\newcommand{\infer}\\[0\\]{\vdash_\texttt{i}}
+\newcommand{\Ginfer}\\[0\\]{\Gamma \infer}
+\newcommand{\subtype}\\[0\\]{\vdash_{<:}}
+\newcommand{\Gsubtype}\\[0\\]{\Gamma \subtype}
+\newcommand{\ty}\\[0\\]{\textsf{Type}}
+\newcommand{\Sum}\\[0\\]{\texttt{Sum}\\ }
+\newcommand{\merge}\\[0\\]{\texttt{merge}}
+\newcommand{\eval}\\[0\\]{\texttt{eval}}
+\newcommand{\inst}\\[0\\]{\texttt{inst}}
+\newcommand{\first}\\[0\\]{\texttt{first}}
+\newcommand{\second}\\[0\\]{\texttt{second}}
+\newcommand{\ctor}\\[0\\]{\texttt{Cons}\\ }
+\newcommand{\app}\\[0\\]{\texttt{app}}
 \\cfrac{}{\\Gistype \\ty \\Rightarrow \\ty}
 \\quad
 \\cfrac{}{\\Gistype \\bot \\Rightarrow \\Sum ()}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gistype \\Sigma \\xx:a.b \\Rightarrow
             \\Sigma n. \\lang m \\rang}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gistype \\Pi \\xx:a.b \\Rightarrow
             \\Pi n. \\lang m \\rang}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Gistype a \\Rightarrow \\Sum S_1 \\quad
         \\Gistype b \\Rightarrow \\Sum S_2}
        {\\Gistype a+b \\Rightarrow \\Sum \\merge(S_1, S_2)}
-$$</span>
+$$
 Check if an expression is a valid type expression.
 */
 fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
@@ -256,7 +256,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
 }
 
 /**
-<span>$$
+$$
 \\newcommand{\\xx}[0]{\\texttt{x}}
 \\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
 \\newcommand{\\Gistype}[0]{\\Gamma \\istype}
@@ -278,28 +278,28 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
 \\cfrac{\\Gamma(\\xx) = o}{\\Ginfer \\xx \\Rightarrow o}
 \\quad
 \\cfrac{}{\\Ginfer \\ty \\Rightarrow \\ty}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Ginfer a \\Rightarrow \\Sigma n. \\lang m \\rang}
        {\\Ginfer a\\ .1 \\Rightarrow n}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Ginfer a \\Rightarrow n \\quad \\Ginfer b \\Rightarrow m}
        {\\Ginfer a,b \\Rightarrow \\Sigma n. \\lang m \\rang}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Gistype a \\Rightarrow o}{\\Ginfer \`\\ctor a \\Rightarrow \\ty}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Ginfer a \\Rightarrow o}{\\Ginfer \\ctor a \\Rightarrow \\sum (\`\\ctor o, ())}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Ginfer a \\Rightarrow \\Pi o. \\lang n \\rang \\quad
         \\Gtyck b:o \\Rightarrow m}
        {\\Ginfer a \\ b \\Rightarrow \\inst(n, m)}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Gistype a \\Rightarrow \\Sum S_1 \\quad
         \\Gistype b \\Rightarrow \\Sum S_2}
        {\\Ginfer a+b \\Rightarrow \\ty}
-\\\\ \\space \\\\
+\\\\ \space \\\\ \space
 \\cfrac{\\Ginfer a \\Rightarrow \\Sigma n. \\lang m \\rang}
        {\\Ginfer a\\ .2 \\Rightarrow \\inst(m, \\first(a))}
-$$</span>
+$$
 Infer type of a value.
 */
 fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
