@@ -57,18 +57,18 @@ The idea of "extensible record" is that the creation, manipulation and
 destruction of "records" can be done locally as an expression, without
 the need of declaring a record type globally, like:
 
-$$
+<span>$$
 \newcommand{\Bool}[0]{(\texttt{True}\mid\texttt{False})}
 \begin{alignedat}{2}
 &\texttt{not}&&:\Bool \rarr \Bool \\\\
 &\texttt{ifThenElse}&&:\forall A. \Bool \rarr A \rarr A \rarr A
 \end{alignedat}
-$$
+$$</span>
 
 For-all quantification should also support generalizing over a part of the
 records (in other words, [row-polymorphism][row-poly]), like:
 
-$$
+<span>$$
 \newcommand{\xx}[0]{\texttt{X}}
 \newcommand{\T}[0]{\lBrace\xx:A, ...=r\rBrace}
 \begin{alignedat}{2}
@@ -77,7 +77,7 @@ $$
 &\texttt{setX}&&:\forall A. \T \rarr A \rarr \T \\\\
 &\texttt{setX}&&= [\textnormal{syntax undecided yet}]
 \end{alignedat}
-$$
+$$</span>
 
 Existing row-polymorphism implementation divides into two groups
 according to how they support such generalization,
@@ -124,15 +124,15 @@ simply by looking at its type.
 
 We can denote function from $A$ to $B$ that may throw exception $E$ like this:
 
-$$
+<span>$$
 A \xrightarrow{E} B
-$$
+$$</span>
 
 A higher-order function taking an exception-throwing function and handles one
 exception will have signature like this (convert langauge-level exceptions to
 monadic exceptions):
 
-$$
+<span>$$
 (A \xrightarrow{E \mid r} B) \rarr (E \rarr B) \rarr (A \xrightarrow{r} B)
 $$
 
@@ -210,7 +210,7 @@ prototype, [minitt].
 
 <p style="color: yellowgreen;">
 TODO Something needs to be written here.
-</p>
+</span>
 
  [Agda]: http://www.cse.chalmers.se/~ulfn/papers/thesis.pdf
  [MiniAgda]: http://www.cse.chalmers.se/~abela/miniagda
@@ -218,7 +218,7 @@ TODO Something needs to be written here.
  [minitt]: https://lib.rs/crates/minitt
 
 <br/>
-<p>
+<span>
 <details>
 <summary>About the name, Voile</summary>
 <span>
@@ -228,14 +228,14 @@ href="https://www.codewars.com/users/Voile"><em>Voile</em></a> (or
 However, this is also the name of a library in the
 <a href="https://en.touhouwiki.net/wiki/Scarlet_Devil_Mansion"><em>
 Scarlet Devil Mansion</em></a>.
-</span></p>
-<p><details>
+</span></span>
+<span><details>
 <summary>The librarian of Voile, the Magic Library</summary>
 <img src=
 "https://raw.githubusercontent.com/owo-lang/voile-rs/master/rustdoc/voile-librarian.png"
 alt="" />
 </details>
-</details></p>
+</details></span>
 */
 
 /// Abstract syntax, surface syntax,
