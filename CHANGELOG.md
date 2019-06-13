@@ -2,6 +2,8 @@
 
 # 0.0.10
 
++ Fix rustdoc format
+
 # 0.0.9
 
 + Remove `Bot` in core (#78)

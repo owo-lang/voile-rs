@@ -60,7 +60,7 @@ the need of declaring a record type globally, like:
 $$
 \newcommand{\Bool}[0]{(\texttt{True}\mid\texttt{False})}
 \begin{alignedat}{2}
-&\texttt{not}&&:\Bool \rarr \Bool \\\\
+&\texttt{not}&&:\Bool \rarr \Bool \newline
 &\texttt{ifThenElse}&&:\forall A. \Bool \rarr A \rarr A \rarr A
 \end{alignedat}
 $$
@@ -72,9 +72,9 @@ $$
 \newcommand{\xx}[0]{\texttt{X}}
 \newcommand{\T}[0]{\lBrace\xx:A, ...=r\rBrace}
 \begin{alignedat}{2}
-&\texttt{getX}&&:\forall A. \T \rarr A \\\\
-&\texttt{getX}&&=\lambda s. (s.\xx) \\\\
-&\texttt{setX}&&:\forall A. \T \rarr A \rarr \T \\\\
+&\texttt{getX}&&:\forall A. \T \rarr A \newline
+&\texttt{getX}&&=\lambda s. (s.\xx) \newline
+&\texttt{setX}&&:\forall A. \T \rarr A \rarr \T \newline
 &\texttt{setX}&&= [\textnormal{syntax undecided yet}]
 \end{alignedat}
 $$
@@ -194,7 +194,7 @@ We may also write it in a more inductive way:
 
 $$
 \begin{alignedat}{2}
-&\mathbb{N}^0&&=\texttt{Zero}\\\\
+&\mathbb{N}^0&&=\texttt{Zero}\newline
 &\mathbb{N}^{(\texttt{s}\ i)}&&=\texttt{Suc}\ \mathbb{N}^i
 \end{alignedat}
 $$

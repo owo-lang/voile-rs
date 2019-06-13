@@ -32,28 +32,28 @@ $$
 \\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
         \\Gamma,n:o \\tyck b:\\inst(C, n) \\Rightarrow m}
        {\\Gtyck a, b : \\Sigma\\ C \\Rightarrow n, m}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Gamma,[\\xx]:o \\tyck a:\\app(n, [\\xx])}
        {\\Gtyck \\lambda \\xx.a :\\Pi o. \\lang n \\rang
             \\Rightarrow \\lambda \\lang n \\rang}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
         \\Gistype c \\Rightarrow m}
        {\\Gtyck a:o+m \\Rightarrow n}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{}{\\Gtyck \`\\ctor:\\Pi o. \\lang n \\rang
            \\Rightarrow \\lambda \\lang n \\rang}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gtyck (\\Sigma \\xx:a.b):\\ty \\Rightarrow
             \\Sigma n. \\lang m \\rang}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gtyck (\\Pi \\xx:a.b):\\ty \\Rightarrow
             \\Pi n. \\lang m \\rang}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Ginfer a \\Rightarrow n \\quad
         \\Gsubtype n <: m}
        {\\Gtyck a:m \\Rightarrow \\eval(a)}
@@ -65,7 +65,7 @@ Some additional operations:
 $$
 \\newcommand{\\merge}[0]{\\texttt{merge}}
 \\begin{alignedat}{1}
-\\merge((), S) &= S \\\\
+\\merge((), S) &= S \newline
 \\merge((\`L\\ a, S\_1), S\_2) &= \\merge(S\_1, (\`L a, S\_2))
 \\end{alignedat}
 $$
@@ -186,17 +186,17 @@ $$
 \\cfrac{}{\\Gistype \\ty \\Rightarrow \\ty}
 \\quad
 \\cfrac{}{\\Gistype \\bot \\Rightarrow \\Sum ()}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gistype \\Sigma \\xx:a.b \\Rightarrow
             \\Sigma n. \\lang m \\rang}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Gistype a \\Rightarrow n \\quad
         \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
        {\\Gistype \\Pi \\xx:a.b \\Rightarrow
             \\Pi n. \\lang m \\rang}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Gistype a \\Rightarrow \\Sum S_1 \\quad
         \\Gistype b \\Rightarrow \\Sum S_2}
        {\\Gistype a+b \\Rightarrow \\Sum \\merge(S_1, S_2)}
@@ -278,25 +278,25 @@ $$
 \\cfrac{\\Gamma(\\xx) = o}{\\Ginfer \\xx \\Rightarrow o}
 \\quad
 \\cfrac{}{\\Ginfer \\ty \\Rightarrow \\ty}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Ginfer a \\Rightarrow \\Sigma n. \\lang m \\rang}
        {\\Ginfer a\\ .1 \\Rightarrow n}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Ginfer a \\Rightarrow n \\quad \\Ginfer b \\Rightarrow m}
        {\\Ginfer a,b \\Rightarrow \\Sigma n. \\lang m \\rang}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Gistype a \\Rightarrow o}{\\Ginfer \`\\ctor a \\Rightarrow \\ty}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Ginfer a \\Rightarrow o}{\\Ginfer \\ctor a \\Rightarrow \\sum (\`\\ctor o, ())}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Ginfer a \\Rightarrow \\Pi o. \\lang n \\rang \\quad
         \\Gtyck b:o \\Rightarrow m}
        {\\Ginfer a \\ b \\Rightarrow \\inst(n, m)}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Gistype a \\Rightarrow \\Sum S_1 \\quad
         \\Gistype b \\Rightarrow \\Sum S_2}
        {\\Ginfer a+b \\Rightarrow \\ty}
-\\\\ \\space \\\\
+\newline \\space \newline
 \\cfrac{\\Ginfer a \\Rightarrow \\Sigma n. \\lang m \\rang}
        {\\Ginfer a\\ .2 \\Rightarrow \\inst(m, \\first(a))}
 $$
