@@ -11,24 +11,24 @@ use crate::syntax::level::Level;
 
 /**
 $$
-\\newcommand{\\xx}[0]{\\texttt{x}}
-\\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
-\\newcommand{\\Gistype}[0]{\\Gamma \\istype}
-\\newcommand{\\tyck}[0]{\\vdash_\\texttt{c}}
-\\newcommand{\\Gtyck}[0]{\\Gamma \\tyck}
-\\newcommand{\\infer}[0]{\\vdash_\\texttt{i}}
-\\newcommand{\\Ginfer}[0]{\\Gamma \\infer}
-\\newcommand{\\subtype}[0]{\\vdash_{<:}}
-\\newcommand{\\Gsubtype}[0]{\\Gamma \\subtype}
-\\newcommand{\\ty}[0]{\\textsf{Type}}
-\\newcommand{\\Sum}[0]{\\texttt{Sum}\\ }
-\\newcommand{\\merge}[0]{\\texttt{merge}}
-\\newcommand{\\eval}[0]{\\texttt{eval}}
-\\newcommand{\\inst}[0]{\\texttt{inst}}
-\\newcommand{\\first}[0]{\\texttt{first}}
-\\newcommand{\\second}[0]{\\texttt{second}}
-\\newcommand{\\ctor}[0]{\\texttt{Cons}\\ }
-\\newcommand{\\app}[0]{\\texttt{app}}
+\newcommand{\xx}[0]{\texttt{x}}
+\newcommand{\istype}[0]{\vdash_\texttt{t}}
+\newcommand{\Gistype}[0]{\Gamma \istype}
+\newcommand{\tyck}[0]{\vdash_\texttt{c}}
+\newcommand{\Gtyck}[0]{\Gamma \tyck}
+\newcommand{\infer}[0]{\vdash_\texttt{i}}
+\newcommand{\Ginfer}[0]{\Gamma \infer}
+\newcommand{\subtype}[0]{\vdash_{<:}}
+\newcommand{\Gsubtype}[0]{\Gamma \subtype}
+\newcommand{\ty}[0]{\textsf{Type}}
+\newcommand{\Sum}[0]{\texttt{Sum}\\ }
+\newcommand{\merge}[0]{\texttt{merge}}
+\newcommand{\eval}[0]{\texttt{eval}}
+\newcommand{\inst}[0]{\texttt{inst}}
+\newcommand{\first}[0]{\texttt{first}}
+\newcommand{\second}[0]{\texttt{second}}
+\newcommand{\ctor}[0]{\texttt{Cons}\\ }
+\newcommand{\app}[0]{\texttt{app}}
 \\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
         \\Gamma,n:o \\tyck b:\\inst(C, n) \\Rightarrow m}
        {\\Gtyck a, b : \\Sigma\\ C \\Rightarrow n, m}
@@ -165,24 +165,24 @@ fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -
 
 /**
 $$
-\newcommand{\xx}\\[0\\]{\texttt{x}}
-\newcommand{\istype}\\[0\\]{\vdash_\texttt{t}}
-\newcommand{\Gistype}\\[0\\]{\Gamma \istype}
-\newcommand{\tyck}\\[0\\]{\vdash_\texttt{c}}
-\newcommand{\Gtyck}\\[0\\]{\Gamma \tyck}
-\newcommand{\infer}\\[0\\]{\vdash_\texttt{i}}
-\newcommand{\Ginfer}\\[0\\]{\Gamma \infer}
-\newcommand{\subtype}\\[0\\]{\vdash_{<:}}
-\newcommand{\Gsubtype}\\[0\\]{\Gamma \subtype}
-\newcommand{\ty}\\[0\\]{\textsf{Type}}
-\newcommand{\Sum}\\[0\\]{\texttt{Sum}\\ }
-\newcommand{\merge}\\[0\\]{\texttt{merge}}
-\newcommand{\eval}\\[0\\]{\texttt{eval}}
-\newcommand{\inst}\\[0\\]{\texttt{inst}}
-\newcommand{\first}\\[0\\]{\texttt{first}}
-\newcommand{\second}\\[0\\]{\texttt{second}}
-\newcommand{\ctor}\\[0\\]{\texttt{Cons}\\ }
-\newcommand{\app}\\[0\\]{\texttt{app}}
+\newcommand{\xx}[0]{\texttt{x}}
+\newcommand{\istype}[0]{\vdash_\texttt{t}}
+\newcommand{\Gistype}[0]{\Gamma \istype}
+\newcommand{\tyck}[0]{\vdash_\texttt{c}}
+\newcommand{\Gtyck}[0]{\Gamma \tyck}
+\newcommand{\infer}[0]{\vdash_\texttt{i}}
+\newcommand{\Ginfer}[0]{\Gamma \infer}
+\newcommand{\subtype}[0]{\vdash_{<:}}
+\newcommand{\Gsubtype}[0]{\Gamma \subtype}
+\newcommand{\ty}[0]{\textsf{Type}}
+\newcommand{\Sum}[0]{\texttt{Sum}\\ }
+\newcommand{\merge}[0]{\texttt{merge}}
+\newcommand{\eval}[0]{\texttt{eval}}
+\newcommand{\inst}[0]{\texttt{inst}}
+\newcommand{\first}[0]{\texttt{first}}
+\newcommand{\second}[0]{\texttt{second}}
+\newcommand{\ctor}[0]{\texttt{Cons}\\ }
+\newcommand{\app}[0]{\texttt{app}}
 \\cfrac{}{\\Gistype \\ty \\Rightarrow \\ty}
 \\quad
 \\cfrac{}{\\Gistype \\bot \\Rightarrow \\Sum ()}
@@ -257,24 +257,24 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
 
 /**
 $$
-\\newcommand{\\xx}[0]{\\texttt{x}}
-\\newcommand{\\istype}[0]{\\vdash_\\texttt{t}}
-\\newcommand{\\Gistype}[0]{\\Gamma \\istype}
-\\newcommand{\\tyck}[0]{\\vdash_\\texttt{c}}
-\\newcommand{\\Gtyck}[0]{\\Gamma \\tyck}
-\\newcommand{\\infer}[0]{\\vdash_\\texttt{i}}
-\\newcommand{\\Ginfer}[0]{\\Gamma \\infer}
-\\newcommand{\\subtype}[0]{\\vdash_{<:}}
-\\newcommand{\\Gsubtype}[0]{\\Gamma \\subtype}
-\\newcommand{\\ty}[0]{\\textsf{Type}}
-\\newcommand{\\Sum}[0]{\\texttt{Sum}\\ }
-\\newcommand{\\merge}[0]{\\texttt{merge}}
-\\newcommand{\\eval}[0]{\\texttt{eval}}
-\\newcommand{\\inst}[0]{\\texttt{inst}}
-\\newcommand{\\first}[0]{\\texttt{first}}
-\\newcommand{\\second}[0]{\\texttt{second}}
-\\newcommand{\\ctor}[0]{\\texttt{Cons}\\ }
-\\newcommand{\\app}[0]{\\texttt{app}}
+\newcommand{\xx}[0]{\texttt{x}}
+\newcommand{\istype}[0]{\vdash_\texttt{t}}
+\newcommand{\Gistype}[0]{\Gamma \istype}
+\newcommand{\tyck}[0]{\vdash_\texttt{c}}
+\newcommand{\Gtyck}[0]{\Gamma \tyck}
+\newcommand{\infer}[0]{\vdash_\texttt{i}}
+\newcommand{\Ginfer}[0]{\Gamma \infer}
+\newcommand{\subtype}[0]{\vdash_{<:}}
+\newcommand{\Gsubtype}[0]{\Gamma \subtype}
+\newcommand{\ty}[0]{\textsf{Type}}
+\newcommand{\Sum}[0]{\texttt{Sum}\\ }
+\newcommand{\merge}[0]{\texttt{merge}}
+\newcommand{\eval}[0]{\texttt{eval}}
+\newcommand{\inst}[0]{\texttt{inst}}
+\newcommand{\first}[0]{\texttt{first}}
+\newcommand{\second}[0]{\texttt{second}}
+\newcommand{\ctor}[0]{\texttt{Cons}\\ }
+\newcommand{\app}[0]{\texttt{app}}
 \\cfrac{\\Gamma(\\xx) = o}{\\Ginfer \\xx \\Rightarrow o}
 \\quad
 \\cfrac{}{\\Ginfer \\ty \\Rightarrow \\ty}
