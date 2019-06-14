@@ -141,9 +141,7 @@ pub enum Neutral {
     Snd(Box<Self>),
 }
 
-/// Postulated value, aka axioms.
-/// If the `Option<DBI>` value is `None`, then it's really postulated.
-/// Otherwise it should be a generated lambda parameter.
+/// Postulated value (or temporarily irreducible expressions), aka axioms.
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum Axiom {
     /// Functions without implementation.
