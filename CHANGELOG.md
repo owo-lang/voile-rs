@@ -2,6 +2,8 @@
 
 # 0.0.14
 
++ Documentation cleanup
+
 # 0.0.9
 
 + Remove `Bot` in core (#78)

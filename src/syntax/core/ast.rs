@@ -28,7 +28,7 @@ impl Val {
     \\app([k], o) &= [k\ o]
     \\end{alignedat}
     $$
-    Just for evaluation during beta-reduction.
+    For evaluation during beta-reduction.
     */
     pub fn apply(self, arg: Val) -> Val {
         match self {
@@ -47,7 +47,7 @@ impl Val {
     \\first([k]) &= [k\ .1] \\\\
     \\end{alignedat}
     $$
-    Just for evaluation during beta-reduction.
+    For evaluation during beta-reduction.
     */
     pub fn first(self) -> Val {
         match self {
@@ -58,13 +58,15 @@ impl Val {
     }
 
     /**
+    $$
     \\newcommand{\\first}[0]{\\texttt{first}}
     \\newcommand{\\second}[0]{\\texttt{second}}
     \\begin{alignedat}{1}
     \\second(n, m) &= m \\\\
     \\second([k]) &= [k\ .2]
     \\end{alignedat}
-    Just for evaluation during beta-reduction.
+    $$
+    For evaluation during beta-reduction.
     */
     pub fn second(self) -> Val {
         match self {
