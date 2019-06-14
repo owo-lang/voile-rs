@@ -23,7 +23,7 @@ sums and records.
 
 ## Resources
 
-+ [Doc.rs][doc-rs] documentation (a tutorial is included)
++ [Docs.rs][doc-rs] documentation (a tutorial is included)
 + [Change Log](CHANGELOG.md)
 + [IntelliJ Plugin][plugin]
 + [Code examples](samples)
