@@ -13,6 +13,11 @@ pub enum DtKind {
 /// are curious but have no idea about it.
 pub type DBI = usize;
 
+/// Meta variable indices (they're resolved as global reference).
+pub type MI = usize;
+
+// TODO: add standalone type for global indices
+
 pub type UID = usize;
 static mut UID_COUNT: UID = 0;
 

@@ -12,6 +12,7 @@ impl Display for Neutral {
             // This might be conflict with other syntax.
             Ref(dbi) => write!(f, "[|{:?}|]", dbi),
             Axi(a) => a.fmt(f),
+            Meta(mi) => write!(f, "?{:?}", mi),
             App(fun, a) => write!(f, "({} {})", fun, a),
             Fst(p) => write!(f, "({}.1)", p),
             Snd(p) => write!(f, "({}.2)", p),

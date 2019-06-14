@@ -84,7 +84,7 @@ impl LiftEx for Neutral {
                 None => Some(Level::Omega),
             },
             // Level is zero by default
-            Var(..) | Axi(..) => Some(Default::default()),
+            Var(..) | Axi(..) | Meta(..) => Some(Default::default()),
             Ref(..) => None,
             Fst(expr) => expr.calc_level(),
             Snd(expr) => expr.calc_level(),

@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
 
-use super::level::*;
-use crate::syntax::common::{next_uid, DtKind, DBI, UID};
+use crate::syntax::common::{next_uid, DtKind, DBI, MI, UID};
 use crate::syntax::level::Level;
+
+use super::level::*;
 
 pub type Variants = BTreeMap<String, TVal>;
 
@@ -131,6 +132,8 @@ pub enum Neutral {
     Var(DBI),
     /// Global variable, referred by index. Needed for recursive definitions.
     Ref(DBI),
+    /// Meta variable reference.
+    Meta(MI),
     /// Lifting self to a higher/lower level.
     Lift(u32, Box<Self>),
     /// Postulated value, aka axioms.
@@ -178,6 +181,7 @@ impl Neutral {
             Snd(p) => Snd(Box::new(p.map_axiom(f))),
             Var(n) => Var(n),
             Ref(n) => Ref(n),
+            Meta(n) => Meta(n),
             Lift(levels, expr) => Lift(levels, Box::new(expr.map_axiom(f))),
         }
     }
@@ -208,6 +212,7 @@ impl RedEx for Neutral {
             Var(n) if dbi == n => arg.attach_dbi(dbi),
             Var(n) => Val::var(n),
             Ref(n) => Val::glob(n),
+            Meta(mi) => Val::Neut(Meta(mi)),
             Axi(a) => Val::Neut(Axi(a)),
             App(function, argument) => function
                 .reduce_with_dbi(arg.clone(), dbi)
@@ -244,6 +249,7 @@ pub enum Val {
     Cons(String, Box<Self>),
     /// Sigma instance.
     Pair(Box<Self>, Box<Self>),
+    /// Neutral value means irreducible but not canonical values.
     Neut(Neutral),
 }
 
@@ -253,6 +259,7 @@ impl Val {
         match self {
             Type(..) | Dt(..) | Sum(..) => true,
             // In case it's neutral, we use `is_universe` on its type.
+            // In case it's a meta, we're supposed to solve it.
             Lam(..) | Cons(..) | Pair(..) | Neut(..) => false,
         }
     }

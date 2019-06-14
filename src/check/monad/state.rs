@@ -1,8 +1,33 @@
-use crate::syntax::common::DBI;
-use crate::syntax::core::ValInfo;
+use crate::syntax::common::{DBI, MI};
+use crate::syntax::core::{Val, ValInfo};
 
 /// Typing context.
 pub type Gamma = Vec<ValInfo>;
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum MetaSolution {
+    /// Solved meta.
+    ///
+    /// Boxed to make the variable smaller.
+    Solved(Box<Val>),
+    /// Not yet solved meta.
+    Unsolved,
+    /// This may probably be unused and we'll see.
+    /// If so, it's gonna be deleted.
+    Inlined,
+}
+
+impl Default for MetaSolution {
+    fn default() -> Self {
+        MetaSolution::Unsolved
+    }
+}
+
+impl MetaSolution {
+    pub fn solved(val: Val) -> Self {
+        MetaSolution::Solved(Box::new(val))
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct TCS {
@@ -14,9 +39,26 @@ pub struct TCS {
     pub gamma: Gamma,
     /// Local typing context.
     pub local_gamma: Gamma,
+    /// Meta variable context. Always global.
+    meta_context: Vec<MetaSolution>,
 }
 
 impl TCS {
+    pub fn solve_meta(&mut self, meta_index: MI, solution: Val) {
+        let meta_solution = &mut self.meta_context[meta_index];
+        debug_assert_eq!(meta_solution, &mut MetaSolution::Unsolved);
+        *meta_solution = MetaSolution::solved(solution);
+    }
+
+    pub fn meta_solution(&self, meta_index: MI) -> &MetaSolution {
+        &self.meta_context[meta_index]
+    }
+
+    pub fn initialize_meta_context(&mut self, meta_count: MI) {
+        debug_assert!(self.meta_context.is_empty());
+        self.meta_context.resize_with(meta_count, Default::default);
+    }
+
     pub fn local_type(&self, dbi: DBI) -> &ValInfo {
         &self.local_gamma[self.local_gamma.len() - dbi - 1]
     }
