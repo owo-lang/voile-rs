@@ -392,43 +392,11 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
 }
 
 /// Check if `subtype` is a subtype of `supertype`.
-fn check_subtype(mut tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
-    use crate::syntax::core::Neutral::*;
-    use crate::syntax::core::Val::*;
+fn check_subtype(tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
+    use Val::*;
     match (subtype, supertype) {
         (Type(sub_level), Type(super_level)) if sub_level <= super_level => Ok(tcs),
-        (Neut(Axi(sub)), Neut(Axi(sup))) => {
-            if sub.unique_id() == sup.unique_id() {
-                Ok(tcs)
-            } else {
-                Err(TCE::NotSameType(subtype.clone(), supertype.clone()))
-            }
-        }
-        (Neut(Var(sub_dbi)), Neut(Var(super_dbi))) => {
-            if sub_dbi == super_dbi {
-                Ok(tcs)
-            } else {
-                Err(TCE::NotSameType(Neut(Var(*sub_dbi)), Neut(Var(*super_dbi))))
-            }
-        }
-        (Sum(sub_variants), Sum(super_variants)) => {
-            for (name, ty) in sub_variants {
-                let counterpart = super_variants
-                    .get(name)
-                    .ok_or_else(|| TCE::MissingVariant(name.clone()))?;
-                tcs = tcs.check_subtype(ty, counterpart)?;
-            }
-            Ok(tcs)
-        }
-        // Bottom type
-        (Sum(variants), sup) => {
-            if variants.is_empty() {
-                Ok(tcs)
-            } else {
-                Err(TCE::NotSubtype(Sum(variants.clone()), sup.clone()))
-            }
-        }
-        (e, t) => panic!("Unimplemented subtyping: `{}` against `{}`.", e, t),
+        (e, t) => tcs.unify(e, t),
     }
 }
 

@@ -3,6 +3,7 @@ use crate::syntax::abs::AbsDecl;
 pub use self::decl::*;
 pub use self::eval::*;
 pub use self::expr::*;
+pub use self::unify::*;
 
 /**
 $$
@@ -14,6 +15,11 @@ $$
 Type-checking monad is a `Result<State, Rrror>`.
 */
 pub mod monad;
+
+/**
+Meta variable resolution.
+*/
+mod unify;
 
 /// Declaration relevant checking.
 ///
