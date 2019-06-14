@@ -102,3 +102,12 @@ pub enum AbsDecl {
     /// Function body with a signature.
     Impl(Abs, DBI),
 }
+
+impl ToSyntaxInfo for AbsDecl {
+    fn syntax_info(&self) -> SyntaxInfo {
+        use AbsDecl::*;
+        match self {
+            Sign(abs, ..) | Decl(abs) | Impl(abs, ..) => abs.syntax_info(),
+        }
+    }
+}

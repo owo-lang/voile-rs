@@ -3,6 +3,7 @@
 # 0.0.14
 
 + Documentation cleanup
++ Report error on redefinitions (#107)
 
 # 0.0.9
 

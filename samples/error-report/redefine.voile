@@ -1,0 +1,8 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-06-14
+// redefine
+// Author: ice1000
+//
+
+val redefine : Type1;
+val redefine : Type;

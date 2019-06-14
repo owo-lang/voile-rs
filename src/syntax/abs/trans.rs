@@ -50,9 +50,13 @@ fn trans_one_decl(mut tcs: TransState, decl: &Decl) -> TCM<TransState> {
             abs
         }
         // Re-type-signaturing something, should give error
-        (DeclKind::Sign, Some(..)) => unimplemented!(),
+        (DeclKind::Sign, Some(thing)) => {
+            return Err(TCE::ReDefine(decl.name.info, thing.syntax_info()))
+        }
         // Re-defining something, should give error
-        (_, Some(AbsDecl::Impl(..))) | (_, Some(AbsDecl::Decl(..))) => unimplemented!(),
+        (_, Some(AbsDecl::Impl(thing, ..))) | (_, Some(AbsDecl::Decl(thing))) => {
+            return Err(TCE::ReDefine(decl.name.info, thing.syntax_info()))
+        }
         (DeclKind::Impl, None) => {
             tcs.decl_count += 1;
             tcs.signature_indices.push(tcs.decls.len());

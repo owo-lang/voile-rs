@@ -31,6 +31,9 @@ pub enum TCE {
     /// Cannot find the definition.
     LookUpFailed(Ident),
     Wrapped(Box<Self>, SyntaxInfo),
+    /// The definition at the first `SyntaxInfo` will
+    /// hide the definition at the second `SyntaxInfo`.
+    ReDefine(SyntaxInfo, SyntaxInfo),
 }
 
 impl TCE {
@@ -96,7 +99,14 @@ impl Display for TCE {
                 "Expression `{}` has level {}, which is not smaller than {}.",
                 expr, expected_to_be_small, big
             ),
-            TCE::Wrapped(inner, info) => write!(f, "{}\nAt: {}.", inner, info),
+            TCE::Wrapped(inner, info) => {
+                write!(f, "{}\nWhen checking the expression at: {}.", inner, info)
+            }
+            TCE::ReDefine(new, old) => write!(
+                f,
+                "The definition at {} will hide the definition at {}.",
+                new, old
+            ),
         }
     }
 }
