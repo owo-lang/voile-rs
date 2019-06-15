@@ -212,7 +212,7 @@ impl RedEx for Neutral {
             Var(n) if dbi == n => arg.attach_dbi(dbi),
             Var(n) => Val::var(n),
             Ref(n) => Val::glob(n),
-            Meta(mi) => Val::Neut(Meta(mi)),
+            Meta(mi) => Val::meta(mi),
             Axi(a) => Val::Neut(Axi(a)),
             App(function, argument) => function
                 .reduce_with_dbi(arg.clone(), dbi)
@@ -288,6 +288,10 @@ impl Val {
 
     pub fn lift(levels: u32, expr: Neutral) -> Self {
         Val::Neut(Neutral::Lift(levels, Box::new(expr)))
+    }
+
+    pub fn meta(index: MI) -> Self {
+        Val::Neut(Neutral::Meta(index))
     }
 
     pub fn var(index: DBI) -> Self {

@@ -44,6 +44,7 @@ pub struct TCS {
 }
 
 impl TCS {
+    /// Submit a solution to a meta variable to the context.
     pub fn solve_meta(&mut self, meta_index: MI, solution: Val) {
         let meta_solution = &mut self.meta_context[meta_index];
         debug_assert_eq!(meta_solution, &mut MetaSolution::Unsolved);
@@ -54,9 +55,17 @@ impl TCS {
         &self.meta_context[meta_index]
     }
 
+    /// Create a new valid but unsolved meta variable.
+    /// Used for generating fresh metas during elaboration.
+    pub fn new_meta(&mut self) -> Val {
+        let meta = Val::meta(self.meta_context.len());
+        self.meta_context.push(MetaSolution::Unsolved);
+        meta
+    }
+
     pub fn initialize_meta_context(&mut self, meta_count: MI) {
-        debug_assert!(self.meta_context.is_empty());
-        self.meta_context.resize_with(meta_count, Default::default);
+        let new_size = self.meta_context.len() + meta_count;
+        self.meta_context.resize_with(new_size, Default::default);
     }
 
     pub fn local_type(&self, dbi: DBI) -> &ValInfo {

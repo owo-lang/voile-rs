@@ -76,7 +76,9 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
     }
 }
 
-pub fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
+/// Expand global references to concrete values,
+/// like meta references or global references due to recursion.
+fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
     let val = expr.map_neutral(|neut| match neut {
         Neutral::Ref(index) => tcs.glob_val(index).ast.clone(),
         neut => Val::Neut(neut),
