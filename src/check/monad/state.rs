@@ -57,7 +57,7 @@ impl TCS {
 
     /// Add many unsolved metas to the context.
     pub fn expand_with_fresh_meta(&mut self, meta_count: MI) {
-        debug_assert!(self.meta_context.len() < meta_count);
+        debug_assert!(self.meta_context.len() <= meta_count);
         self.meta_context.resize_with(meta_count, Default::default);
     }
 
