@@ -2,7 +2,7 @@ use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{MetaSolution, TCS};
 use crate::syntax::abs::Abs;
-use crate::syntax::common::{Ident, ToSyntaxInfo};
+use crate::syntax::common::Ident;
 use crate::syntax::core::{LiftEx, Neutral, Val, ValInfo};
 
 /// Ensure `abs` is well-typed before invoking this,
@@ -72,7 +72,7 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let (expr, tcs) = tcs.expand_global(expr.ast);
             (expr.lift(levels).into_info(info), tcs)
         }
-        e => panic!("Cannot compile `{}` at {}", e, e.syntax_info()),
+        Meta(ident, mi) => (Val::meta(mi).into_info(ident.info), tcs),
     }
 }
 

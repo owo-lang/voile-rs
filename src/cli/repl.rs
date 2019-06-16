@@ -7,13 +7,13 @@ use rustyline::highlight::Highlighter;
 use rustyline::hint::Hinter;
 use rustyline::{CompletionType, Config, Context, Editor, Helper};
 
-use voile::check::check_main;
 use voile::check::monad::{MetaSolution, TCM, TCS as TCMS};
 use voile::syntax::abs::{trans_decls_contextual, trans_expr, Abs, TransState};
 use voile::syntax::core::LiftEx;
 use voile::syntax::surf::{parse_expr_err_printed, parse_str_err_printed, Decl};
 
 use crate::util::parse_file;
+use voile::check::check_decls;
 
 type TCS = (TCMS, TransState);
 
@@ -164,12 +164,12 @@ fn level(tcs: TCS, line: &str) -> TCS {
 }
 
 fn expression_thing<T: Display>(
-    tcs: TCS,
+    mut tcs: TCS,
     line: &str,
     cmd: &str,
     f: impl FnOnce(TCMS, Abs) -> TCM<(T, TCMS)>,
 ) -> TCS {
-    if let Some(abs) = code_to_abs(&tcs, line.trim_start_matches(cmd).trim_start()) {
+    if let Some(abs) = code_to_abs(&mut tcs, line.trim_start_matches(cmd).trim_start()) {
         if let Ok((show, tcms)) = f(tcs.0, abs).map_err(|err| eprintln!("{}", err)) {
             println!("{}", show);
             (tcms, tcs.1)
@@ -185,18 +185,25 @@ fn update_tcs(tcs: TCS, decls: Vec<Decl>) -> TCS {
     let state = trans_decls_contextual(tcs.1, decls)
         .map_err(|err| eprintln!("{}", err))
         .unwrap_or_default();
-    let tcs = check_main(state.decls.clone())
+    let mut telescope = tcs.0;
+    telescope.expand_with_fresh_meta(state.meta_count);
+    let tcs = check_decls(telescope, state.decls.clone())
         .map_err(|err| eprintln!("{}", err))
         .unwrap_or_default();
     (tcs, state)
 }
 
-pub fn code_to_abs(tcs: &TCS, code: &str) -> Option<Abs> {
-    let trans_state = &tcs.1;
+pub fn code_to_abs(tcs: &mut TCS, code: &str) -> Option<Abs> {
+    let trans_state = &mut tcs.1;
     let expr = parse_expr_err_printed(code).ok()?;
-    trans_expr(&expr, &trans_state.decls, &trans_state.context_mapping)
-        .map_err(|err| eprintln!("{}", err))
-        .ok()
+    trans_expr(
+        &expr,
+        &trans_state.decls,
+        &mut trans_state.meta_count,
+        &trans_state.context_mapping,
+    )
+    .map_err(|err| eprintln!("{}", err))
+    .ok()
 }
 
 #[allow(clippy::print_literal)]

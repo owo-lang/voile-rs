@@ -80,7 +80,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 Err(TCE::LevelMismatch(expr.syntax_info(), *lower + 1, *upper))
             }
         }
-        (Meta(ident), _) => Ok((tcs.fresh_meta().into_info(ident.info), tcs)),
+        (Meta(ident, mi), _) => Ok((Val::meta(*mi).into_info(ident.info), tcs)),
         (Pair(info, fst, snd), Val::Dt(Sigma, param_ty, closure)) => {
             let (fst_term, mut tcs) = tcs.check(&**fst, &**param_ty).map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();

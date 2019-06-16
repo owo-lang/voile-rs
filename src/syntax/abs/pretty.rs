@@ -11,7 +11,7 @@ impl Display for Abs {
             Abs::Bot(_) => write!(f, "Bot"),
             Abs::Var(info, name, dbi) => write!(f, "{}[{:?},{:?}]", info.text, name, dbi),
             Abs::Ref(_, dbi) => write!(f, "<{:?}>", dbi),
-            Abs::Meta(info) => write!(f, "?{}", info.text),
+            Abs::Meta(_, mi) => write!(f, "?{:?}", mi),
             Abs::Cons(name) => write!(f, "@{}", name.text),
             Abs::Lift(_, levels, expr) => write!(f, "(^[{:?}] {})", levels, expr),
             Abs::Variant(info) => write!(f, "'{}", info.text),

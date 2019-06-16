@@ -1,7 +1,7 @@
 use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::common::{next_uid, DtKind, DtKind::*, Ident, ToSyntaxInfo, DBI, UID};
+use crate::syntax::common::{next_uid, DtKind, DtKind::*, Ident, ToSyntaxInfo, DBI, MI, UID};
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
@@ -27,10 +27,16 @@ pub struct TransState {
     pub signature_indices: Vec<DBI>,
     pub context_mapping: NamedDbi,
     pub decl_count: DBI,
+    pub meta_count: MI,
 }
 
 fn trans_one_decl(mut tcs: TransState, decl: &Decl) -> TCM<TransState> {
-    let abs = trans_expr(&decl.body, &tcs.decls, &tcs.context_mapping)?;
+    let abs = trans_expr(
+        &decl.body,
+        &tcs.decls,
+        &mut tcs.meta_count,
+        &tcs.context_mapping,
+    )?;
 
     let decl_total = tcs.decl_count;
     let dbi = *tcs
@@ -68,12 +74,13 @@ fn trans_one_decl(mut tcs: TransState, decl: &Decl) -> TCM<TransState> {
     Ok(tcs)
 }
 
-pub fn trans_expr(expr: &Expr, env: &[AbsDecl], map: &NamedDbi) -> TCM<Abs> {
-    trans_expr_inner(expr, env, map, &[], &Default::default())
+pub fn trans_expr(expr: &Expr, env: &[AbsDecl], meta_count: &mut MI, map: &NamedDbi) -> TCM<Abs> {
+    trans_expr_inner(expr, meta_count, env, map, &[], &Default::default())
 }
 
 fn trans_expr_inner(
     expr: &Expr,
+    meta_count: &mut MI,
     env: &[AbsDecl],
     global_map: &NamedDbi,
     local_env: &[UID],
@@ -93,30 +100,38 @@ fn trans_expr_inner(
             }
         }
         Expr::App(applied, app_vec) => app_vec.iter().try_fold(
-            trans_expr_inner(applied, env, global_map, local_env, local_map)?,
+            trans_expr_inner(applied, meta_count, env, global_map, local_env, local_map)?,
             |result, each_expr| -> TCM<_> {
-                let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
+                let abs =
+                    trans_expr_inner(each_expr, meta_count, env, global_map, local_env, local_map)?;
                 let info = result.syntax_info() + abs.syntax_info();
                 Ok(Abs::app(info, result, abs))
             },
         ),
         // I really hope I can reuse the code with `App` here :(
         Expr::Pipe(startup, pipe_vec) => pipe_vec.iter().rev().try_fold(
-            trans_expr_inner(startup, env, global_map, local_env, local_map)?,
+            trans_expr_inner(startup, meta_count, env, global_map, local_env, local_map)?,
             |result, each_expr| -> TCM<_> {
-                let abs = trans_expr_inner(each_expr, env, global_map, local_env, local_map)?;
+                let abs =
+                    trans_expr_inner(each_expr, meta_count, env, global_map, local_env, local_map)?;
                 let info = result.syntax_info() + abs.syntax_info();
                 Ok(Abs::app(info, result, abs))
             },
         ),
-        Expr::Meta(ident) => Ok(Abs::Meta(ident.clone())),
+        Expr::Meta(ident) => {
+            let ret = Ok(Abs::Meta(ident.clone(), *meta_count));
+            *meta_count += 1;
+            ret
+        }
         Expr::Cons(ident) => Ok(Abs::Cons(ident.clone())),
         Expr::Variant(ident) => Ok(Abs::Variant(ident.clone())),
         Expr::Bot(info) => Ok(Abs::Bot(*info)),
         Expr::Sum(first, variants) => {
-            let f = |expr: &Expr| trans_expr_inner(expr, env, global_map, local_env, local_map);
+            let f = |expr: &Expr| {
+                trans_expr_inner(expr, meta_count, env, global_map, local_env, local_map)
+            };
             let mut abs_vec: Vec<Abs> = variants.iter().map(f).collect::<TCM<_>>()?;
-            let first = trans_expr_inner(first, env, global_map, local_env, local_map)?;
+            let first = trans_expr_inner(first, meta_count, env, global_map, local_env, local_map)?;
             let info = abs_vec
                 .iter()
                 .fold(first.syntax_info(), |l, r| l + r.syntax_info());
@@ -124,14 +139,15 @@ fn trans_expr_inner(
             Ok(Abs::Sum(info, abs_vec))
         }
         Expr::Tup(first, tup_vec) => tup_vec.iter().try_fold(
-            trans_expr_inner(first, env, global_map, local_env, local_map)?,
+            trans_expr_inner(first, meta_count, env, global_map, local_env, local_map)?,
             |pair, expr| {
-                let abs = trans_expr_inner(expr, env, global_map, local_env, local_map)?;
+                let abs =
+                    trans_expr_inner(expr, meta_count, env, global_map, local_env, local_map)?;
                 Ok(Abs::pair(abs.syntax_info(), pair, abs))
             },
         ),
         Expr::Sig(initial, last) => trans_dependent_type(
-            env, global_map, local_env, local_map, initial, &*last, Sigma,
+            meta_count, env, global_map, local_env, local_map, initial, &*last, Sigma,
         ),
         Expr::Lam(info, params, body) => {
             let mut local_env = local_env.to_vec();
@@ -139,18 +155,20 @@ fn trans_expr_inner(
             let mut local_map = local_map.clone();
             let mut names = Vec::with_capacity(params.len());
             introduce_abstractions(params, &mut local_env, &mut local_map, &mut names);
-            let body = trans_expr_inner(&**body, env, global_map, &local_env, &local_map)?;
+            let body =
+                trans_expr_inner(&**body, meta_count, env, global_map, &local_env, &local_map)?;
             Ok(params.iter().rev().fold(body, |lam_abs, param| {
                 let pop_empty = "The stack `names` is empty. Please report this as a bug.";
                 let name = names.pop().expect(pop_empty);
                 Abs::lam(*info, param.clone(), name, lam_abs)
             }))
         }
-        Expr::Pi(params, result) => {
-            trans_dependent_type(env, global_map, local_env, local_map, params, &*result, Pi)
-        }
+        Expr::Pi(params, result) => trans_dependent_type(
+            meta_count, env, global_map, local_env, local_map, params, &*result, Pi,
+        ),
         Expr::Lift(info, levels, inner) => {
-            let inner = trans_expr_inner(&**inner, env, global_map, local_env, local_map)?;
+            let inner =
+                trans_expr_inner(&**inner, meta_count, env, global_map, local_env, local_map)?;
             Ok(Abs::lift(*info, *levels, inner))
         }
     }
@@ -179,23 +197,33 @@ fn introduce_abstractions(
 }
 
 fn trans_dependent_type(
+    meta_count: &mut MI,
     env: &[AbsDecl],
-    glob: &NamedDbi,
+    global_map: &NamedDbi,
     local_env: &[UID],
     local_map: &NamedDbi,
     params: &[Param],
     result: &Expr,
     kind: DtKind,
 ) -> TCM<Abs> {
-    let mut pi = local_env.to_vec();
+    let mut pi_env = local_env.to_vec();
     let mut pi_map = local_map.clone();
     let mut names = Vec::with_capacity(params.len());
     let pi_vec: Vec<Abs> = params.iter().try_fold(Vec::new(), |pi_vec, param| {
-        introduce_telescope(env, glob, &mut pi, &mut pi_map, &mut names, pi_vec, param)
+        introduce_telescope(
+            meta_count,
+            env,
+            global_map,
+            &mut pi_env,
+            &mut pi_map,
+            &mut names,
+            pi_vec,
+            param,
+        )
     })?;
 
     Ok(pi_vec.into_iter().rev().fold(
-        trans_expr_inner(result, env, glob, &pi, &pi_map)?,
+        trans_expr_inner(result, meta_count, env, global_map, &pi_env, &pi_map)?,
         |pi_abs, param| {
             let info = param.syntax_info() + pi_abs.syntax_info();
             let pop_empty = "The stack `names` is empty. Please report this as a bug.";
@@ -205,6 +233,7 @@ fn trans_dependent_type(
 }
 
 fn introduce_telescope(
+    meta_count: &mut MI,
     env: &[AbsDecl],
     global_map: &NamedDbi,
     dt_env: &mut Vec<UID>,
@@ -213,7 +242,7 @@ fn introduce_telescope(
     mut dt_vec: Vec<Abs>,
     param: &Param,
 ) -> TCM<Vec<Abs>> {
-    let param_ty = trans_expr_inner(&param.ty, env, global_map, &dt_env, &dt_map)?;
+    let param_ty = trans_expr_inner(&param.ty, meta_count, env, global_map, &dt_env, &dt_map)?;
     for name in &param.names {
         let param_name = name.text.clone();
         // These two are actually our assumption. Hope they're correct.

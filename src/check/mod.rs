@@ -1,5 +1,3 @@
-use crate::syntax::abs::AbsDecl;
-
 pub use self::decl::*;
 pub use self::eval::*;
 pub use self::expr::*;
@@ -58,7 +56,3 @@ $$
 Expression/Type relevant checking.
 */
 mod expr;
-
-pub fn check_main(decls: Vec<AbsDecl>) -> monad::TCM {
-    check_decls(Default::default(), decls)
-}

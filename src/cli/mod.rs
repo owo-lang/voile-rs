@@ -1,8 +1,10 @@
 extern crate voile;
 
-use crate::repl::code_to_abs;
-use voile::check::check_main;
+use voile::check::check_decls;
+use voile::check::monad::TCS;
 use voile::syntax::abs::trans_decls_contextual;
+
+use crate::repl::code_to_abs;
 
 mod args;
 mod repl;
@@ -30,7 +32,9 @@ fn main() {
                     });
 
                 // Type Check
-                let checked = check_main(abs_decls.decls.clone())
+                let mut tcs = TCS::default();
+                tcs.expand_with_fresh_meta(abs_decls.meta_count);
+                let checked = check_decls(tcs, abs_decls.decls.clone())
                     .map_err(|err| eprintln!("{}", err))
                     .unwrap_or_else(|()| {
                         eprintln!("Type-Check failed.");
@@ -54,7 +58,10 @@ fn main() {
         })
         .unwrap_or_else(Default::default);
 
-    if let Some(abs) = args.evaluate.and_then(|code| code_to_abs(&checked, &code)) {
+    if let Some(abs) = args
+        .evaluate
+        .and_then(|code| code_to_abs(&mut checked, &code))
+    {
         let (tcs, trans_st) = checked;
         let (core, tcs) = tcs.evaluate(abs);
         println!("{}", core.ast);

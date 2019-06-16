@@ -11,7 +11,7 @@ pub enum Abs {
     /// Global variable
     Ref(Ident, DBI),
     /// Meta variable
-    Meta(Ident),
+    Meta(Ident, MI),
     /// Lift an expression many times
     Lift(SyntaxInfo, u32, Box<Self>),
     /// Constructor call
@@ -34,19 +34,19 @@ pub enum Abs {
 impl ToSyntaxInfo for Abs {
     fn syntax_info(&self) -> SyntaxInfo {
         match self {
-            Abs::Type(info, _)
+            Abs::Type(info, ..)
             | Abs::Bot(info)
-            | Abs::App(info, _, _)
-            | Abs::Dt(info, _, _, _, _)
-            | Abs::Pair(info, _, _)
-            | Abs::Fst(info, _)
-            | Abs::Snd(info, _)
-            | Abs::Sum(info, _)
-            | Abs::Lift(info, _, _)
-            | Abs::Lam(info, _, _, _) => *info,
-            Abs::Var(ident, _, _)
-            | Abs::Ref(ident, _)
-            | Abs::Meta(ident)
+            | Abs::App(info, ..)
+            | Abs::Dt(info, ..)
+            | Abs::Pair(info, ..)
+            | Abs::Fst(info, ..)
+            | Abs::Snd(info, ..)
+            | Abs::Sum(info, ..)
+            | Abs::Lift(info, ..)
+            | Abs::Lam(info, ..) => *info,
+            Abs::Var(ident, ..)
+            | Abs::Ref(ident, ..)
+            | Abs::Meta(ident, ..)
             | Abs::Cons(ident)
             | Abs::Variant(ident) => ident.info,
         }
