@@ -2,7 +2,7 @@ use std::mem::swap;
 
 use crate::syntax::abs::AbsDecl;
 use crate::syntax::common::{ToSyntaxInfo, DBI};
-use crate::syntax::core::{AxiomEx, Val, ValInfo};
+use crate::syntax::core::{Val, ValInfo};
 
 use super::monad::{TCM, TCS};
 
@@ -39,10 +39,10 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             }
             // Every references to me are now actually valid (they were axioms before),
             // replace them with a global reference.
-            for i in sign_dbi..tcs.glob_size() {
+            for i in sign_dbi..tcs.glob_len() {
                 unimplemented_to_glob(tcs.env.as_mut_slice(), i);
             }
-            for i in sign_dbi + 1..tcs.glob_size() {
+            for i in sign_dbi + 1..tcs.glob_len() {
                 unimplemented_to_glob(tcs.gamma.as_mut_slice(), i);
             }
 

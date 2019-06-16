@@ -1,6 +1,6 @@
 use std::collections::btree_map::BTreeMap;
 
-use crate::check::monad::TCS;
+use crate::check::monad::{MetaSolution, TCS};
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{Ident, ToSyntaxInfo};
 use crate::syntax::core::{LiftEx, Neutral, Val, ValInfo};
@@ -81,6 +81,19 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
 fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
     let val = expr.map_neutral(|neut| match neut {
         Neutral::Ref(index) => tcs.glob_val(index).ast.clone(),
+        Neutral::Meta(mi) => match tcs.meta_solution(mi) {
+            MetaSolution::Solved(val) => {
+                let mut local: Vec<_> = tcs.local_env.iter().map(|a| a.ast.clone()).collect();
+                let mut ret = *val.clone();
+                // The left most local var has dbi 0.
+                while let Some(var) = local.pop() {
+                    ret = ret.apply(var);
+                }
+                ret
+            }
+            MetaSolution::Unsolved => panic!("Cannot eval unsolved meta: {:?}", mi),
+            MetaSolution::Inlined => unreachable!(),
+        },
         neut => Val::Neut(neut),
     });
     (val, tcs)

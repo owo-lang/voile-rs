@@ -100,7 +100,11 @@ impl TCS {
         self.local_env.pop().expect("Unexpected empty local env");
     }
 
-    pub fn glob_size(&self) -> usize {
+    pub fn glob_len(&self) -> usize {
         self.gamma.len()
+    }
+
+    pub fn local_len(&self) -> usize {
+        self.local_env.len()
     }
 }

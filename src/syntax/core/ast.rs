@@ -14,11 +14,6 @@ pub trait RedEx: Sized {
     fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val;
 }
 
-pub trait AxiomEx: Sized {
-    fn generated_to_var(self) -> Self;
-    fn unimplemented_to_glob(self) -> Self;
-}
-
 impl Val {
     /**
     $$
@@ -90,16 +85,6 @@ impl Val {
                 })
             }))
         })
-    }
-}
-
-impl AxiomEx for Val {
-    fn generated_to_var(self) -> Self {
-        self.map_neutral(|neut| Val::Neut(neut.generated_to_var()))
-    }
-
-    fn unimplemented_to_glob(self) -> Self {
-        self.map_neutral(|neut| Val::Neut(neut.unimplemented_to_glob()))
     }
 }
 
@@ -194,24 +179,6 @@ impl Neutral {
             Meta(n) => Meta(n),
             Lift(levels, expr) => Lift(levels, Box::new(expr.map_axiom(f))),
         }
-    }
-}
-
-impl AxiomEx for Neutral {
-    fn generated_to_var(self) -> Self {
-        use {Axiom::*, Neutral::*};
-        self.map_axiom(|a| match a {
-            Postulated(..) | Unimplemented(..) => Axi(a),
-            Generated(_, dbi) => Var(dbi),
-        })
-    }
-
-    fn unimplemented_to_glob(self) -> Self {
-        use {Axiom::*, Neutral::*};
-        self.map_axiom(|a| match a {
-            Postulated(..) | Generated(..) => Axi(a),
-            Unimplemented(_, dbi) => Ref(dbi),
-        })
     }
 }
 
@@ -386,6 +353,26 @@ impl Val {
         }
     }
 
+    pub fn map_axiom<F: Fn(Axiom) -> Neutral + Copy>(self, f: F) -> Self {
+        self.map_neutral(|neut| Val::Neut(neut.map_axiom(f)))
+    }
+
+    pub fn generated_to_var(self) -> Self {
+        use {Axiom::*, Neutral::*};
+        self.map_axiom(|a| match a {
+            Postulated(..) | Unimplemented(..) => Axi(a),
+            Generated(_, dbi) => Var(dbi),
+        })
+    }
+
+    pub fn unimplemented_to_glob(self) -> Self {
+        use {Axiom::*, Neutral::*};
+        self.map_axiom(|a| match a {
+            Postulated(..) | Generated(..) => Axi(a),
+            Unimplemented(_, dbi) => Ref(dbi),
+        })
+    }
+
     /// Traverse through the AST in a stateful manner.
     pub fn fold_neutral<R, F: Fn(R, Neutral) -> R + Copy>(self, init: R, f: F) -> R {
         match self {
@@ -399,6 +386,14 @@ impl Val {
             Val::Cons(_, a) => a.fold_neutral(init, f),
             Val::Type(_) => init,
         }
+    }
+}
+
+pub fn lambda_with_n_params(n: usize, inside: Val) -> Val {
+    if n == 0 {
+        inside
+    } else {
+        Val::lam(lambda_with_n_params(n - 1, inside))
     }
 }
 

@@ -1,5 +1,5 @@
-use crate::syntax::common::{SyntaxInfo, DBI, MI, UID};
-use crate::syntax::core::{Axiom, Neutral, Val};
+use crate::syntax::common::{MI, UID};
+use crate::syntax::core::{lambda_with_n_params, Axiom, Neutral, Val};
 
 use super::monad::{Gamma, TCE, TCM, TCS};
 
@@ -43,11 +43,24 @@ fn check_solution(meta: MI, spine: Vec<UID>, rhs: Val) -> TCM<()> {
 /**
 Solve a meta with a specific value.
 */
-fn solve_with(tcs: TCS, meta: MI, solution: Val) -> TCM {
+fn solve_with(mut tcs: TCS, meta: MI, solution: Val) -> TCM {
+    use Axiom::*;
     let spine = check_spine(&tcs.local_env)?;
-    check_solution(meta, spine, solution.clone())?;
+    let anticipated_solution = solution.clone().map_axiom(|axiom| match axiom {
+        Generated(uid, _) => {
+            let msg = "Bad uid during solution generation.";
+            // The left most local var has dbi 0.
+            Neutral::Var(spine.iter().position(|i| *i == uid).expect(msg))
+        }
+        Postulated(_) => Neutral::Axi(axiom),
+        Unimplemented(_, dbi) => Neutral::Ref(dbi),
+    });
+    check_solution(meta, spine, solution)?;
     // Here I need to produce a new lambda, using its own local DBI.
-    unimplemented!();
+    tcs.solve_meta(
+        meta,
+        lambda_with_n_params(tcs.local_len(), anticipated_solution),
+    );
 
     Ok(tcs)
 }

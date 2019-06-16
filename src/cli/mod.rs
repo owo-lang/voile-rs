@@ -38,7 +38,7 @@ fn main() {
                     });
 
                 if !args.quiet {
-                    for i in 0..checked.glob_size() {
+                    for i in 0..checked.glob_len() {
                         println!("sign: {}", checked.gamma[i].ast);
                         println!("body: {}", checked.env[i].ast);
                     }
