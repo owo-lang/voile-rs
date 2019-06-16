@@ -9,20 +9,26 @@ use crate::syntax::level::Level;
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TCE {
     Textual(String),
-    CouldNotInfer(SyntaxInfo),
-    TypeNotInGamma(SyntaxInfo),
+
+    // == "Cannot"s ==
+    CannotInfer(SyntaxInfo),
+    CannotUnify(Val, Val),
+
+    // == "Not"s ==
     NotSigma(SyntaxInfo, TVal),
     NotPi(SyntaxInfo, TVal),
-    NotSameType(TVal, TVal),
     /// Expected the first `TVal` to be the subtype of
     /// the second `TVal`.
     NotSubtype(TVal, TVal),
     NotTypeAbs(SyntaxInfo, Abs),
     NotTypeVal(SyntaxInfo, Val),
     NotSumVal(SyntaxInfo, Val),
+    NotUniverseVal(SyntaxInfo, Val),
+
+    // == Elaboration ==
+    TypeNotInGamma(SyntaxInfo),
     OverlappingVariant(SyntaxInfo, String),
     MissingVariant(String),
-    NotUniverseVal(SyntaxInfo, Val),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
     /// Expected the first level to be smaller than second.
@@ -31,9 +37,13 @@ pub enum TCE {
     /// Cannot find the definition.
     LookUpFailed(Ident),
     Wrapped(Box<Self>, SyntaxInfo),
+
+    // == Scoping ==
     /// The definition at the first `SyntaxInfo` will
     /// hide the definition at the second `SyntaxInfo`.
     ReDefine(SyntaxInfo, SyntaxInfo),
+
+    // == "Meta"s ==
     /// Solved meta contains out-of-scope variables.
     MetaScopeError(MI),
     /// Recursive metas are disallowed.
@@ -52,7 +62,7 @@ impl Display for TCE {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         match self {
             TCE::Textual(text) => f.write_str(text),
-            TCE::CouldNotInfer(val) => write!(f, "Could not infer type of: {}.", val),
+            TCE::CannotInfer(val) => write!(f, "Could not infer type of: {}.", val),
             TCE::TypeNotInGamma(id) => write!(f, "Type info not in Gamma for: {}.", id),
             TCE::NotSigma(id, val) => write!(
                 f,
@@ -64,9 +74,7 @@ impl Display for TCE {
                 "Expected a pi type expression (function), got: `{}` at {}.",
                 val, id
             ),
-            TCE::NotSameType(val1, val2) => {
-                write!(f, "Expected `{}` and `{}` to be the same type.", val1, val2)
-            }
+            TCE::CannotUnify(val1, val2) => write!(f, "Cannot unify `{}` with `{}`.", val1, val2),
             TCE::NotSubtype(sub, sup) => {
                 write!(f, "Expected `{}` to be the subtype of `{}`.", sub, sup)
             }

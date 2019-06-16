@@ -4,6 +4,8 @@
 
 + Documentation cleanup
 + Report error on redefinitions (#107)
++ Unification (#105, #110)
++ Meta variable solving (#104, #110)
 
 # 0.0.9
 
