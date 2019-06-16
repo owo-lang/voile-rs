@@ -51,8 +51,8 @@ impl TCS {
         *meta_solution = MetaSolution::solved(solution);
     }
 
-    pub fn meta_solution(&self, meta_index: MI) -> &MetaSolution {
-        &self.meta_context[meta_index]
+    pub fn meta_solutions(&self) -> &[MetaSolution] {
+        &self.meta_context
     }
 
     /// Create a new valid but unsolved meta variable,

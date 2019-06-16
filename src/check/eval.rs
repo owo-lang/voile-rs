@@ -81,13 +81,12 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
 fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
     let val = expr.map_neutral(|neut| match neut {
         Neutral::Ref(index) => tcs.glob_val(index).ast.clone(),
-        Neutral::Meta(mi) => match tcs.meta_solution(mi) {
+        Neutral::Meta(mi) => match &tcs.meta_solutions()[mi] {
             MetaSolution::Solved(val) => {
-                let mut local: Vec<_> = tcs.local_env.iter().map(|a| a.ast.clone()).collect();
                 let mut ret = *val.clone();
-                // The left most local var has dbi 0.
-                while let Some(var) = local.pop() {
-                    ret = ret.apply(var);
+                // The right most local var has dbi 0.
+                for var in tcs.local_env.iter() {
+                    ret = ret.apply(var.ast.clone());
                 }
                 ret
             }

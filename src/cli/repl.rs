@@ -8,7 +8,7 @@ use rustyline::hint::Hinter;
 use rustyline::{CompletionType, Config, Context, Editor, Helper};
 
 use voile::check::check_main;
-use voile::check::monad::{TCM, TCS as TCMS};
+use voile::check::monad::{MetaSolution, TCM, TCS as TCMS};
 use voile::syntax::abs::{trans_decls_contextual, trans_expr, Abs, TransState};
 use voile::syntax::core::LiftEx;
 use voile::syntax::surf::{parse_expr_err_printed, parse_str_err_printed, Decl};
@@ -69,6 +69,7 @@ const PROMPT: &str = "=> ";
 const QUIT_CMD: &str = ":quit";
 const GAMMA_CMD: &str = ":gamma";
 const CTX_CMD: &str = ":context";
+const META_CMD: &str = ":meta";
 const HELP_CMD: &str = ":help";
 const LOAD_CMD: &str = ":load";
 const INFER_CMD: &str = ":infer";
@@ -92,6 +93,19 @@ fn show_telescope(tcs: &TCS) {
     }
 }
 
+fn show_meta_solutions(tcs: &TCS) {
+    use MetaSolution::*;
+    let mut index = 0;
+    for solution in tcs.0.meta_solutions() {
+        match solution {
+            Solved(solution) => println!("{}: {}", index, solution),
+            Unsolved => println!("{}: ???", index),
+            Inlined => unimplemented!(),
+        }
+        index += 1;
+    }
+}
+
 fn repl_work(tcs: TCS, current_mode: &str, line: &str) -> Option<TCS> {
     if line == QUIT_CMD {
         None
@@ -102,6 +116,9 @@ fn repl_work(tcs: TCS, current_mode: &str, line: &str) -> Option<TCS> {
         Some(tcs)
     } else if line == CTX_CMD {
         show_telescope(&tcs);
+        Some(tcs)
+    } else if line == META_CMD {
+        show_meta_solutions(&tcs);
         Some(tcs)
     } else if line == HELP_CMD {
         help(current_mode);
@@ -195,11 +212,14 @@ fn help(current_mode: &str) {
          {:<20} {}\n\
          {:<20} {}\n\
          {:<20} {}\n\
+         {:<20} {}\n\
          ",
         QUIT_CMD,
         "Quit the REPL.",
         GAMMA_CMD,
         "Show current typing context.",
+        META_CMD,
+        "Show current meta solution context.",
         CTX_CMD,
         "Show current value context.",
         ":infer <EXPR>",
@@ -249,7 +269,7 @@ pub fn repl_plain(mut tcs: TCS) {
 pub fn repl(mut tcs: TCS) {
     repl_welcome_message("RICH");
     let all_cmd: Vec<_> = vec![
-        QUIT_CMD, GAMMA_CMD, CTX_CMD, HELP_CMD, INFER_PFX, LOAD_PFX, EVAL_PFX, LEVEL_PFX,
+        QUIT_CMD, GAMMA_CMD, CTX_CMD, META_CMD, HELP_CMD, INFER_PFX, LOAD_PFX, EVAL_PFX, LEVEL_PFX,
     ]
     .iter()
     .map(|s| s.to_string())

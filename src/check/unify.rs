@@ -49,8 +49,8 @@ fn solve_with(mut tcs: TCS, meta: MI, solution: Val) -> TCM {
     let anticipated_solution = solution.clone().map_axiom(|axiom| match axiom {
         Generated(uid, _) => {
             let msg = "Bad uid during solution generation.";
-            // The left most local var has dbi 0.
-            Neutral::Var(spine.iter().position(|i| *i == uid).expect(msg))
+            // The right most local var has dbi 0.
+            Neutral::Var(spine.iter().rposition(|i| *i == uid).expect(msg))
         }
         Postulated(_) => Neutral::Axi(axiom),
         Unimplemented(_, dbi) => Neutral::Ref(dbi),
