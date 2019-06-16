@@ -1,14 +1,14 @@
-use crate::syntax::common::{SyntaxInfo, DBI, MI};
-use crate::syntax::core::{Neutral, Val};
+use crate::syntax::common::{SyntaxInfo, DBI, MI, UID};
+use crate::syntax::core::{Axiom, Neutral, Val};
 
 use super::monad::{Gamma, TCE, TCM, TCS};
 
 /// Check that all entries in a spine are bound variables.
-fn check_spine(telescope: &Gamma) -> TCM<Vec<DBI>> {
+fn check_spine(telescope: &Gamma) -> TCM<Vec<UID>> {
     let mut res = Vec::with_capacity(telescope.len());
     for val in telescope {
         match val.ast {
-            Val::Neut(Neutral::Var(dbi)) => res.push(dbi),
+            Val::Neut(Neutral::Axi(Axiom::Generated(uid, ..))) => res.push(uid),
             _ => return Err(TCE::MetaWithNonVar(val.info)),
         }
     }
@@ -27,12 +27,29 @@ thing we can do.
 We don't have to worry about shadowing here, because normal
 forms have no shadowing by our previous quote implementation.
 */
-fn check_solution(info: SyntaxInfo, meta: MI, spine: Vec<DBI>, rhs: Val) -> TCM<()> {
-    rhs.fold_neutral(Ok(()), |err, neut| match neut {
-        Neutral::Var(dbi) if spine.contains(&dbi) => Err(TCE::MetaScopeError(info, meta)),
-        Neutral::Meta(mi) if mi == meta => Err(TCE::MetaRecursion(info, mi)),
-        _ => Ok(()),
+fn check_solution(meta: MI, spine: Vec<UID>, rhs: Val) -> TCM<()> {
+    rhs.fold_neutral(Ok(()), |err, neut| {
+        err?;
+        match neut {
+            Neutral::Axi(Axiom::Generated(uid, ..)) if spine.contains(&uid) => {
+                Err(TCE::MetaScopeError(meta))
+            }
+            Neutral::Meta(mi) if mi == meta => Err(TCE::MetaRecursion(mi)),
+            _ => Ok(()),
+        }
     })
+}
+
+/**
+Solve a meta with a specific value.
+*/
+fn solve_with(tcs: TCS, meta: MI, solution: Val) -> TCM {
+    let spine = check_spine(&tcs.local_env)?;
+    check_solution(meta, spine, solution.clone())?;
+    // Here I need to produce a new lambda, using its own local DBI.
+    unimplemented!();
+
+    Ok(tcs)
 }
 
 /**
@@ -67,6 +84,7 @@ fn unify(mut tcs: TCS, a: &Val, b: &Val) -> TCM {
             }
             Ok(tcs)
         }
+        (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => solve_with(tcs, *mi, term.clone()),
         // TODO: provide a proper error message
         (e, t) => panic!("Cannot unify `{}` with `{}`.", e, t),
     }
