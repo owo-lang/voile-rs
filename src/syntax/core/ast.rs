@@ -371,6 +371,7 @@ impl Val {
         }
     }
 
+    /// Traverse through the AST and change all [`Neutral`](self::Neutral) values.
     pub fn map_neutral<F: Fn(Neutral) -> Self + Copy>(self, f: F) -> Self {
         match self {
             Val::Neut(n) => f(n),
@@ -382,6 +383,21 @@ impl Val {
             }
             Val::Cons(name, a) => Self::cons(name, a.map_neutral(f)),
             e => e,
+        }
+    }
+
+    /// Traverse through the AST in a stateful manner.
+    pub fn fold_neutral<R, F: Fn(R, Neutral) -> R + Copy>(self, init: R, f: F) -> R {
+        match self {
+            Val::Neut(n) => f(init, n),
+            Val::Pair(a, b) => b.fold_neutral(a.fold_neutral(init, f), f),
+            Val::Sum(v) => v.into_iter().fold(init, |a, (_, v)| v.fold_neutral(a, f)),
+            Val::Lam(Closure { body }) => body.fold_neutral(init, f),
+            Val::Dt(_, param_ty, Closure { body }) => {
+                param_ty.fold_neutral(body.fold_neutral(init, f), f)
+            }
+            Val::Cons(_, a) => a.fold_neutral(init, f),
+            Val::Type(_) => init,
         }
     }
 }

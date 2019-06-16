@@ -35,9 +35,9 @@ pub enum TCE {
     /// hide the definition at the second `SyntaxInfo`.
     ReDefine(SyntaxInfo, SyntaxInfo),
     /// Solved meta contains out-of-scope variables.
-    MetaScopeError(SyntaxInfo),
+    MetaScopeError(SyntaxInfo, MI),
     /// Recursive metas are disallowed.
-    MetaRecursion(SyntaxInfo),
+    MetaRecursion(SyntaxInfo, MI),
     /// Meta solution should be passed with bound variables only.
     MetaWithNonVar(SyntaxInfo),
 }
@@ -113,17 +113,17 @@ impl Display for TCE {
                 "The definition at {} will hide the definition at {}.",
                 new, old
             ),
-            TCE::MetaScopeError(info) => write!(
+            TCE::MetaScopeError(info, mi) => write!(
                 f,
-                "Failed to solve meta at {}: \
+                "Failed to solve meta at {} (meta: {:?}): \
                  anticipated solution contains out-of-scope variables.",
-                info
+                info, mi
             ),
-            TCE::MetaRecursion(info) => write!(
+            TCE::MetaRecursion(info, mi) => write!(
                 f,
-                "Failed to solve meta at {}: \
+                "Failed to solve meta at {} (meta: {:?}): \
                  anticipated solution contains recursive call.",
-                info
+                info, mi
             ),
             TCE::MetaWithNonVar(info) => write!(
                 f,

@@ -1,4 +1,4 @@
-use crate::syntax::common::{DBI, MI};
+use crate::syntax::common::{SyntaxInfo, DBI, MI};
 use crate::syntax::core::{Neutral, Val};
 
 use super::monad::{Gamma, TCE, TCM, TCS};
@@ -27,8 +27,12 @@ thing we can do.
 We don't have to worry about shadowing here, because normal
 forms have no shadowing by our previous quote implementation.
 */
-fn check_solution(meta: MI, spine: Vec<DBI>, rhs: Val) -> TCM<()> {
-    unimplemented!()
+fn check_solution(info: SyntaxInfo, meta: MI, spine: Vec<DBI>, rhs: Val) -> TCM<()> {
+    rhs.fold_neutral(Ok(()), |err, neut| match neut {
+        Neutral::Var(dbi) if spine.contains(&dbi) => Err(TCE::MetaScopeError(info, meta)),
+        Neutral::Meta(mi) if mi == meta => Err(TCE::MetaRecursion(info, mi)),
+        _ => Ok(()),
+    })
 }
 
 /**
