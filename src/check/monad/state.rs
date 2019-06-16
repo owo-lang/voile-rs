@@ -63,11 +63,6 @@ impl TCS {
         meta
     }
 
-    pub fn initialize_meta_context(&mut self, meta_count: MI) {
-        let new_size = self.meta_context.len() + meta_count;
-        self.meta_context.resize_with(new_size, Default::default);
-    }
-
     pub fn local_type(&self, dbi: DBI) -> &ValInfo {
         &self.local_gamma[self.local_gamma.len() - dbi - 1]
     }

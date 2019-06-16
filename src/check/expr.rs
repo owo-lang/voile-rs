@@ -73,13 +73,14 @@ $$
 fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     use Abs::*;
     match (expr, expected_type) {
-        (Abs::Type(info, lower), Val::Type(upper)) => {
+        (Type(info, lower), Val::Type(upper)) => {
             if *upper > *lower {
                 Ok((Val::Type(*lower).into_info(*info), tcs))
             } else {
                 Err(TCE::LevelMismatch(expr.syntax_info(), *lower + 1, *upper))
             }
         }
+        (Meta(ident), _) => Ok((tcs.fresh_meta().into_info(ident.info), tcs)),
         (Pair(info, fst, snd), Val::Dt(Sigma, param_ty, closure)) => {
             let (fst_term, mut tcs) = tcs.check(&**fst, &**param_ty).map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();
