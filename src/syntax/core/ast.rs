@@ -323,7 +323,7 @@ impl Val {
         Val::Neut(Neutral::Ref(index))
     }
 
-    pub fn axiom() -> Self {
+    pub fn fresh_axiom() -> Self {
         Self::postulate(unsafe { next_uid() })
     }
 
@@ -335,7 +335,7 @@ impl Val {
         Val::Neut(Neutral::Axi(Axiom::Generated(uid, dbi)))
     }
 
-    pub fn unimplemented(dbi: DBI) -> Self {
+    pub fn fresh_unimplemented(dbi: DBI) -> Self {
         let axiom = Axiom::Unimplemented(unsafe { next_uid() }, dbi);
         Val::Neut(Neutral::Axi(axiom))
     }
@@ -388,7 +388,7 @@ impl Val {
 
 impl Default for Val {
     fn default() -> Self {
-        Self::axiom()
+        Self::fresh_axiom()
     }
 }
 

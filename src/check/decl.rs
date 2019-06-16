@@ -55,7 +55,7 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             let syntax_info = sign_abs.syntax_info();
             let (sign_fake, mut tcs) = tcs.check_type(&sign_abs)?;
             let sign = sign_fake.map_ast(|ast| ast.generated_to_var());
-            let val_info = Val::unimplemented(self_index).into_info(syntax_info);
+            let val_info = Val::fresh_unimplemented(self_index).into_info(syntax_info);
             tcs.env.push(val_info);
             tcs.gamma.push(sign);
 

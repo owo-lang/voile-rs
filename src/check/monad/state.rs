@@ -55,9 +55,9 @@ impl TCS {
         &self.meta_context[meta_index]
     }
 
-    /// Create a new valid but unsolved meta variable.
-    /// Used for generating fresh metas during elaboration.
-    pub fn new_meta(&mut self) -> Val {
+    /// Create a new valid but unsolved meta variable,
+    /// used for generating fresh metas during elaboration.
+    pub fn fresh_meta(&mut self) -> Val {
         let meta = Val::meta(self.meta_context.len());
         self.meta_context.push(MetaSolution::Unsolved);
         meta

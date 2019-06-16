@@ -1,6 +1,35 @@
-use crate::syntax::core::Val;
+use crate::syntax::common::{DBI, MI};
+use crate::syntax::core::{Neutral, Val};
 
-use super::monad::{TCE, TCM, TCS};
+use super::monad::{Gamma, TCE, TCM, TCS};
+
+/// Check that all entries in a spine are bound variables.
+fn check_spine(telescope: &Gamma) -> TCM<Vec<DBI>> {
+    let mut res = Vec::with_capacity(telescope.len());
+    for val in telescope {
+        match val.ast {
+            Val::Neut(Neutral::Var(dbi)) => res.push(dbi),
+            _ => return Err(TCE::MetaWithNonVar(val.info)),
+        }
+    }
+    Ok(res)
+}
+
+/**
+Scope check + occurs check a solution candidate.
+
+Inputs are a meta, a spine of
+variable names (which comes from [check_spine](self::check_spine)) and a RHS
+term in normal form. In real implementations it would be a bad idea to solve
+metas with normal forms (because of size explosion), but here it's the simplest
+thing we can do.
+
+We don't have to worry about shadowing here, because normal
+forms have no shadowing by our previous quote implementation.
+*/
+fn check_solution(meta: MI, spine: Vec<DBI>, rhs: Val) -> TCM<()> {
+    unimplemented!()
+}
 
 /**
 Try to unify two terms.

@@ -1,7 +1,7 @@
 use std::fmt::{Display, Error as FmtError, Formatter};
 
 use crate::syntax::abs::Abs;
-use crate::syntax::common::{Ident, SyntaxInfo, DBI};
+use crate::syntax::common::{Ident, SyntaxInfo, DBI, MI};
 use crate::syntax::core::{TVal, Val};
 use crate::syntax::level::Level;
 
@@ -34,6 +34,12 @@ pub enum TCE {
     /// The definition at the first `SyntaxInfo` will
     /// hide the definition at the second `SyntaxInfo`.
     ReDefine(SyntaxInfo, SyntaxInfo),
+    /// Solved meta contains out-of-scope variables.
+    MetaScopeError(SyntaxInfo),
+    /// Recursive metas are disallowed.
+    MetaRecursion(SyntaxInfo),
+    /// Meta solution should be passed with bound variables only.
+    MetaWithNonVar(SyntaxInfo),
 }
 
 impl TCE {
@@ -106,6 +112,24 @@ impl Display for TCE {
                 f,
                 "The definition at {} will hide the definition at {}.",
                 new, old
+            ),
+            TCE::MetaScopeError(info) => write!(
+                f,
+                "Failed to solve meta at {}: \
+                 anticipated solution contains out-of-scope variables.",
+                info
+            ),
+            TCE::MetaRecursion(info) => write!(
+                f,
+                "Failed to solve meta at {}: \
+                 anticipated solution contains recursive call.",
+                info
+            ),
+            TCE::MetaWithNonVar(info) => write!(
+                f,
+                "Failed to solve meta at {}: \
+                 anticipated solution contains unexpected non-bound values.",
+                info
             ),
         }
     }
