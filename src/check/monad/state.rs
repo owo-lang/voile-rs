@@ -55,6 +55,11 @@ impl TCS {
         &self.meta_context
     }
 
+    pub fn initialize_meta_context(&mut self, meta_count: MI) {
+        debug_assert!(self.meta_context.is_empty());
+        self.meta_context.resize_with(meta_count, Default::default);
+    }
+
     /// Create a new valid but unsolved meta variable,
     /// used for generating fresh metas during elaboration.
     pub fn fresh_meta(&mut self) -> Val {

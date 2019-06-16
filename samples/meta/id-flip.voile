@@ -1,0 +1,13 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-06-16
+// id-flip
+// Author: ice1000
+//
+
+val id: (A : Type) -> A -> A;
+let id = \A a. a;
+
+val flip : (A B C : Type)
+         -> (A -> B -> C)
+         -> (B -> A -> C);
+let flip = \A B C f a b. id _ (f b a);

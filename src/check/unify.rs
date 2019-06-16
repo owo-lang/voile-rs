@@ -1,14 +1,14 @@
 use crate::syntax::common::{MI, UID};
 use crate::syntax::core::{lambda_with_n_params, Axiom, Neutral, Val};
 
-use super::monad::{Gamma, TCE, TCM, TCS};
+use super::monad::{Gamma, MetaSolution, TCE, TCM, TCS};
 
 /// Check that all entries in a spine are bound variables.
 fn check_spine(telescope: &Gamma) -> TCM<Vec<UID>> {
     let mut res = Vec::with_capacity(telescope.len());
     for val in telescope {
         match val.ast {
-            Val::Neut(Neutral::Axi(Axiom::Generated(uid, ..))) => res.push(uid),
+            Val::Neut(Neutral::Axi(Axiom::Postulated(uid, ..))) => res.push(uid),
             _ => return Err(TCE::MetaWithNonVar(val.info)),
         }
     }
@@ -31,7 +31,7 @@ fn check_solution(meta: MI, spine: Vec<UID>, rhs: Val) -> TCM<()> {
     rhs.fold_neutral(Ok(()), |err, neut| {
         err?;
         match neut {
-            Neutral::Axi(Axiom::Generated(uid, ..)) if spine.contains(&uid) => {
+            Neutral::Axi(Axiom::Generated(uid, ..)) if !spine.contains(&uid) => {
                 Err(TCE::MetaScopeError(meta))
             }
             Neutral::Meta(mi) if mi == meta => Err(TCE::MetaRecursion(mi)),
@@ -97,7 +97,14 @@ fn unify(mut tcs: TCS, a: &Val, b: &Val) -> TCM {
             }
             Ok(tcs)
         }
-        (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => solve_with(tcs, *mi, term.clone()),
+        (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => {
+            match tcs.meta_solutions()[*mi].clone() {
+                MetaSolution::Unsolved => solve_with(tcs, *mi, term.clone()),
+                // Re-check?
+                MetaSolution::Solved(_solved) => Ok(tcs),
+                MetaSolution::Inlined => unreachable!(),
+            }
+        }
         // TODO: provide a proper error message
         (e, t) => panic!("Cannot unify `{}` with `{}`.", e, t),
     }
