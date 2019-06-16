@@ -22,7 +22,7 @@ fn unify(mut tcs: TCS, a: &Val, b: &Val) -> TCM {
             if sub_dbi == super_dbi {
                 Ok(tcs)
             } else {
-                Err(TCE::NotSameType(Neut(Var(*sub_dbi)), Neut(Var(*super_dbi))))
+                Err(TCE::NotSameType(Val::var(*sub_dbi), Val::var(*super_dbi)))
             }
         }
         (Sum(a_variants), Sum(b_variants)) if a_variants.len() == b_variants.len() => {

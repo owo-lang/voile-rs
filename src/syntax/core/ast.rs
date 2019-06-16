@@ -34,7 +34,11 @@ impl Val {
     pub fn apply(self, arg: Val) -> Val {
         match self {
             Val::Lam(closure) => closure.instantiate(arg),
-            Val::Neut(n) => Val::app(n, arg),
+            Val::Neut(Neutral::App(f, mut a)) => {
+                a.push(arg);
+                Val::app(*f, a)
+            }
+            Val::Neut(n) => Val::app(n, vec![arg]),
             e => panic!("Cannot apply on `{:?}`.", e),
         }
     }
@@ -138,8 +142,12 @@ pub enum Neutral {
     Lift(u32, Box<Self>),
     /// Postulated value, aka axioms.
     Axi(Axiom),
-    /// Function application.
-    App(Box<Self>, Box<Val>),
+    /// Function application, with all arguments collected
+    /// (so we have easy access to application arguments).<br/>
+    /// This is convenient for meta resolution and termination check.
+    ///
+    /// The "arguments" is supposed to be non-empty.
+    App(Box<Self>, Vec<Val>),
     /// Projecting the first element of a pair.
     Fst(Box<Self>),
     /// Projecting the second element of a pair.
@@ -173,9 +181,11 @@ impl Neutral {
         use Neutral::*;
         match self {
             Axi(a) => f(a),
-            App(fun, a) => App(
+            App(fun, args) => App(
                 Box::new(fun.map_axiom(f)),
-                Box::new(a.map_neutral(|n| Val::Neut(n.map_axiom(f)))),
+                args.into_iter()
+                    .map(|a| a.map_neutral(|n| Val::Neut(n.map_axiom(f))))
+                    .collect(),
             ),
             Fst(p) => Fst(Box::new(p.map_axiom(f))),
             Snd(p) => Snd(Box::new(p.map_axiom(f))),
@@ -214,9 +224,12 @@ impl RedEx for Neutral {
             Ref(n) => Val::glob(n),
             Meta(mi) => Val::meta(mi),
             Axi(a) => Val::Neut(Axi(a)),
-            App(function, argument) => function
-                .reduce_with_dbi(arg.clone(), dbi)
-                .apply(argument.reduce_with_dbi(arg, dbi)),
+            App(f, args) => args
+                .into_iter()
+                .fold(f.reduce_with_dbi(arg.clone(), dbi), |f, a| {
+                    // Do we need to `reduce` after `apply` again?
+                    f.apply(a.reduce_with_dbi(arg.clone(), dbi))
+                }),
             Fst(pair) => pair
                 .reduce_with_dbi(arg.clone(), dbi)
                 .first()
@@ -327,8 +340,8 @@ impl Val {
         Val::Neut(Neutral::Axi(axiom))
     }
 
-    pub fn app(function: Neutral, arg: Self) -> Self {
-        Val::Neut(Neutral::App(Box::new(function), Box::new(arg)))
+    pub fn app(function: Neutral, args: Vec<Self>) -> Self {
+        Val::Neut(Neutral::App(Box::new(function), args))
     }
 
     pub fn fst(pair: Neutral) -> Self {

@@ -13,7 +13,13 @@ impl Display for Neutral {
             Ref(dbi) => write!(f, "[|{:?}|]", dbi),
             Axi(a) => a.fmt(f),
             Meta(mi) => write!(f, "?{:?}", mi),
-            App(fun, a) => write!(f, "({} {})", fun, a),
+            App(fun, a) => {
+                write!(f, "({}", fun)?;
+                for x in a {
+                    write!(f, " {}", x)?;
+                }
+                f.write_str(")")
+            }
             Fst(p) => write!(f, "({}.1)", p),
             Snd(p) => write!(f, "({}.2)", p),
             Lift(levels, p) => write!(f, "(^[{:?}] {})", levels, p),

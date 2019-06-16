@@ -17,7 +17,8 @@ Type-checking monad is a `Result<State, Rrror>`.
 pub mod monad;
 
 /**
-Meta variable resolution.
+Meta variable solving,
+term (definitional) equality comparison.
 */
 mod unify;
 
