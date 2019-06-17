@@ -1,4 +1,4 @@
-use crate::syntax::common::{DBI, MI};
+use crate::syntax::common::{DBI, GI, MI};
 use crate::syntax::core::{Val, ValInfo};
 
 /// Typing context.
@@ -74,24 +74,24 @@ impl TCS {
         &self.local_gamma[self.local_gamma.len() - dbi.0 - 1]
     }
 
-    pub fn glob_type(&self, dbi: DBI) -> &ValInfo {
-        &self.gamma[dbi.0]
+    pub fn glob_type(&self, index: GI) -> &ValInfo {
+        &self.gamma[index.0]
     }
 
     pub fn local_val(&self, dbi: DBI) -> &ValInfo {
         &self.local_env[self.local_env.len() - dbi.0 - 1]
     }
 
-    pub fn glob_val(&self, dbi: DBI) -> &ValInfo {
-        &self.env[dbi.0]
+    pub fn glob_val(&self, index: GI) -> &ValInfo {
+        &self.env[index.0]
     }
 
     pub fn local_is_type(&self, dbi: DBI) -> bool {
         self.local_val(dbi).ast.is_type() || self.local_type(dbi).ast.is_universe()
     }
 
-    pub fn glob_is_type(&self, dbi: DBI) -> bool {
-        self.glob_val(dbi).ast.is_type() || self.glob_type(dbi).ast.is_universe()
+    pub fn glob_is_type(&self, index: GI) -> bool {
+        self.glob_val(index).ast.is_type() || self.glob_type(index).ast.is_universe()
     }
 
     pub fn pop_local(&mut self) {

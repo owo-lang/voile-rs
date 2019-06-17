@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::syntax::common::{next_uid, DtKind, DBI, MI, UID};
+use crate::syntax::common::{next_uid, DtKind, DBI, GI, MI, UID};
 use crate::syntax::level::Level;
 
 use super::level::*;
@@ -120,7 +120,7 @@ pub enum Neutral {
     /// Local variable, referred by de-bruijn index.
     Var(DBI),
     /// Global variable, referred by index. Needed for recursive definitions.
-    Ref(DBI),
+    Ref(GI),
     /// Meta variable reference.
     Meta(MI),
     /// Lifting self to a higher/lower level.
@@ -149,7 +149,7 @@ pub enum Axiom {
     Generated(UID, DBI),
     /// Usages of definitions when they're not yet implemented.
     /// (usually will be replaced with `Val::glob` after implemented).
-    Unimplemented(UID, DBI),
+    Unimplemented(UID, GI),
 }
 
 impl Axiom {
@@ -286,7 +286,7 @@ impl Val {
         Val::Sum(Default::default())
     }
 
-    pub fn glob(index: DBI) -> Self {
+    pub fn glob(index: GI) -> Self {
         Val::Neut(Neutral::Ref(index))
     }
 
@@ -302,8 +302,8 @@ impl Val {
         Val::Neut(Neutral::Axi(Axiom::Generated(uid, dbi)))
     }
 
-    pub fn fresh_unimplemented(dbi: DBI) -> Self {
-        let axiom = Axiom::Unimplemented(unsafe { next_uid() }, dbi);
+    pub fn fresh_unimplemented(index: GI) -> Self {
+        let axiom = Axiom::Unimplemented(unsafe { next_uid() }, index);
         Val::Neut(Neutral::Axi(axiom))
     }
 

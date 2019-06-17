@@ -45,7 +45,10 @@ impl_usize!(DBI);
 pub struct MI(pub usize);
 impl_usize!(MI);
 
-// TODO: add standalone type for global indices
+/// Global reference indices.
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
+pub struct GI(pub usize);
+impl_usize!(GI);
 
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
 pub struct UID(pub usize);

@@ -1,6 +1,6 @@
 use crate::check::monad::TCE;
 use crate::syntax::abs::{trans_expr, Abs};
-use crate::syntax::common::{DtKind, Ident, DBI, MI};
+use crate::syntax::common::{DtKind, Ident, DBI, GI, MI};
 use crate::syntax::surf::parse_str_err_printed;
 
 use super::{trans_decls, AbsDecl};
@@ -182,13 +182,13 @@ fn trans_lam_global() {
         &lam_expr,
         &[AbsDecl::Decl(Abs::Meta(ident, MI(0)))],
         &mut MI(1),
-        &[("b".to_string(), DBI(0))].iter().cloned().collect(),
+        &[("b".to_string(), GI(0))].iter().cloned().collect(),
     )
     .unwrap();
     println!("{}", lam_abs);
     match lam_abs {
         Abs::Lam(_, _, _, global_b) => match *global_b {
-            Abs::Ref(_, b_index) => assert_eq!(b_index, DBI(0)),
+            Abs::Ref(_, b_index) => assert_eq!(b_index, GI(0)),
             _ => panic!(),
         },
         _ => panic!(),

@@ -9,7 +9,7 @@ pub enum Abs {
     /// Local variable
     Var(Ident, UID, DBI),
     /// Global variable
-    Ref(Ident, DBI),
+    Ref(Ident, GI),
     /// Meta variable
     Meta(Ident, MI),
     /// Lift an expression many times
@@ -96,11 +96,11 @@ impl Abs {
 #[derive(Debug, Clone)]
 pub enum AbsDecl {
     /// Signature.
-    Sign(Abs, DBI),
+    Sign(Abs, GI),
     /// Function body without a signature.
     Decl(Abs),
     /// Function body with a signature.
-    Impl(Abs, DBI),
+    Impl(Abs, GI),
 }
 
 impl ToSyntaxInfo for AbsDecl {

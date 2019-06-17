@@ -1,13 +1,16 @@
 use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::common::{next_uid, DtKind, DtKind::*, Ident, ToSyntaxInfo, DBI, MI, UID};
+use crate::syntax::common::{DtKind::*, *};
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
 
 /// Key: global declaration name; Value: global declaration index.
-type NamedDbi = BTreeMap<String, DBI>;
+type GlobCtx = BTreeMap<String, GI>;
+
+/// Key: local declaration name; Value: de-bruijn indices.
+type LocalCtx = BTreeMap<String, DBI>;
 
 pub fn trans_decls(decls: Vec<Decl>) -> TCM<Vec<AbsDecl>> {
     trans_decls_contextual(Default::default(), decls).map(|tcs| tcs.decls)
@@ -25,8 +28,8 @@ pub struct TransState {
     /// (`Impl`s are not counted as valid declarations because they're just
     /// attachments to existing declarations).
     pub signature_indices: Vec<DBI>,
-    pub context_mapping: NamedDbi,
-    pub decl_count: DBI,
+    pub context_mapping: GlobCtx,
+    pub decl_count: GI,
     pub meta_count: MI,
 }
 
@@ -74,7 +77,7 @@ fn trans_one_decl(mut tcs: TransState, decl: &Decl) -> TCM<TransState> {
     Ok(tcs)
 }
 
-pub fn trans_expr(expr: &Expr, env: &[AbsDecl], meta_count: &mut MI, map: &NamedDbi) -> TCM<Abs> {
+pub fn trans_expr(expr: &Expr, env: &[AbsDecl], meta_count: &mut MI, map: &GlobCtx) -> TCM<Abs> {
     trans_expr_inner(expr, meta_count, env, map, &[], &Default::default())
 }
 
@@ -82,9 +85,9 @@ fn trans_expr_inner(
     expr: &Expr,
     meta_count: &mut MI,
     env: &[AbsDecl],
-    global_map: &NamedDbi,
+    global_map: &GlobCtx,
     local_env: &[UID],
-    local_map: &NamedDbi,
+    local_map: &LocalCtx,
 ) -> TCM<Abs> {
     match expr {
         Expr::Type(syntax, level) => Ok(Abs::Type(*syntax, *level)),
@@ -177,7 +180,7 @@ fn trans_expr_inner(
 fn introduce_abstractions(
     params: &[Ident],
     local_env: &mut Vec<UID>,
-    local_map: &mut NamedDbi,
+    local_map: &mut LocalCtx,
     names: &mut Vec<UID>,
 ) {
     for param in params {
@@ -199,9 +202,9 @@ fn introduce_abstractions(
 fn trans_dependent_type(
     meta_count: &mut MI,
     env: &[AbsDecl],
-    global_map: &NamedDbi,
+    global_map: &GlobCtx,
     local_env: &[UID],
-    local_map: &NamedDbi,
+    local_map: &LocalCtx,
     params: &[Param],
     result: &Expr,
     kind: DtKind,
@@ -235,9 +238,9 @@ fn trans_dependent_type(
 fn introduce_telescope(
     meta_count: &mut MI,
     env: &[AbsDecl],
-    global_map: &NamedDbi,
+    global_map: &GlobCtx,
     dt_env: &mut Vec<UID>,
-    dt_map: &mut NamedDbi,
+    dt_map: &mut LocalCtx,
     names: &mut Vec<UID>,
     mut dt_vec: Vec<Abs>,
     param: &Param,
