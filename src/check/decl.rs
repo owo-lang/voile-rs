@@ -1,7 +1,7 @@
 use std::mem::swap;
 
 use crate::syntax::abs::AbsDecl;
-use crate::syntax::common::{ToSyntaxInfo, DBI};
+use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::{Val, ValInfo};
 
 use super::monad::{TCM, TCS};
@@ -29,9 +29,9 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             // Now it's time to change them back to `var` references.
             let val = val_fake.map_ast(|ast| ast.generated_to_var());
 
-            tcs.env[sign_dbi] = val;
+            tcs.env[sign_dbi.0] = val;
 
-            fn unimplemented_to_glob(v: &mut [ValInfo], i: DBI) {
+            fn unimplemented_to_glob(v: &mut [ValInfo], i: usize) {
                 let mut placeholder = Default::default();
                 swap(&mut v[i], &mut placeholder);
                 placeholder = placeholder.map_ast(|ast| ast.unimplemented_to_glob());
@@ -39,10 +39,10 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             }
             // Every references to me are now actually valid (they were axioms before),
             // replace them with a global reference.
-            for i in sign_dbi..tcs.glob_len() {
+            for i in sign_dbi.0..tcs.glob_len() {
                 unimplemented_to_glob(tcs.env.as_mut_slice(), i);
             }
-            for i in sign_dbi + 1..tcs.glob_len() {
+            for i in sign_dbi.0 + 1..tcs.glob_len() {
                 unimplemented_to_glob(tcs.gamma.as_mut_slice(), i);
             }
 

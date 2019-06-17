@@ -1,6 +1,6 @@
 use crate::check::monad::TCE;
 use crate::syntax::abs::{trans_expr, Abs};
-use crate::syntax::common::{DtKind, Ident, DBI};
+use crate::syntax::common::{DtKind, Ident, DBI, MI};
 use crate::syntax::surf::parse_str_err_printed;
 
 use super::{trans_decls, AbsDecl};
@@ -93,22 +93,23 @@ fn trans_pi_env() {
         .unwrap()
         .remove(0)
         .body;
-    let pi_expr = trans_expr(&pi_expr, &[], &mut 0, &Default::default()).expect("Parse failed.");
+    let pi_expr = trans_expr(&pi_expr, &[], &mut Default::default(), &Default::default())
+        .expect("Parse failed.");
     println!("{}", pi_expr);
     let (_, bc) = must_be_pi(pi_expr);
     let (b, c) = must_be_pi(bc);
     // the type of `b`, `c` should be _(0), _(0)
     let b = must_be_app(b);
     let c = must_be_app(c);
-    assert_eq!(0, must_be_local(b));
-    assert_eq!(0, must_be_local(c));
+    assert_eq!(DBI(0), must_be_local(b));
+    assert_eq!(DBI(0), must_be_local(c));
 }
 
 #[test]
 fn trans_pi_shadowing() {
     let code = "val t : ((a : Type) -> (b : Type(a)) -> (b: Type(b)) -> Type(a));";
     let pi_expr = parse_str_err_printed(code).unwrap().remove(0).body;
-    let pi_abs = trans_expr(&pi_expr, &[], &mut 0, &Default::default()).unwrap();
+    let pi_abs = trans_expr(&pi_expr, &[], &mut Default::default(), &Default::default()).unwrap();
     println!("{}", pi_abs);
     let (_, bc) = must_be_pi(pi_abs);
     let (b1, bc) = must_be_pi(bc);
@@ -117,24 +118,24 @@ fn trans_pi_shadowing() {
     let b1 = must_be_app(b1);
     let b2 = must_be_app(b2);
     let c = must_be_app(c);
-    assert_eq!(0, must_be_local(b1));
-    assert_eq!(0, must_be_local(b2));
-    assert_eq!(2, must_be_local(c));
+    assert_eq!(DBI(0), must_be_local(b1));
+    assert_eq!(DBI(0), must_be_local(b2));
+    assert_eq!(DBI(2), must_be_local(c));
 }
 
 #[test]
 fn trans_lam() {
     let code = r"let l = \a . \b . \a . b a;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
-    let lam_abs = trans_expr(&lam_expr, &[], &mut 0, &Default::default()).unwrap();
+    let lam_abs = trans_expr(&lam_expr, &[], &mut Default::default(), &Default::default()).unwrap();
     println!("{}", lam_abs);
     let abs_lam_ba = must_be_lam(lam_abs);
     let abs_lam_a = must_be_lam(abs_lam_ba);
     match must_be_lam(abs_lam_a) {
         Abs::App(_, b, a) => {
             // lam body should be App(_info, Local(_info, 1), Local(_info, 0))
-            assert_eq!(1, must_be_local(*b));
-            assert_eq!(0, must_be_local(*a));
+            assert_eq!(DBI(1), must_be_local(*b));
+            assert_eq!(DBI(0), must_be_local(*a));
         }
         _ => panic!(),
     }
@@ -144,15 +145,15 @@ fn trans_lam() {
 fn trans_multi_param_lam() {
     let code = r"let l = \a b a . b a;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
-    let lam_abs = trans_expr(&lam_expr, &[], &mut 0, &Default::default()).unwrap();
+    let lam_abs = trans_expr(&lam_expr, &[], &mut Default::default(), &Default::default()).unwrap();
     println!("{}", lam_abs);
     let abs_lam_ba = must_be_lam(lam_abs);
     let abs_lam_a = must_be_lam(abs_lam_ba);
     match must_be_lam(abs_lam_a) {
         Abs::App(_, b, a) => {
             // lam body should be App(_info, Local(_info, 1), Local(_info, 0))
-            assert_eq!(1, must_be_local(*b));
-            assert_eq!(0, must_be_local(*a));
+            assert_eq!(DBI(1), must_be_local(*b));
+            assert_eq!(DBI(0), must_be_local(*a));
         }
         _ => panic!(),
     }
@@ -162,7 +163,7 @@ fn trans_multi_param_lam() {
 fn trans_lam_lookup_failed() {
     let code = r"let l = \a . b;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
-    let tce = trans_expr(&lam_expr, &[], &mut 0, &Default::default()).unwrap_err();
+    let tce = trans_expr(&lam_expr, &[], &mut Default::default(), &Default::default()).unwrap_err();
     match tce {
         TCE::LookUpFailed(ident) => assert_eq!(ident.text, "b"),
         _ => panic!(),
@@ -179,15 +180,15 @@ fn trans_lam_global() {
     };
     let lam_abs = trans_expr(
         &lam_expr,
-        &[AbsDecl::Decl(Abs::Meta(ident, 0))],
-        &mut 1,
-        &[("b".to_string(), 0)].iter().cloned().collect(),
+        &[AbsDecl::Decl(Abs::Meta(ident, MI(0)))],
+        &mut MI(1),
+        &[("b".to_string(), DBI(0))].iter().cloned().collect(),
     )
     .unwrap();
     println!("{}", lam_abs);
     match lam_abs {
         Abs::Lam(_, _, _, global_b) => match *global_b {
-            Abs::Ref(_, b_index) => assert_eq!(b_index, 0),
+            Abs::Ref(_, b_index) => assert_eq!(b_index, DBI(0)),
             _ => panic!(),
         },
         _ => panic!(),

@@ -1,3 +1,4 @@
+use crate::syntax::common::UID;
 use crate::syntax::core::{LiftEx, Val};
 use crate::syntax::lisp::{self, Lisp};
 
@@ -19,11 +20,11 @@ fn many_to_val(block: &[Lisp], lisp: &Lisp) -> Val {
     use crate::syntax::lisp::Lisp::*;
     match block {
         // So `()` == `()`.
-        [] => Val::postulate(0),
+        [] => Val::postulate(UID(0)),
         [Sym("lift"), arg] => lisp_to_val(arg).lift(1),
         [Sym("fst"), arg] => lisp_to_val(arg).first(),
         [Sym("snd"), arg] => lisp_to_val(arg).second(),
-        [Sym("type"), arg] => Val::Type(From::from(arg.as_dbi().unwrap())),
+        [Sym("type"), arg] => Val::Type(From::from(arg.as_dbi().unwrap().0)),
         [Sym("app"), fst, snd] => lisp_to_val(fst).apply(lisp_to_val(snd)),
         [Sym("pair"), fst, snd] => Val::pair(lisp_to_val(fst), lisp_to_val(snd)),
         [Sym("lam"), snd] => Val::lam(lisp_to_val(snd)),

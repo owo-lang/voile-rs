@@ -46,7 +46,7 @@ pub struct TCS {
 impl TCS {
     /// Submit a solution to a meta variable to the context.
     pub fn solve_meta(&mut self, meta_index: MI, solution: Val) {
-        let meta_solution = &mut self.meta_context[meta_index];
+        let meta_solution = &mut self.meta_context[meta_index.0];
         debug_assert_eq!(meta_solution, &mut MetaSolution::Unsolved);
         *meta_solution = MetaSolution::solved(solution);
     }
@@ -57,32 +57,33 @@ impl TCS {
 
     /// Add many unsolved metas to the context.
     pub fn expand_with_fresh_meta(&mut self, meta_count: MI) {
-        debug_assert!(self.meta_context.len() <= meta_count);
-        self.meta_context.resize_with(meta_count, Default::default);
+        debug_assert!(self.meta_context.len() <= meta_count.0);
+        self.meta_context
+            .resize_with(meta_count.0, Default::default);
     }
 
     /// Create a new valid but unsolved meta variable,
     /// used for generating fresh metas during elaboration.
     pub fn fresh_meta(&mut self) -> Val {
-        let meta = Val::meta(self.meta_context.len());
+        let meta = Val::meta(MI(self.meta_context.len()));
         self.meta_context.push(MetaSolution::Unsolved);
         meta
     }
 
     pub fn local_type(&self, dbi: DBI) -> &ValInfo {
-        &self.local_gamma[self.local_gamma.len() - dbi - 1]
+        &self.local_gamma[self.local_gamma.len() - dbi.0 - 1]
     }
 
     pub fn glob_type(&self, dbi: DBI) -> &ValInfo {
-        &self.gamma[dbi]
+        &self.gamma[dbi.0]
     }
 
     pub fn local_val(&self, dbi: DBI) -> &ValInfo {
-        &self.local_env[self.local_env.len() - dbi - 1]
+        &self.local_env[self.local_env.len() - dbi.0 - 1]
     }
 
     pub fn glob_val(&self, dbi: DBI) -> &ValInfo {
-        &self.env[dbi]
+        &self.env[dbi.0]
     }
 
     pub fn local_is_type(&self, dbi: DBI) -> bool {

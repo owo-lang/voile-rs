@@ -1,4 +1,5 @@
-use std::ops::Add;
+use std::fmt::{Display, Error, Formatter};
+use std::ops::{Add, AddAssign};
 
 use pest::Span;
 
@@ -9,22 +10,53 @@ pub enum DtKind {
     Sigma,
 }
 
+macro_rules! impl_usize {
+    ($name:ident) => {
+        impl Add<usize> for $name {
+            type Output = $name;
+
+            fn add(self, rhs: usize) -> Self::Output {
+                Self(self.0 + rhs)
+            }
+        }
+
+        impl AddAssign<usize> for $name {
+            fn add_assign(&mut self, rhs: usize) {
+                self.0 += rhs
+            }
+        }
+
+        impl Display for $name {
+            fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+                self.0.fmt(f)
+            }
+        }
+    };
+}
+
 /// De Bruijn Indices. Checkout [Wikipedia](https://en.wikipedia.org/wiki/De_Bruijn_index) if you
 /// are curious but have no idea about it.
-pub type DBI = usize;
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
+pub struct DBI(pub usize);
+impl_usize!(DBI);
 
 /// Meta variable indices (they're resolved as global reference).
-pub type MI = usize;
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
+pub struct MI(pub usize);
+impl_usize!(MI);
 
 // TODO: add standalone type for global indices
 
-pub type UID = usize;
-static mut UID_COUNT: UID = 0;
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
+pub struct UID(pub usize);
+impl_usize!(UID);
+
+static mut UID_COUNT: usize = 0;
 
 pub(crate) unsafe fn next_uid() -> UID {
     let val = UID_COUNT;
     UID_COUNT += 1;
-    val
+    UID(val)
 }
 
 impl<'a> From<Span<'a>> for SyntaxInfo {
@@ -77,8 +109,8 @@ impl Add for SyntaxInfo {
     }
 }
 
-impl std::fmt::Display for SyntaxInfo {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+impl Display for SyntaxInfo {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         write!(f, "line {:?} ({:?}:{:?})", self.line, self.start, self.end)
     }
 }

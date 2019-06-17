@@ -1,4 +1,4 @@
-use crate::syntax::common::{MI, UID};
+use crate::syntax::common::{DBI, MI, UID};
 use crate::syntax::core::{lambda_with_n_params, Axiom, Neutral, Val};
 
 use super::monad::{Gamma, MetaSolution, TCE, TCM, TCS};
@@ -52,7 +52,7 @@ fn solve_with(mut tcs: TCS, meta: MI, solution: Val) -> TCM {
         Generated(uid, _) => {
             let msg = "Bad uid during solution generation.";
             // The right most local var has dbi 0.
-            Neutral::Var(spine.iter().rposition(|i| *i == uid).expect(msg))
+            Neutral::Var(DBI(spine.iter().rposition(|i| *i == uid).expect(msg)))
         }
         Postulated(_) => Neutral::Axi(axiom),
         Unimplemented(_, dbi) => Neutral::Ref(dbi),
@@ -88,7 +88,7 @@ fn unify(mut tcs: TCS, a: &Val, b: &Val) -> TCM {
             Ok(tcs)
         }
         (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => {
-            match tcs.meta_solutions()[*mi].clone() {
+            match tcs.meta_solutions()[mi.0].clone() {
                 MetaSolution::Unsolved => solve_with(tcs, *mi, term.clone()),
                 // TODO: Re-check?
                 MetaSolution::Solved(_solved) => Ok(tcs),

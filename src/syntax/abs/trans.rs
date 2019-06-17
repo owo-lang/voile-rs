@@ -44,14 +44,14 @@ fn trans_one_decl(mut tcs: TransState, decl: &Decl) -> TCM<TransState> {
         .entry(decl.name.text.clone())
         .or_insert_with(|| decl_total);
     let original = if decl_total > dbi {
-        Some(&tcs.decls[tcs.signature_indices[dbi]])
+        Some(&tcs.decls[tcs.signature_indices[dbi.0].0])
     } else {
         None
     };
     let modified = match (decl.kind, original) {
         (DeclKind::Sign, None) => {
             let abs = AbsDecl::Sign(abs, tcs.decl_count);
-            tcs.signature_indices.push(tcs.decls.len());
+            tcs.signature_indices.push(DBI(tcs.decls.len()));
             tcs.decl_count += 1;
             abs
         }
@@ -65,7 +65,7 @@ fn trans_one_decl(mut tcs: TransState, decl: &Decl) -> TCM<TransState> {
         }
         (DeclKind::Impl, None) => {
             tcs.decl_count += 1;
-            tcs.signature_indices.push(tcs.decls.len());
+            tcs.signature_indices.push(DBI(tcs.decls.len()));
             AbsDecl::Decl(abs)
         }
         (DeclKind::Impl, Some(AbsDecl::Sign(_, dbi))) => AbsDecl::Impl(abs, *dbi),
@@ -92,7 +92,7 @@ fn trans_expr_inner(
             let name = &ident.text;
             if local_map.contains_key(name) {
                 let dbi = local_map[name];
-                Ok(Abs::Var(ident.clone(), local_env[dbi], dbi))
+                Ok(Abs::Var(ident.clone(), local_env[dbi.0], dbi))
             } else if global_map.contains_key(name) {
                 Ok(Abs::Ref(ident.clone(), global_map[name]))
             } else {
@@ -186,10 +186,10 @@ fn introduce_abstractions(
             let dbi_value = *dbi;
             *dbi += 1;
             if shadowing == Some(dbi_value) {
-                local_env.remove(dbi_value);
+                local_env.remove(dbi_value.0);
             }
         }
-        local_map.insert(param.text.clone(), 0);
+        local_map.insert(param.text.clone(), Default::default());
         let new_name = unsafe { next_uid() };
         local_env.insert(0, new_name);
         names.push(new_name);
@@ -258,7 +258,7 @@ fn introduce_telescope(
             // *dbi = 0;
         }
         */
-        dt_map.insert(param_name, 0);
+        dt_map.insert(param_name, Default::default());
         let new_name = unsafe { next_uid() };
         dt_env.insert(0, new_name);
         names.push(new_name);

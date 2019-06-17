@@ -2,7 +2,7 @@ use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{MetaSolution, TCS};
 use crate::syntax::abs::Abs;
-use crate::syntax::common::Ident;
+use crate::syntax::common::{Ident, DBI};
 use crate::syntax::core::{LiftEx, Neutral, Val, ValInfo};
 
 /// Ensure `abs` is well-typed before invoking this,
@@ -81,7 +81,7 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
 fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
     let val = expr.map_neutral(|neut| match neut {
         Neutral::Ref(index) => tcs.glob_val(index).ast.clone(),
-        Neutral::Meta(mi) => match &tcs.meta_solutions()[mi] {
+        Neutral::Meta(mi) => match &tcs.meta_solutions()[mi.0] {
             MetaSolution::Solved(val) => {
                 let mut ret = *val.clone();
                 // The right most local var has dbi 0.
@@ -102,14 +102,14 @@ pub fn compile_variant(info: Ident) -> ValInfo {
     let mut variant = BTreeMap::default();
     let mut text = info.text;
     text.remove(0);
-    variant.insert(text, Val::var(0));
+    variant.insert(text, Val::var(DBI(0)));
     Val::lam(Val::Sum(variant)).into_info(info.info)
 }
 
 pub fn compile_cons(info: Ident) -> ValInfo {
     let mut text = info.text;
     text.remove(0);
-    Val::lam(Val::cons(text, Val::var(0))).into_info(info.info)
+    Val::lam(Val::cons(text, Val::var(DBI(0)))).into_info(info.info)
 }
 
 /// So you can do some functional programming based on method call chains.

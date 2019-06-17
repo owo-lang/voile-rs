@@ -417,10 +417,10 @@ impl Closure {
     }
 
     pub fn instantiate(self, arg: Val) -> Val {
-        self.body.reduce_with_dbi(arg, 0)
+        self.body.reduce_with_dbi(arg, Default::default())
     }
 
     pub fn instantiate_cloned(&self, arg: Val) -> Val {
-        self.body.clone().reduce_with_dbi(arg, 0)
+        self.body.clone().reduce_with_dbi(arg, Default::default())
     }
 }
