@@ -7,13 +7,14 @@ use rustyline::highlight::Highlighter;
 use rustyline::hint::Hinter;
 use rustyline::{CompletionType, Config, Context, Editor, Helper};
 
+use voile::check::check_decls;
 use voile::check::monad::{MetaSolution, TCM, TCS as TCMS};
 use voile::syntax::abs::{trans_decls_contextual, trans_expr, Abs, TransState};
+use voile::syntax::common::MI;
 use voile::syntax::core::LiftEx;
 use voile::syntax::surf::{parse_expr_err_printed, parse_str_err_printed, Decl};
 
 use crate::util::parse_file;
-use voile::check::check_decls;
 
 type TCS = (TCMS, TransState);
 
@@ -182,7 +183,9 @@ fn expression_thing<T: Display>(
 }
 
 fn update_tcs(tcs: TCS, decls: Vec<Decl>) -> TCS {
-    let state = trans_decls_contextual(tcs.1, decls)
+    let mut state = tcs.1;
+    state.meta_count = MI(tcs.0.meta_solutions().len());
+    let state = trans_decls_contextual(state, decls)
         .map_err(|err| eprintln!("{}", err))
         .unwrap_or_default();
     let mut telescope = tcs.0;
@@ -195,6 +198,7 @@ fn update_tcs(tcs: TCS, decls: Vec<Decl>) -> TCS {
 
 pub fn code_to_abs(tcs: &mut TCS, code: &str) -> Option<Abs> {
     let trans_state = &mut tcs.1;
+    trans_state.meta_count = MI(tcs.0.meta_solutions().len());
     let expr = parse_expr_err_printed(code).ok()?;
     trans_expr(
         &expr,
