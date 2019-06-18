@@ -65,7 +65,7 @@ $$
 \end{alignedat}
 $$
 
-For-all quantification should also support generalizing over a part of the
+Universal quantification should also support generalizing over a part of the
 records (in other words, [row-polymorphism][row-poly]), like:
 
 $$
