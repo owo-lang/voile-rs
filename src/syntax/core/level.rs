@@ -51,7 +51,7 @@ impl LiftEx for Val {
             Val::Type(level) => Some(*level + 1),
             Val::Sum(variants) => {
                 let mut maximum = Level::default();
-                for (_, variant) in variants {
+                for variant in variants.values() {
                     maximum = maximum.max(variant.calc_level()?);
                 }
                 Some(maximum)

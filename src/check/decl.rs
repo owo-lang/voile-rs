@@ -6,11 +6,8 @@ use crate::syntax::core::{Val, ValInfo};
 
 use super::monad::{TCM, TCS};
 
-pub fn check_decls(mut tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
-    for decl in decls.into_iter() {
-        tcs = tcs.check_decl(decl)?;
-    }
-    Ok(tcs)
+pub fn check_decls(tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
+    decls.into_iter().try_fold(tcs, check_decl)
 }
 
 fn require_local_emptiness(tcs: &TCS) {
@@ -81,10 +78,5 @@ impl TCS {
     #[inline]
     pub fn check_decls(self, decls: Vec<AbsDecl>) -> TCM {
         check_decls(self, decls)
-    }
-
-    #[inline]
-    pub fn check_decl(self, decl: AbsDecl) -> TCM {
-        check_decl(self, decl)
     }
 }

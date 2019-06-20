@@ -1,17 +1,18 @@
 use crate::syntax::common::{DBI, MI, UID};
-use crate::syntax::core::{lambda_with_n_params, Axiom, Neutral, Val};
+use crate::syntax::core::{lambda_with_n_params, Axiom, Neutral, Val, ValInfo};
 
-use super::monad::{Gamma, MetaSolution, TCE, TCM, TCS};
+use super::monad::{MetaSolution, TCE, TCM, TCS};
 
 /// Check that all entries in a spine are bound variables.
-fn check_spine(telescope: &Gamma) -> TCM<Vec<UID>> {
+fn check_spine(telescope: &[ValInfo]) -> TCM<Vec<UID>> {
     let mut res = Vec::with_capacity(telescope.len());
     for val in telescope {
-        match val.ast {
-            // `Unimplemented` is probably not what we want here,
-            // but I'm not sure if it's gonna affect.
-            Val::Neut(Neutral::Axi(axiom)) => res.push(axiom.unique_id()),
-            _ => return Err(TCE::MetaWithNonVar(val.info)),
+        // `Unimplemented` is probably not what we want here,
+        // but I'm not sure if it's gonna affect.
+        if let Val::Neut(Neutral::Axi(axiom)) = val.ast {
+            res.push(axiom.unique_id());
+        } else {
+            return Err(TCE::MetaWithNonVar(val.info));
         }
     }
     Ok(res)
@@ -68,7 +69,7 @@ fn solve_with(mut tcs: TCS, meta: MI, solution: Val) -> TCM {
 Try to unify two well-typed terms.
 This may lead to meta variable resolution.
 */
-fn unify(mut tcs: TCS, a: &Val, b: &Val) -> TCM {
+fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
     use {Neutral::*, Val::*};
     match (a, b) {
         (Type(sub_level), Type(super_level)) if sub_level == super_level => Ok(tcs),
@@ -76,13 +77,12 @@ fn unify(mut tcs: TCS, a: &Val, b: &Val) -> TCM {
         (Cons(_, a), Cons(_, b)) => tcs.unify(&**a, &**b),
         (Pair(a0, a1), Pair(b0, b1)) => tcs.unify(&**a0, &**b0)?.unify(&**a1, &**b1),
         (Sum(a_variants), Sum(b_variants)) if a_variants.len() == b_variants.len() => {
-            for (name, ty) in a_variants {
+            a_variants.iter().try_fold(tcs, |tcs, (name, ty)| {
                 let counterpart = b_variants
                     .get(name)
                     .ok_or_else(|| TCE::MissingVariant(name.clone()))?;
-                tcs = tcs.unify(ty, counterpart)?;
-            }
-            Ok(tcs)
+                tcs.unify(ty, counterpart)
+            })
         }
         (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => {
             match tcs.meta_solutions()[mi.0].clone() {
@@ -102,13 +102,8 @@ fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
     match (a, b) {
         (Ref(x), Ref(y)) if x == y => Ok(tcs),
         (Lift(x, a), Lift(y, b)) if x == y => tcs.unify_neutral(&**a, &**b),
-        (App(f, a), App(g, b)) if a.len() == b.len() => {
-            let mut tcs = tcs.unify_neutral(&**f, &**g)?;
-            for (x, y) in a.iter().zip(b.iter()) {
-                tcs = tcs.unify(x, y)?;
-            }
-            Ok(tcs)
-        }
+        (App(f, a), App(g, b)) if a.len() == b.len() => (a.iter().zip(b.iter()))
+            .try_fold(tcs.unify_neutral(&*f, &*g)?, |tcs, (x, y)| tcs.unify(x, y)),
         (Snd(a), Snd(b)) | (Fst(a), Fst(b)) => tcs.unify_neutral(&**a, &**b),
         (e, t) => Err(TCE::CannotUnify(Val::Neut(e.clone()), Val::Neut(t.clone()))),
     }

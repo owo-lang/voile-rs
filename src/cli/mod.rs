@@ -42,9 +42,9 @@ fn main() {
                     });
 
                 if !args.quiet {
-                    for i in 0..checked.glob_len() {
-                        println!("sign: {}", checked.gamma[i].ast);
-                        println!("body: {}", checked.env[i].ast);
+                    for (ty, val) in checked.gamma.iter().zip(checked.env.iter()) {
+                        println!("sign: {}", ty.ast);
+                        println!("body: {}", val.ast);
                     }
 
                     // Meme: https://github.com/owo-lang/voile-rs/issues/56

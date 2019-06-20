@@ -75,9 +75,5 @@ fn dbi(the_rule: Tok) -> Lisp {
 }
 
 fn block(the_rule: Tok) -> Lisp {
-    let mut lisps: Vec<Lisp> = Default::default();
-    for lisp in the_rule.into_inner() {
-        lisps.push(element(lisp));
-    }
-    Lisp::Many(lisps)
+    Lisp::Many(the_rule.into_inner().map(element).collect())
 }
