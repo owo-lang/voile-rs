@@ -82,7 +82,7 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
     let val = expr.map_neutral(|neut| match neut {
         Neutral::Ref(index) => tcs.glob_val(index).ast.clone(),
         Neutral::Meta(mi) => match &tcs.meta_solutions()[mi.0] {
-            MetaSolution::Solved(val) => expand_meta(&tcs.local_env, val.clone()),
+            MetaSolution::Solved(val) => *val.clone(),
             MetaSolution::Unsolved => panic!("Cannot eval unsolved meta: {:?}", mi),
             MetaSolution::Inlined => unreachable!(),
         },

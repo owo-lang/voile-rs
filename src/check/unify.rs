@@ -1,41 +1,10 @@
-use crate::syntax::common::{DBI, MI, UID};
-use crate::syntax::core::{lambda_with_n_params, Axiom, Neutral, Val, ValInfo};
+use crate::syntax::common::MI;
+use crate::syntax::core::{Neutral, Val};
 
 use super::monad::{MetaSolution, TCE, TCM, TCS};
-use crate::check::expand_meta;
 
-/// Check that all entries in a spine are bound variables.
-fn check_spine(telescope: &[ValInfo]) -> TCM<Vec<UID>> {
-    let mut res = Vec::with_capacity(telescope.len());
-    for val in telescope {
-        // `Unimplemented` is probably not what we want here,
-        // but I'm not sure if it's gonna affect.
-        if let Val::Neut(Neutral::Axi(axiom)) = val.ast {
-            res.push(axiom.unique_id());
-        } else {
-            return Err(TCE::MetaWithNonVar(val.info));
-        }
-    }
-    Ok(res)
-}
-
-/**
-Scope check + occurs check a solution candidate.
-
-Inputs are a meta, a spine of
-variable names (which comes from [check_spine](self::check_spine)) and a RHS
-term in normal form. In real implementations it would be a bad idea to solve
-metas with normal forms (because of size explosion), but here it's the simplest
-thing we can do.
-
-We don't have to worry about shadowing here, because normal
-forms have no shadowing by our previous quote implementation.
-*/
-fn check_solution(meta: MI, spine: Vec<UID>, rhs: Val) -> TCM<()> {
+fn check_solution(meta: MI, rhs: Val) -> TCM<()> {
     rhs.try_fold_neutral((), |(), neut| match neut {
-        Neutral::Axi(axiom) if !spine.contains(&axiom.unique_id()) => {
-            Err(TCE::MetaScopeError(meta))
-        }
         Neutral::Meta(mi) if mi == meta => Err(TCE::MetaRecursion(mi)),
         _ => Ok(()),
     })
@@ -45,23 +14,10 @@ fn check_solution(meta: MI, spine: Vec<UID>, rhs: Val) -> TCM<()> {
 Solve a meta with a specific value.
 */
 fn solve_with(mut tcs: TCS, meta: MI, solution: Val) -> TCM {
-    use Axiom::*;
-    let spine = check_spine(&tcs.local_env)?;
-    let anticipated_solution = solution.clone().map_axiom(|axiom| match axiom {
-        Generated(uid, _) => {
-            let msg = "Bad uid during solution generation.";
-            // The right most local var has dbi 0.
-            Neutral::Var(DBI(spine.iter().rposition(|i| *i == uid).expect(msg)))
-        }
-        Postulated(_) => Neutral::Axi(axiom),
-        Unimplemented(_, dbi) => Neutral::Ref(dbi),
-    });
-    check_solution(meta, spine, solution)?;
-    // Here I need to produce a new lambda, using its own local DBI.
-    tcs.solve_meta(
-        meta,
-        lambda_with_n_params(tcs.local_len(), anticipated_solution),
-    );
+    // TODO: remove this clone by introducing reference version of `try_fold_neutral`.
+    let anticipated_solution = solution.clone().unimplemented_to_glob();
+    check_solution(meta, solution)?;
+    tcs.solve_meta(meta, anticipated_solution);
 
     Ok(tcs)
 }
@@ -87,16 +43,14 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
                 tcs.unify(ty, counterpart)
             })
         }
-        (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => {
-            match tcs.meta_solutions()[mi.0].clone() {
-                MetaSolution::Unsolved => solve_with(tcs, *mi, term.clone()),
-                MetaSolution::Solved(solution) => {
-                    let expanded = expand_meta(&tcs.local_env, solution);
-                    tcs.unify(&expanded, term)
-                }
-                MetaSolution::Inlined => unreachable!(),
+        (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => match &tcs.meta_solutions()[mi.0] {
+            MetaSolution::Unsolved => solve_with(tcs, *mi, term.clone()),
+            MetaSolution::Solved(solution) => {
+                let val = *solution.clone();
+                tcs.unify(&val, term)
             }
-        }
+            MetaSolution::Inlined => unreachable!(),
+        },
         (Neut(a), Neut(b)) => tcs.unify_neutral(a, b),
         (e, t) => Err(TCE::CannotUnify(e.clone(), t.clone())),
     }

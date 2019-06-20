@@ -5,7 +5,7 @@
 + Documentation cleanup
 + Report error on redefinitions (#107)
 + Unification (#105, #110)
-+ Meta variable solving (#104, #110)
++ Meta variable solving (#104, #110, #119, #120)
 + Use Rust's newtype pattern to represent different indices (#111, #112)
 + Memory optimizations
 

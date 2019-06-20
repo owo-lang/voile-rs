@@ -457,14 +457,6 @@ impl Val {
     }
 }
 
-pub fn lambda_with_n_params(n: usize, inside: Val) -> Val {
-    if n == 0 {
-        inside
-    } else {
-        Val::lam(lambda_with_n_params(n - 1, inside))
-    }
-}
-
 impl Default for Val {
     fn default() -> Self {
         Self::fresh_axiom()
