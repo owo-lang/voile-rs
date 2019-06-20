@@ -2,6 +2,7 @@ use crate::syntax::common::{DBI, MI, UID};
 use crate::syntax::core::{lambda_with_n_params, Axiom, Neutral, Val, ValInfo};
 
 use super::monad::{MetaSolution, TCE, TCM, TCS};
+use crate::check::expand_meta;
 
 /// Check that all entries in a spine are bound variables.
 fn check_spine(telescope: &[ValInfo]) -> TCM<Vec<UID>> {
@@ -74,6 +75,8 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
     match (a, b) {
         (Type(sub_level), Type(super_level)) if sub_level == super_level => Ok(tcs),
         (Neut(Axi(sub)), Neut(Axi(sup))) if sub.unique_id() == sup.unique_id() => Ok(tcs),
+        (Neut(Var(x)), Neut(Var(y))) if x == y => Ok(tcs),
+        (Neut(Ref(x)), Neut(Ref(y))) if x == y => Ok(tcs),
         (Cons(_, a), Cons(_, b)) => tcs.unify(&**a, &**b),
         (Pair(a0, a1), Pair(b0, b1)) => tcs.unify(&**a0, &**b0)?.unify(&**a1, &**b1),
         (Sum(a_variants), Sum(b_variants)) if a_variants.len() == b_variants.len() => {
@@ -87,8 +90,10 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
         (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => {
             match tcs.meta_solutions()[mi.0].clone() {
                 MetaSolution::Unsolved => solve_with(tcs, *mi, term.clone()),
-                // TODO: Re-check?
-                MetaSolution::Solved(_solved) => Ok(tcs),
+                MetaSolution::Solved(solution) => {
+                    let expanded = expand_meta(&tcs.local_env, solution);
+                    tcs.unify(&expanded, term)
+                }
                 MetaSolution::Inlined => unreachable!(),
             }
         }

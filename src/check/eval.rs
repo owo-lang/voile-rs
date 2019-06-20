@@ -82,20 +82,21 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
     let val = expr.map_neutral(|neut| match neut {
         Neutral::Ref(index) => tcs.glob_val(index).ast.clone(),
         Neutral::Meta(mi) => match &tcs.meta_solutions()[mi.0] {
-            MetaSolution::Solved(val) => {
-                let mut ret = *val.clone();
-                // The right most local var has dbi 0.
-                for var in tcs.local_env.iter() {
-                    ret = ret.apply_borrow(&var.ast);
-                }
-                ret
-            }
+            MetaSolution::Solved(val) => expand_meta(&tcs.local_env, val.clone()),
             MetaSolution::Unsolved => panic!("Cannot eval unsolved meta: {:?}", mi),
             MetaSolution::Inlined => unreachable!(),
         },
         neut => Val::Neut(neut),
     });
     (val, tcs)
+}
+
+/// Require `Box<Val>` because currently both two calls to this function have boxed value.
+pub fn expand_meta(local_vars: &[ValInfo], solution: Box<Val>) -> Val {
+    local_vars
+        .iter()
+        // The right most local var has dbi 0.
+        .fold(*solution, |ret, var| ret.apply_borrow(&var.ast))
 }
 
 pub fn compile_variant(info: Ident) -> ValInfo {

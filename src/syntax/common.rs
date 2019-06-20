@@ -20,9 +20,23 @@ macro_rules! impl_usize {
             }
         }
 
+        impl Add for $name {
+            type Output = $name;
+
+            fn add(self, rhs: $name) -> Self::Output {
+                Self(self.0 + rhs.0)
+            }
+        }
+
         impl AddAssign<usize> for $name {
             fn add_assign(&mut self, rhs: usize) {
                 self.0 += rhs
+            }
+        }
+
+        impl AddAssign for $name {
+            fn add_assign(&mut self, rhs: $name) {
+                self.0 += rhs.0
             }
         }
 
