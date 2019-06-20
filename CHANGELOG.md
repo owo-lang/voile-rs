@@ -7,6 +7,7 @@
 + Unification (#105, #110)
 + Meta variable solving (#104, #110)
 + Use Rust's newtype pattern to represent different indices (#111, #112)
++ Memory optimizations
 
 # 0.0.9
 

@@ -30,15 +30,12 @@ We don't have to worry about shadowing here, because normal
 forms have no shadowing by our previous quote implementation.
 */
 fn check_solution(meta: MI, spine: Vec<UID>, rhs: Val) -> TCM<()> {
-    rhs.fold_neutral(Ok(()), |err, neut| {
-        err?;
-        match neut {
-            Neutral::Axi(axiom) if !spine.contains(&axiom.unique_id()) => {
-                Err(TCE::MetaScopeError(meta))
-            }
-            Neutral::Meta(mi) if mi == meta => Err(TCE::MetaRecursion(mi)),
-            _ => Ok(()),
+    rhs.try_fold_neutral((), |(), neut| match neut {
+        Neutral::Axi(axiom) if !spine.contains(&axiom.unique_id()) => {
+            Err(TCE::MetaScopeError(meta))
         }
+        Neutral::Meta(mi) if mi == meta => Err(TCE::MetaRecursion(mi)),
+        _ => Ok(()),
     })
 }
 

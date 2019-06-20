@@ -429,16 +429,30 @@ impl Val {
 
     /// Traverse through the AST in a stateful manner.
     pub fn fold_neutral<R, F: Fn(R, Neutral) -> R + Copy>(self, init: R, f: F) -> R {
+        self.try_fold_neutral(init, |r, v| Ok::<_, ()>(f(r, v)))
+            .unwrap()
+    }
+
+    /// Traverse through the AST with possible error.
+    pub fn try_fold_neutral<E, R, F: Fn(R, Neutral) -> Result<R, E> + Copy>(
+        self,
+        init: R,
+        f: F,
+    ) -> Result<R, E> {
         match self {
             Val::Neut(n) => f(init, n),
-            Val::Pair(a, b) => b.fold_neutral(a.fold_neutral(init, f), f),
-            Val::Sum(v) => v.into_iter().fold(init, |a, (_, v)| v.fold_neutral(a, f)),
-            Val::Lam(Closure { body }) => body.fold_neutral(init, f),
-            Val::Dt(_, param_ty, Closure { body }) => {
-                param_ty.fold_neutral(body.fold_neutral(init, f), f)
-            }
-            Val::Cons(_, a) => a.fold_neutral(init, f),
-            Val::Type(_) => init,
+            Val::Pair(a, b) => a
+                .try_fold_neutral(init, f)
+                .and_then(|r| b.try_fold_neutral(r, f)),
+            Val::Sum(v) => v
+                .into_iter()
+                .try_fold(init, |a, (_, v)| v.try_fold_neutral(a, f)),
+            Val::Lam(Closure { body }) => body.try_fold_neutral(init, f),
+            Val::Dt(_, param_ty, Closure { body }) => body
+                .try_fold_neutral(init, f)
+                .and_then(|r| param_ty.try_fold_neutral(r, f)),
+            Val::Cons(_, a) => a.try_fold_neutral(init, f),
+            Val::Type(_) => Ok(init),
         }
     }
 }
