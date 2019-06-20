@@ -12,6 +12,10 @@ pub trait RedEx: Sized {
     /// This is primarily a private implementation-related API.
     /// Use at your own risk.
     fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val;
+
+    /// When the argument is not likely to be used,
+    /// prefer this over [`reduce_with_dbi`](reduce_with_dbi).
+    fn reduce_with_dbi_borrow(self, arg: &Val, dbi: DBI) -> Val;
 }
 
 impl Val {
@@ -34,6 +38,18 @@ impl Val {
                 Val::app(*f, a)
             }
             Val::Neut(n) => Val::app(n, vec![arg]),
+            e => panic!("Cannot apply on `{:?}`.", e),
+        }
+    }
+
+    pub fn apply_borrow(self, arg: &Val) -> Val {
+        match self {
+            Val::Lam(closure) => closure.instantiate_borrow(arg),
+            Val::Neut(Neutral::App(f, mut a)) => {
+                a.push(arg.clone());
+                Val::app(*f, a)
+            }
+            Val::Neut(n) => Val::app(n, vec![arg.clone()]),
             e => panic!("Cannot apply on `{:?}`.", e),
         }
     }
@@ -92,23 +108,47 @@ impl RedEx for Val {
     fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val {
         match self {
             Val::Pair(a, b) => Val::pair(
-                a.reduce_with_dbi(arg.clone(), dbi),
+                a.reduce_with_dbi_borrow(&arg, dbi),
                 b.reduce_with_dbi(arg, dbi),
             ),
             Val::Neut(neutral_value) => neutral_value.reduce_with_dbi(arg, dbi),
             Val::Lam(Closure { body }) => Val::lam(body.reduce_with_dbi(arg, dbi + 1)),
             Val::Dt(kind, param_type, Closure { body }) => Val::dependent_type(
                 kind,
-                param_type.reduce_with_dbi(arg.clone(), dbi),
+                param_type.reduce_with_dbi_borrow(&arg, dbi),
                 body.reduce_with_dbi(arg, dbi + 1),
             ),
             Val::Sum(variants) => Val::Sum(
                 variants
                     .into_iter()
-                    .map(|(name, ty)| (name, ty.reduce_with_dbi(arg.clone(), dbi)))
+                    .map(|(name, ty)| (name, ty.reduce_with_dbi_borrow(&arg, dbi)))
                     .collect(),
             ),
             Val::Cons(name, a) => Self::cons(name, a.reduce_with_dbi(arg, dbi)),
+            Val::Type(n) => Val::Type(n),
+        }
+    }
+
+    fn reduce_with_dbi_borrow(self, arg: &Val, dbi: DBI) -> Val {
+        match self {
+            Val::Pair(a, b) => Val::pair(
+                a.reduce_with_dbi_borrow(arg, dbi),
+                b.reduce_with_dbi_borrow(arg, dbi),
+            ),
+            Val::Neut(neutral_value) => neutral_value.reduce_with_dbi_borrow(arg, dbi),
+            Val::Lam(Closure { body }) => Val::lam(body.reduce_with_dbi_borrow(arg, dbi + 1)),
+            Val::Dt(kind, param_type, Closure { body }) => Val::dependent_type(
+                kind,
+                param_type.reduce_with_dbi_borrow(arg, dbi),
+                body.reduce_with_dbi_borrow(arg, dbi + 1),
+            ),
+            Val::Sum(variants) => Val::Sum(
+                variants
+                    .into_iter()
+                    .map(|(name, ty)| (name, ty.reduce_with_dbi_borrow(arg, dbi)))
+                    .collect(),
+            ),
+            Val::Cons(name, a) => Self::cons(name, a.reduce_with_dbi_borrow(arg, dbi)),
             Val::Type(n) => Val::Type(n),
         }
     }
@@ -193,19 +233,33 @@ impl RedEx for Neutral {
             Axi(a) => Val::Neut(Axi(a)),
             App(f, args) => args
                 .into_iter()
-                .fold(f.reduce_with_dbi(arg.clone(), dbi), |f, a| {
+                .fold(f.reduce_with_dbi_borrow(&arg, dbi), |f, a| {
                     // Do we need to `reduce` after `apply` again?
-                    f.apply(a.reduce_with_dbi(arg.clone(), dbi))
+                    f.apply(a.reduce_with_dbi_borrow(&arg, dbi))
                 }),
-            Fst(pair) => pair
-                .reduce_with_dbi(arg.clone(), dbi)
-                .first()
-                .reduce_with_dbi(arg, dbi),
-            Snd(pair) => pair
-                .reduce_with_dbi(arg.clone(), dbi)
-                .second()
-                .reduce_with_dbi(arg, dbi),
+            Fst(pair) => pair.reduce_with_dbi(arg, dbi).first(),
+            Snd(pair) => pair.reduce_with_dbi(arg, dbi).second(),
             Lift(levels, neut) => neut.reduce_with_dbi(arg, dbi).lift(levels),
+        }
+    }
+
+    fn reduce_with_dbi_borrow(self, arg: &Val, dbi: DBI) -> Val {
+        use Neutral::*;
+        match self {
+            Var(n) if dbi == n => arg.clone().attach_dbi(dbi),
+            Var(n) => Val::var(n),
+            Ref(n) => Val::glob(n),
+            Meta(mi) => Val::meta(mi),
+            Axi(a) => Val::Neut(Axi(a)),
+            App(f, args) => args
+                .into_iter()
+                .fold(f.reduce_with_dbi_borrow(arg, dbi), |f, a| {
+                    // Do we need to `reduce` after `apply` again?
+                    f.apply(a.reduce_with_dbi_borrow(arg, dbi))
+                }),
+            Fst(pair) => pair.reduce_with_dbi_borrow(arg, dbi).first(),
+            Snd(pair) => pair.reduce_with_dbi_borrow(arg, dbi).second(),
+            Lift(levels, neut) => neut.reduce_with_dbi_borrow(arg, dbi).lift(levels),
         }
     }
 }
@@ -422,5 +476,15 @@ impl Closure {
 
     pub fn instantiate_cloned(&self, arg: Val) -> Val {
         self.body.clone().reduce_with_dbi(arg, Default::default())
+    }
+
+    pub fn instantiate_borrow(self, arg: &Val) -> Val {
+        self.body.reduce_with_dbi_borrow(arg, Default::default())
+    }
+
+    pub fn instantiate_cloned_borrow(&self, arg: &Val) -> Val {
+        self.body
+            .clone()
+            .reduce_with_dbi_borrow(arg, Default::default())
     }
 }

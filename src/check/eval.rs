@@ -86,7 +86,7 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
                 let mut ret = *val.clone();
                 // The right most local var has dbi 0.
                 for var in tcs.local_env.iter() {
-                    ret = ret.apply(var.ast.clone());
+                    ret = ret.apply_borrow(&var.ast);
                 }
                 ret
             }
