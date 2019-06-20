@@ -49,12 +49,13 @@ impl LiftEx for Val {
     fn calc_level(&self) -> LevelCalcState {
         match self {
             Val::Type(level) => Some(*level + 1),
-            Val::Sum(variants) => variants
-                .iter()
-                .map(|(_, v)| v.calc_level())
-                // TODO: use for loop with `?` operator to avoid the creation of this `Vec`
-                .collect::<Option<Vec<_>>>()
-                .map(|v| v.into_iter().max().unwrap_or_default()),
+            Val::Sum(variants) => {
+                let mut maximum = Level::default();
+                for (name, variant) in variants {
+                    maximum = maximum.max(variant.calc_level()?);
+                }
+                Some(maximum)
+            }
             Val::Dt(_, param_ty, closure) => {
                 Some(param_ty.calc_level()?.max(closure.calc_level()?))
             }
