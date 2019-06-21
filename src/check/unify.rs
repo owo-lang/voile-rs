@@ -10,9 +10,7 @@ fn check_solution(meta: MI, rhs: Val) -> TCM<()> {
     })
 }
 
-/**
-Solve a meta with a specific value.
-*/
+/// Solve a meta with a specific value.
 fn solve_with(mut tcs: TCS, meta: MI, solution: Val) -> TCM {
     // TODO: remove this clone by introducing reference version of `try_fold_neutral`.
     let anticipated_solution = solution.clone().unimplemented_to_glob();
