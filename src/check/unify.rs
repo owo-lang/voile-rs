@@ -1,5 +1,5 @@
 use crate::syntax::common::MI;
-use crate::syntax::core::{Neutral, Val};
+use crate::syntax::core::{Axiom, Neutral, Val};
 
 use super::monad::{MetaSolution, TCE, TCM, TCS};
 
@@ -25,12 +25,24 @@ Try to unify two well-typed terms.
 This may lead to meta variable resolution.
 */
 fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
+    use Axiom::Generated as Gen;
     use {Neutral::*, Val::*};
     match (a, b) {
         (Type(sub_level), Type(super_level)) if sub_level == super_level => Ok(tcs),
         (Neut(Axi(sub)), Neut(Axi(sup))) if sub.unique_id() == sup.unique_id() => Ok(tcs),
+        /*
         (Neut(Var(x)), Neut(Var(y))) if x == y => Ok(tcs),
+        (Neut(Var(x)), Neut(Axi(Gen(_, y)))) | (Neut(Axi(Gen(_, y))), Neut(Var(x))) if x == y => {
+            Ok(tcs)
+        }
+        */
         (Neut(Ref(x)), Neut(Ref(y))) if x == y => Ok(tcs),
+        (Lam(a), Lam(b)) => {
+            let p = Val::fresh_axiom();
+            let a = a.instantiate_cloned_borrow(&p);
+            let b = b.instantiate_cloned(p);
+            tcs.unify(&a, &b)
+        }
         (Cons(_, a), Cons(_, b)) => tcs.unify(&**a, &**b),
         (Pair(a0, a1), Pair(b0, b1)) => tcs.unify(&**a0, &**b0)?.unify(&**a1, &**b1),
         (Sum(a_variants), Sum(b_variants)) if a_variants.len() == b_variants.len() => {
