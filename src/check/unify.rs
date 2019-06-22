@@ -1,5 +1,5 @@
 use crate::syntax::common::MI;
-use crate::syntax::core::{Axiom, Neutral, Val};
+use crate::syntax::core::{Neutral, Val};
 
 use super::monad::{MetaSolution, TCE, TCM, TCS};
 
@@ -25,7 +25,7 @@ Try to unify two well-typed terms.
 This may lead to meta variable resolution.
 */
 fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
-    use Axiom::Generated as Gen;
+    // use Axiom::Generated as Gen;
     use {Neutral::*, Val::*};
     match (a, b) {
         (Type(sub_level), Type(super_level)) if sub_level == super_level => Ok(tcs),

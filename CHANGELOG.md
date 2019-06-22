@@ -7,6 +7,7 @@
 + Unification (#105, #110)
 + Meta variable solving (#104, #110, #119, #120)
 + Use Rust's newtype pattern to represent different indices (#111, #112)
++ Infer lambda types using metas (#117)
 + Memory optimizations
 + Update dependency versions
 

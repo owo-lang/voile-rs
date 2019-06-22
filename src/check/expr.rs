@@ -312,6 +312,17 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
             let local = tcs.local_type(*dbi).ast.clone().attach_dbi(*dbi);
             Ok((local.into_info(info), tcs))
         }
+        Lam(..) => {
+            let param_meta = tcs.fresh_meta();
+            let ret_meta = tcs.fresh_meta();
+            // let mocked = Val::postulate(*uid);
+            // tcs.local_gamma.push(param_meta.clone().into_info(info));
+            // tcs.local_env.push(mocked.clone().into_info(info));
+            let pi = Val::pi(param_meta, ret_meta);
+            let (_, tcs) = tcs.check(value, &pi)?;
+            // tcs.pop_local();
+            Ok((pi.into_info(info), tcs))
+        }
         Lift(_, levels, expr) => {
             let (expr, tcs) = tcs.infer(&**expr).map_err(|e| e.wrap(info))?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
