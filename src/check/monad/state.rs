@@ -1,5 +1,7 @@
 use crate::syntax::common::{DBI, GI, MI};
 use crate::syntax::core::{Val, ValInfo};
+use std::hint::unreachable_unchecked;
+use std::mem::swap;
 
 /// Typing context.
 pub type Gamma = Vec<ValInfo>;
@@ -68,6 +70,23 @@ impl TCS {
         let meta = Val::meta(MI(self.meta_context.len()));
         self.meta_context.push(MetaSolution::Unsolved);
         meta
+    }
+
+    pub fn take_meta(&mut self, meta_index: MI) -> Option<Val> {
+        let x = &mut self.meta_context[meta_index.0];
+        match x {
+            MetaSolution::Solved(_) => {
+                let mut inlined = MetaSolution::Inlined;
+                swap(&mut inlined, x);
+                match inlined {
+                    MetaSolution::Solved(solution) => Some(*solution),
+                    // It is too obvious that these cases are unreachable.
+                    _ => unsafe { unreachable_unchecked() },
+                }
+            }
+            MetaSolution::Unsolved => None,
+            MetaSolution::Inlined => None,
+        }
     }
 
     pub fn local_type(&self, dbi: DBI) -> &ValInfo {
