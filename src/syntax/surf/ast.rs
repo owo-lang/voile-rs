@@ -36,7 +36,7 @@ pub enum Expr {
     App(Box<Self>, Vec<Self>),
     /// Function composition.<br/>
     /// Pipeline operator, where `a |> b |> f` is represented as `Pipe(vec![a, b, f])`
-    /// instead of `App(App(App(f, a), b), c)App(App(App(f, a), b), c)`.
+    /// instead of `Pipe(Pipe(Pipe(f, a), b), c)`.
     Pipe(Box<Self>, Vec<Self>),
     /// Tuple constructor.<br/>
     /// Comma operator, where `a, b, c` is represented as `Tup(a, vec![b, c])`
