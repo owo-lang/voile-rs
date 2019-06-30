@@ -394,16 +394,31 @@ impl Val {
 
     /// Traverse through the AST and change all [`Neutral`](self::Neutral) values.
     pub fn map_neutral(self, f: &mut impl FnMut(Neutral) -> Self) -> Self {
+        let result: Result<_, ()> = self.try_map_neutral(&mut |neut| Ok(f(neut)));
+        result.unwrap()
+    }
+
+    /// Traverse through the AST and change all [`Neutral`](self::Neutral) values.
+    pub fn try_map_neutral<R>(
+        self,
+        f: &mut impl FnMut(Neutral) -> Result<Self, R>,
+    ) -> Result<Self, R> {
         match self {
             Val::Neut(n) => f(n),
-            Val::Pair(a, b) => Self::pair(a.map_neutral(f), b.map_neutral(f)),
-            Val::Sum(v) => Val::Sum(v.into_iter().map(|(k, v)| (k, v.map_neutral(f))).collect()),
-            Val::Lam(Closure { body }) => Self::lam(body.map_neutral(f)),
-            Val::Dt(kind, param_type, Closure { body }) => {
-                Self::dependent_type(kind, param_type.map_neutral(f), body.map_neutral(f))
-            }
-            Val::Cons(name, a) => Self::cons(name, a.map_neutral(f)),
-            e => e,
+            Val::Pair(a, b) => Ok(Self::pair(a.try_map_neutral(f)?, b.try_map_neutral(f)?)),
+            Val::Sum(v) => v
+                .into_iter()
+                .map(|(k, v)| v.try_map_neutral(f).map(|v| (k, v)))
+                .collect::<Result<_, _>>()
+                .map(Val::Sum),
+            Val::Lam(Closure { body }) => body.try_map_neutral(f).map(Self::lam),
+            Val::Dt(kind, param_type, Closure { body }) => Ok(Self::dependent_type(
+                kind,
+                param_type.try_map_neutral(f)?,
+                body.try_map_neutral(f)?,
+            )),
+            Val::Cons(name, a) => Ok(Self::cons(name, a.try_map_neutral(f)?)),
+            e => Ok(e),
         }
     }
 
