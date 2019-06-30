@@ -48,6 +48,8 @@ pub enum TCE {
     MetaRecursion(MI),
     /// Meta solution should be passed with bound variables only.
     MetaWithNonVar(SyntaxInfo),
+    /// Unsolved metas are reported as errors.
+    MetaUnsolved(MI),
 }
 
 impl TCE {
@@ -125,6 +127,7 @@ impl Display for TCE {
                  anticipated solution contains recursive call.",
                 mi
             ),
+            TCE::MetaUnsolved(mi) => write!(f, "Failed to solve meta {:?}: No solution found.", mi),
             TCE::MetaWithNonVar(info) => write!(
                 f,
                 "Failed to solve meta at {}: \
