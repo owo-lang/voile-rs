@@ -1,0 +1,8 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-06-30
+// unsolved-meta
+// Author: ice1000
+//
+
+val unsolved_meta : Type1;
+let unsolved_meta = _;
