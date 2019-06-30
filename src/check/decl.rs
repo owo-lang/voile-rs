@@ -25,7 +25,7 @@ fn unimplemented_to_glob(v: &mut [ValInfo], i: usize) {
 fn inline_metas(mut tcs: TCS, val: ValInfo) -> (ValInfo, TCS) {
     use Neutral::*;
     let val = val.map_ast(|ast| {
-        ast.map_neutral(|neut| match neut {
+        ast.map_neutral(&mut |neut| match neut {
             // TODO: Provide error message instead of panic
             Meta(mi) => tcs.take_meta(mi).expect("Unsolved metas!"),
             e => Val::Neut(e),

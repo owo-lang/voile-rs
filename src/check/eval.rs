@@ -79,7 +79,7 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
 /// Expand global references to concrete values,
 /// like meta references or global references due to recursion.
 fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
-    let val = expr.map_neutral(|neut| match neut {
+    let val = expr.map_neutral(&mut |neut| match neut {
         Neutral::Ref(index) => tcs.glob_val(index).ast.clone(),
         Neutral::Meta(mi) => match &tcs.meta_solutions()[mi.0] {
             MetaSolution::Solved(val) => *val.clone(),

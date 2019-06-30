@@ -93,8 +93,8 @@ impl Val {
     }
 
     pub(crate) fn attach_dbi(self, dbi: DBI) -> Self {
-        self.map_neutral(|neut: Neutral| {
-            Val::Neut(neut.map_axiom(|a| {
+        self.map_neutral(&mut |neut: Neutral| {
+            Val::Neut(neut.map_axiom(&mut |a| {
                 Neutral::Axi(match a {
                     Axiom::Postulated(uid) => Axiom::Generated(uid, dbi),
                     e => e,
@@ -202,14 +202,14 @@ impl Axiom {
 }
 
 impl Neutral {
-    pub fn map_axiom<F: Fn(Axiom) -> Self + Copy>(self, f: F) -> Self {
+    pub fn map_axiom(self, f: &mut impl FnMut(Axiom) -> Neutral) -> Self {
         use Neutral::*;
         match self {
             Axi(a) => f(a),
             App(fun, args) => App(
                 Box::new(fun.map_axiom(f)),
                 args.into_iter()
-                    .map(|a| a.map_neutral(|n| Val::Neut(n.map_axiom(f))))
+                    .map(|a| a.map_neutral(&mut |n| Val::Neut(n.map_axiom(f))))
                     .collect(),
             ),
             Fst(p) => Fst(Box::new(p.map_axiom(f))),
@@ -393,7 +393,7 @@ impl Val {
     }
 
     /// Traverse through the AST and change all [`Neutral`](self::Neutral) values.
-    pub fn map_neutral<F: FnMut(Neutral) -> Self + Copy>(self, f: F) -> Self {
+    pub fn map_neutral(self, f: &mut impl FnMut(Neutral) -> Self) -> Self {
         match self {
             Val::Neut(n) => f(n),
             Val::Pair(a, b) => Self::pair(a.map_neutral(f), b.map_neutral(f)),
@@ -407,13 +407,13 @@ impl Val {
         }
     }
 
-    pub fn map_axiom<F: Fn(Axiom) -> Neutral + Copy>(self, f: F) -> Self {
-        self.map_neutral(|neut| Val::Neut(neut.map_axiom(f)))
+    pub fn map_axiom(self, f: &mut impl FnMut(Axiom) -> Neutral) -> Self {
+        self.map_neutral(&mut |neut| Val::Neut(neut.map_axiom(f)))
     }
 
     pub fn generated_to_var(self) -> Self {
         use {Axiom::*, Neutral::*};
-        self.map_axiom(|a| match a {
+        self.map_axiom(&mut |a| match a {
             Postulated(..) | Unimplemented(..) => Axi(a),
             Generated(_, dbi) => Var(dbi),
         })
@@ -421,7 +421,7 @@ impl Val {
 
     pub fn unimplemented_to_glob(self) -> Self {
         use {Axiom::*, Neutral::*};
-        self.map_axiom(|a| match a {
+        self.map_axiom(&mut |a| match a {
             Postulated(..) | Generated(..) => Axi(a),
             Unimplemented(_, dbi) => Ref(dbi),
         })
