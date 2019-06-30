@@ -2,7 +2,7 @@ use std::mem::swap;
 
 use crate::syntax::abs::AbsDecl;
 use crate::syntax::common::ToSyntaxInfo;
-use crate::syntax::core::{Val, ValInfo};
+use crate::syntax::core::{Neutral, Val, ValInfo};
 
 use super::monad::{TCM, TCS};
 
@@ -22,16 +22,29 @@ fn unimplemented_to_glob(v: &mut [ValInfo], i: usize) {
     swap(&mut placeholder, &mut v[i]);
 }
 
+fn inline_metas(mut tcs: TCS, val: ValInfo) -> (ValInfo, TCS) {
+    use Neutral::*;
+    let val = val.map_ast(|ast| {
+        ast.map_neutral(|neut| match neut {
+            // TODO: Provide error message instead of panic
+            Meta(mi) => tcs.take_meta(mi).expect("Unsolved metas!"),
+            e => Val::Neut(e),
+        })
+    });
+    (val, tcs)
+}
+
 fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
     debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
     let tcs = match decl {
         AbsDecl::Impl(impl_abs, sign_dbi) => {
             let sign = tcs.glob_type(sign_dbi);
             let sign_cloned = sign.ast.clone();
-            let (val_fake, mut tcs) = tcs.check(&impl_abs, &sign_cloned)?;
+            let (val_fake, tcs) = tcs.check(&impl_abs, &sign_cloned)?;
             // We generate axioms for lambda parameters during type-checking.
             // Now it's time to change them back to `var` references.
             let val = val_fake.map_ast(|ast| ast.generated_to_var());
+            let (val, mut tcs) = inline_metas(tcs, val);
 
             tcs.env[sign_dbi.0] = val;
 
@@ -49,7 +62,8 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         }
         AbsDecl::Sign(sign_abs, self_index) => {
             let syntax_info = sign_abs.syntax_info();
-            let (sign_fake, mut tcs) = tcs.check_type(&sign_abs)?;
+            let (sign_fake, tcs) = tcs.check_type(&sign_abs)?;
+            let (sign_fake, mut tcs) = inline_metas(tcs, sign_fake);
             let sign = sign_fake.map_ast(|ast| ast.generated_to_var());
             let val_info = Val::fresh_unimplemented(self_index).into_info(syntax_info);
             tcs.env.push(val_info);
@@ -60,7 +74,9 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
         }
         AbsDecl::Decl(impl_abs) => {
             let (inferred, tcs) = tcs.infer(&impl_abs)?;
-            let (compiled, mut tcs) = tcs.evaluate(impl_abs);
+            let (inferred, tcs) = inline_metas(tcs, inferred);
+            let (compiled, tcs) = tcs.evaluate(impl_abs);
+            let (compiled, mut tcs) = inline_metas(tcs, compiled);
             let compiled = compiled.map_ast(|ast| ast.generated_to_var());
             let inferred = inferred.map_ast(|ast| ast.generated_to_var());
             tcs.env.push(compiled);
