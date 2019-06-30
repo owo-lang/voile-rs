@@ -101,7 +101,7 @@ fn show_meta_solutions(tcs: &TCS) {
         match solution {
             Solved(solution) => println!("{}: {}", index, solution),
             Unsolved => println!("{}: ???", index),
-            Inlined => unimplemented!(),
+            Inlined => println!("<inlined out>"),
         }
         index += 1;
     }

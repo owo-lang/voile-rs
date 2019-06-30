@@ -393,7 +393,7 @@ impl Val {
     }
 
     /// Traverse through the AST and change all [`Neutral`](self::Neutral) values.
-    pub fn map_neutral<F: Fn(Neutral) -> Self + Copy>(self, f: F) -> Self {
+    pub fn map_neutral<F: FnMut(Neutral) -> Self + Copy>(self, f: F) -> Self {
         match self {
             Val::Neut(n) => f(n),
             Val::Pair(a, b) => Self::pair(a.map_neutral(f), b.map_neutral(f)),
