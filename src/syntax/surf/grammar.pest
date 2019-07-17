@@ -29,13 +29,15 @@ meta = @{ "_" }
 ///#E0957B
 bottom = @{ "!" }
 ///#E0957B
-no_cases = @{ "nocases" }
-///Pink
-one_sum = @{ "'" ~ ident_raw }
+no_cases = @{ "whatever" }
 
 // Keywords
 val_keyword = _{ "val" }
 let_keyword = _{ "let" }
+case_keyword = _{ "case" }
+or_keyword = _{ "or" }
+rec_keyword = _{ "Rec" }
+sum_keyword = _{ "Sum" }
 lambda_keyword = _{ "\\" | "\u{03BB}" }
 type_level = @{ ASCII_DIGIT* }
 ///#E0957B
@@ -44,7 +46,6 @@ semicolon = _{ ";" }
 arrow = _{ "->" }
 lift_op = { "^" }
 dot = _{ "." }
-sum_op = _{ "+" }
 sig_op = _{ "*" }
 pipe_op = _{ "|>" }
 comma_op = _{ "," }
@@ -66,24 +67,49 @@ lambda =
  ~ expr
  }
 
+// Row-polymorphic things
+record = { rec_keyword ~ row_polymorphic }
+variant = { sum_keyword ~ row_polymorphic }
+row_polymorphic =
+ { "{"
+ ~ labelled+
+ ~ row_rest?
+ ~ "}"
+ }
+
+labelled = { ident ~ ":" ~ expr }
+row_rest = { "..." ~ "=" ~ expr }
+
+// Case expressions
+case_expr =
+ { case_keyword
+ ~ ident
+ ~ ident
+ ~ ":"
+ ~ expr
+ ~ or_keyword
+ ~ expr
+ }
+
 expr = { sig_expr }
 
 sig_expr = { (param ~ sig_op)* ~ pi_expr }
 pi_expr = { (param ~ arrow)* ~ dollar_expr }
 dollar_expr = { comma_expr ~ (dollar_op ~ comma_expr)* }
 comma_expr = { pipe_expr ~ (comma_op ~ pipe_expr)* }
-pipe_expr = { sum_expr ~ (pipe_op ~ sum_expr)* }
-sum_expr = { lift_expr ~ (sum_op ~ lift_expr)* }
+pipe_expr = { lift_expr ~ (pipe_op ~ lift_expr)* }
 lift_expr = { lift_op* ~ app_expr }
 app_expr = { primary_expr+ }
 primary_expr =
  { type_keyword
  | cons
- | one_sum
  | bottom
  | meta
  | no_cases
  | lambda
+ | record
+ | variant
+ | case_expr
  | ident
  | "(" ~ expr ~ ")"
  }

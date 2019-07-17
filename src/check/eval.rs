@@ -17,8 +17,6 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             (resolved.into_info(ident.info), tcs)
         }
         Ref(ident, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(ident.info), tcs),
-        // Because I don't know what else can I output.
-        Variant(info) => (compile_variant(info), tcs),
         Cons(info) => (compile_cons(info), tcs),
         App(info, f, a) => {
             // The function should always be compiled to DBI-based terms

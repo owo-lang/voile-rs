@@ -16,8 +16,6 @@ pub enum Abs {
     Lift(SyntaxInfo, u32, Box<Self>),
     /// Constructor call
     Cons(Ident),
-    /// One variant inside of a sum type
-    Variant(Ident),
     /// Apply or Pipeline in surface
     App(SyntaxInfo, Box<Self>, Box<Self>),
     /// Dependent Type, `(a -> b -> c)` as `Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))`
@@ -44,11 +42,9 @@ impl ToSyntaxInfo for Abs {
             | Abs::Sum(info, ..)
             | Abs::Lift(info, ..)
             | Abs::Lam(info, ..) => *info,
-            Abs::Var(ident, ..)
-            | Abs::Ref(ident, ..)
-            | Abs::Meta(ident, ..)
-            | Abs::Cons(ident)
-            | Abs::Variant(ident) => ident.info,
+            Abs::Var(ident, ..) | Abs::Ref(ident, ..) | Abs::Meta(ident, ..) | Abs::Cons(ident) => {
+                ident.info
+            }
         }
     }
 }

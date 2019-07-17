@@ -7,6 +7,7 @@ use crate::syntax::pest_util::end_of_rule;
 
 use super::ast::Param;
 use super::{Decl, DeclKind, Expr};
+use crate::syntax::surf::Labelled;
 
 #[derive(Parser)]
 #[grammar = "syntax/surf/grammar.pest"]
@@ -37,7 +38,7 @@ macro_rules! expr_parser {
 
 macro_rules! many_prefix_parser {
     ($name:ident, $prefix_ty:ident, $prefix:ident, $end:ident) => {
-        fn $name(rules: Tok) -> (Vec<$prefix_ty>, Expr) {
+        fn $name(rules: Tok) -> (Vec<$prefix_ty>, Option<Expr>) {
             let mut prefixes = vec![];
             let mut end = None;
             for the_rule in rules.into_inner() {
@@ -47,11 +48,7 @@ macro_rules! many_prefix_parser {
                     e => panic!("Unexpected rule: {:?} with token {}.", e, the_rule.as_str()),
                 }
             }
-            // According to the grammar, `end` cannot be `None` (otherwise it's a pest bug).
-            (
-                prefixes,
-                end.expect("Internal error: Pest produces unexpected pairs."),
-            )
+            (prefixes, end)
         }
     };
 }
@@ -67,6 +64,21 @@ fn declarations(the_rule: Tok) -> Vec<Decl> {
         decls.push(declaration(prefix_parameter));
     }
     decls
+}
+
+fn labelled(rules: Tok) -> Labelled {
+    let mut inner: Tik = rules.into_inner();
+    let label = next_ident(&mut inner);
+    let expr = next_rule!(inner, expr);
+    end_of_rule(&mut inner);
+    Labelled { expr, label }
+}
+
+fn row_rest(rules: Tok) -> Expr {
+    let mut inner: Tik = rules.into_inner();
+    let expr = next_rule!(inner, expr);
+    end_of_rule(&mut inner);
+    expr
 }
 
 fn declaration(rules: Tok) -> Decl {
@@ -89,8 +101,7 @@ fn declaration(rules: Tok) -> Decl {
 
 expr_parser!(dollar_expr, comma_expr, app);
 expr_parser!(comma_expr, pipe_expr, tup);
-expr_parser!(pipe_expr, sum_expr, pipe);
-expr_parser!(sum_expr, lift_expr, sum);
+expr_parser!(pipe_expr, lift_expr, pipe);
 // expr_parser!(lift_expr, app_expr, lift); customized
 expr_parser!(app_expr, primary_expr, app);
 
@@ -130,7 +141,6 @@ fn primary_expr(rules: Tok) -> Expr {
         Rule::ident => Expr::Var(ident(the_rule)),
         Rule::cons => Expr::Cons(ident(the_rule)),
         Rule::bottom => Expr::Bot(From::from(the_rule.as_span())),
-        Rule::one_sum => Expr::Variant(ident(the_rule)),
         Rule::meta => Expr::Meta(ident(the_rule)),
         Rule::no_cases => unimplemented!(),
         Rule::lambda => lambda(the_rule),
@@ -145,6 +155,7 @@ fn primary_expr(rules: Tok) -> Expr {
 fn one_param(rules: Tok) -> Param {
     let mut inner: Tik = rules.into_inner();
     let (names, expr) = next_rule!(inner, multi_param);
+    let expr = expr.unwrap();
     end_of_rule(&mut inner);
     Param { names, ty: expr }
 }
@@ -174,6 +185,7 @@ many_prefix_parser!(lambda_internal, Ident, ident, expr);
 
 fn pi_expr(rules: Tok) -> Expr {
     let (params, ret) = pi_expr_internal(rules);
+    let ret = ret.unwrap();
     if params.is_empty() {
         ret
     } else {
@@ -183,6 +195,7 @@ fn pi_expr(rules: Tok) -> Expr {
 
 fn sig_expr(rules: Tok) -> Expr {
     let (params, ret) = sig_expr_internal(rules);
+    let ret = ret.unwrap();
     if params.is_empty() {
         ret
     } else {
@@ -193,6 +206,7 @@ fn sig_expr(rules: Tok) -> Expr {
 fn lambda(rules: Tok) -> Expr {
     let syntax_info = SyntaxInfo::from(rules.as_span());
     let (params, ret) = lambda_internal(rules);
+    let ret = ret.unwrap();
     Expr::lam(syntax_info, params, ret)
 }
 

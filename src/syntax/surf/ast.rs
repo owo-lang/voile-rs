@@ -1,5 +1,14 @@
-use crate::syntax::common::{Ident, SyntaxInfo};
+use crate::syntax::common::{Ident, SyntaxInfo, VarRec};
 use crate::syntax::level::Level;
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+/// Typed label
+pub struct Labelled {
+    /// Label is an identifier
+    pub label: Ident,
+    /// The thing attached on this label
+    pub expr: Expr,
+}
 
 /// Surface syntax tree node: Parameter.
 ///
@@ -20,8 +29,6 @@ pub enum Expr {
     Var(Ident),
     /// Constructor call
     Cons(Ident),
-    /// Type of a constructor call
-    Variant(Ident),
     /// Empty type
     Bot(SyntaxInfo),
     /// Explicit meta variable
@@ -42,8 +49,8 @@ pub enum Expr {
     /// Comma operator, where `a, b, c` is represented as `Tup(a, vec![b, c])`
     /// instead of `Tup(Tup(a, b), c)`.
     Tup(Box<Self>, Vec<Self>),
-    /// Type-sum operator.
-    Sum(Box<Self>, Vec<Self>),
+    /// Row-polymorphic types, either record types or variant types.
+    RowPoly(Vec<Labelled>, VarRec, Option<Box<Self>>),
     /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`
     /// instead of `Pi(a, Pi(b, c))`.
     /// `a` and `b` here can introduce telescopes.
@@ -77,8 +84,16 @@ impl Expr {
         Expr::Pipe(Box::new(first), functions)
     }
 
-    pub fn sum(first: Self, rest: Vec<Self>) -> Self {
-        Expr::Sum(Box::new(first), rest)
+    pub fn row_polymorphic_type(labels: Vec<Labelled>, rec: VarRec, rest: Option<Self>) -> Self {
+        Expr::RowPoly(labels, rec, rest.map(Box::new))
+    }
+
+    pub fn sum(labels: Vec<Labelled>, rest: Option<Self>) -> Self {
+        Self::row_polymorphic_type(labels, VarRec::Variant, rest)
+    }
+
+    pub fn rec(labels: Vec<Labelled>, rest: Option<Self>) -> Self {
+        Self::row_polymorphic_type(labels, VarRec::Record, rest)
     }
 
     pub fn tup(first: Self, rest: Vec<Self>) -> Self {

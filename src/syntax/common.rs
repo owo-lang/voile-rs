@@ -3,6 +3,12 @@ use std::ops::{Add, AddAssign};
 
 use pest::Span;
 
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
+pub enum VarRec {
+    Variant,
+    Record,
+}
+
 /// Various kinds of dependent types
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum DtKind {

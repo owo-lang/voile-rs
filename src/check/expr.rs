@@ -108,11 +108,6 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let lam = Val::lam(lam_term.ast);
             Ok((lam.into_info(*full_info), tcs))
         }
-        (Variant(info), Val::Dt(Pi, param_ty, ret_ty)) => {
-            check_variant_or_cons(&info.info, param_ty, ret_ty).map_err(|e| e.wrap(info.info))?;
-            let variant = compile_variant(info.clone());
-            Ok((variant, tcs))
-        }
         (Cons(info), Val::Dt(Pi, param_ty, ret_ty)) => {
             check_variant_or_cons(&info.info, param_ty, ret_ty).map_err(|e| e.wrap(info.info))?;
             let cons = compile_cons(info.clone());
@@ -377,10 +372,6 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
             Ok((Val::Type(level).into_info(info), tcs))
         }
         App(_, f, a) => match &**f {
-            Variant(_) => {
-                let (e, tcs) = tcs.check_type(a).map_err(|e| e.wrap(info))?;
-                Ok((Val::Type(e.ast.level()).into_info(info), tcs))
-            }
             Cons(variant_info) => {
                 let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap(info))?;
                 let mut variant = BTreeMap::default();

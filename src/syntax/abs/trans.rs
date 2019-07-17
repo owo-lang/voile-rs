@@ -127,20 +127,8 @@ fn trans_expr_inner(
             ret
         }
         Expr::Cons(ident) => Ok(Abs::Cons(ident.clone())),
-        Expr::Variant(ident) => Ok(Abs::Variant(ident.clone())),
         Expr::Bot(info) => Ok(Abs::Bot(*info)),
-        Expr::Sum(first, variants) => {
-            let f = |expr: &Expr| {
-                trans_expr_inner(expr, meta_count, env, global_map, local_env, local_map)
-            };
-            let mut abs_vec: Vec<Abs> = variants.iter().map(f).collect::<TCM<_>>()?;
-            let first = trans_expr_inner(first, meta_count, env, global_map, local_env, local_map)?;
-            let info = abs_vec
-                .iter()
-                .fold(first.syntax_info(), |l, r| l + r.syntax_info());
-            abs_vec.push(first);
-            Ok(Abs::Sum(info, abs_vec))
-        }
+        Expr::RowPoly(labels, kind, variants) => unimplemented!(),
         Expr::Tup(first, tup_vec) => tup_vec.iter().try_fold(
             trans_expr_inner(first, meta_count, env, global_map, local_env, local_map)?,
             |pair, expr| {
