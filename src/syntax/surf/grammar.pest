@@ -77,7 +77,7 @@ row_polymorphic =
  ~ "}"
  }
 
-labelled = { ident ~ ":" ~ expr }
+labelled = { ident ~ ":" ~ expr ~ ";" }
 row_rest = { "..." ~ "=" ~ expr }
 
 // Case expressions

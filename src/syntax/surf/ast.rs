@@ -84,8 +84,8 @@ impl Expr {
         Expr::Pipe(Box::new(first), functions)
     }
 
-    pub fn row_polymorphic_type(labels: Vec<Labelled>, rec: VarRec, rest: Option<Self>) -> Self {
-        Expr::RowPoly(labels, rec, rest.map(Box::new))
+    pub fn row_polymorphic_type(labels: Vec<Labelled>, kind: VarRec, rest: Option<Self>) -> Self {
+        Expr::RowPoly(labels, kind, rest.map(Box::new))
     }
 
     pub fn sum(labels: Vec<Labelled>, rest: Option<Self>) -> Self {

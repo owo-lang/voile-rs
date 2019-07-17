@@ -1,7 +1,7 @@
 use pest::Parser;
 use pest_derive::Parser;
 
-use crate::syntax::common::{Ident, SyntaxInfo};
+use crate::syntax::common::{Ident, SyntaxInfo, VarRec};
 use crate::syntax::level::Level;
 use crate::syntax::pest_util::end_of_rule;
 
@@ -81,6 +81,14 @@ fn row_rest(rules: Tok) -> Expr {
     expr
 }
 
+many_prefix_parser!(row_polymorphic, Labelled, labelled, row_rest);
+
+fn variant_record(rules: Tok, kind: VarRec) -> Expr {
+    let mut inner: Tik = rules.into_inner();
+    let (labels, rest) = next_rule!(inner, row_polymorphic);
+    Expr::row_polymorphic_type(labels, kind, rest)
+}
+
 fn declaration(rules: Tok) -> Decl {
     let the_rule: Tok = rules.into_inner().next().unwrap();
     let kind = match the_rule.as_rule() {
@@ -143,7 +151,10 @@ fn primary_expr(rules: Tok) -> Expr {
         Rule::bottom => Expr::Bot(From::from(the_rule.as_span())),
         Rule::meta => Expr::Meta(ident(the_rule)),
         Rule::no_cases => unimplemented!(),
+        Rule::case_expr => unimplemented!(),
         Rule::lambda => lambda(the_rule),
+        Rule::record => variant_record(the_rule, VarRec::Record),
+        Rule::variant => variant_record(the_rule, VarRec::Variant),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
         e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
