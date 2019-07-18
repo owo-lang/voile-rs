@@ -45,7 +45,7 @@ impl<T> Vec1<T> {
     pub fn try_fold1<E>(self, mut f: impl FnMut(T, T) -> Result<T, E>) -> Result<T, E> {
         let mut iter = self.tail.into_iter();
         let mut accum = self.head;
-        while let Some(x) = iter.next() {
+        for x in iter {
             accum = f(accum, x)?;
         }
         Ok(accum)

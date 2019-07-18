@@ -3,7 +3,7 @@ use std::fmt::{Display, Error, Formatter};
 use PiSig::*;
 use VarRec::*;
 
-use crate::syntax::common::{Labelled, PiSig, VarRec};
+use crate::syntax::common::{PiSig, VarRec};
 
 use super::{Abs, AbsDecl, LabAbs};
 
@@ -42,7 +42,7 @@ impl Display for Abs {
     }
 }
 
-fn pretty_labels(f: &mut Formatter, labels: &Vec<LabAbs>) -> MonadFmt {
+fn pretty_labels(f: &mut Formatter, labels: &[LabAbs]) -> MonadFmt {
     for label in labels {
         writeln!(f, "{}: {}; ", label.label.text, label.expr)?;
     }

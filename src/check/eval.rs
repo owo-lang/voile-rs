@@ -77,14 +77,6 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
     (val, tcs)
 }
 
-/// Require `Box<Val>` because currently both two calls to this function have boxed value.
-pub fn expand_meta(local_vars: &[ValInfo], solution: Box<Val>) -> Val {
-    local_vars
-        .iter()
-        // The right most local var has dbi 0.
-        .fold(*solution, |ret, var| ret.apply_borrow(&var.ast))
-}
-
 pub fn compile_variant(info: Ident) -> ValInfo {
     let mut variant = BTreeMap::default();
     let mut text = info.text;

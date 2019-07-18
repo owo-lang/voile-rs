@@ -192,7 +192,8 @@ fn trans_dependent_type(
     let mut pi_env = local_env.to_vec();
     let mut pi_map = local_map.clone();
     let mut names = Vec::with_capacity(params.len());
-    let pi_vec: Vec<Abs> = params.into_iter().try_fold(Vec::new(), |pi_vec, param| {
+    let pi_initial = Vec::with_capacity(params.len());
+    let pi_vec: Vec<Abs> = params.into_iter().try_fold(pi_initial, |pi_vec, param| {
         introduce_telescope(
             meta_count,
             env,

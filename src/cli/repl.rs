@@ -96,14 +96,12 @@ fn show_telescope(tcs: &TCS) {
 
 fn show_meta_solutions(tcs: &TCS) {
     use MetaSolution::*;
-    let mut index = 0;
-    for solution in tcs.0.meta_solutions() {
+    for (index, solution) in tcs.0.meta_solutions().iter().enumerate() {
         match solution {
             Solved(solution) => println!("{}: {}", index, solution),
             Unsolved => println!("{}: ???", index),
             Inlined => println!("<inlined out>"),
         }
-        index += 1;
     }
 }
 
