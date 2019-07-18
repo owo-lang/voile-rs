@@ -89,6 +89,8 @@ fn trans_expr_inner(
     local_env: &[UID],
     local_map: &LocalCtx,
 ) -> TCM<Abs> {
+    let mut recursion =
+        |e: Expr| trans_expr_inner(e, meta_count, env, global_map, local_env, local_map);
     match expr {
         Expr::Type(syntax, level) => Ok(Abs::Type(syntax, level)),
         Expr::Var(ident) => {
@@ -102,19 +104,15 @@ fn trans_expr_inner(
                 Err(TCE::LookUpFailed(ident.clone()))
             }
         }
-        Expr::App(app_vec) => Ok(app_vec
-            .try_map(|e| trans_expr_inner(e, meta_count, env, global_map, local_env, local_map))?
-            .fold1(|result: Abs, abs: Abs| {
-                let info = result.syntax_info() + abs.syntax_info();
-                Abs::app(info, result, abs)
-            })),
+        Expr::App(app_vec) => Ok(app_vec.try_map(recursion)?.fold1(|result: Abs, abs: Abs| {
+            let info = result.syntax_info() + abs.syntax_info();
+            Abs::app(info, result, abs)
+        })),
         // I really hope I can reuse the code with `App` here :(
-        Expr::Pipe(pipe_vec) => Ok(pipe_vec
-            .try_map(|e| trans_expr_inner(e, meta_count, env, global_map, local_env, local_map))?
-            .rev_fold1(|result, abs| {
-                let info = result.syntax_info() + abs.syntax_info();
-                Abs::app(info, result, abs)
-            })),
+        Expr::Pipe(pipe_vec) => Ok(pipe_vec.try_map(recursion)?.rev_fold1(|result, abs| {
+            let info = result.syntax_info() + abs.syntax_info();
+            Abs::app(info, result, abs)
+        })),
         Expr::Meta(ident) => {
             let ret = Ok(Abs::Meta(ident.clone(), *meta_count));
             *meta_count += 1;
@@ -126,17 +124,14 @@ fn trans_expr_inner(
             let labels = labels
                 .into_iter()
                 .map(|Labelled { expr, label }| {
-                    trans_expr_inner(expr, meta_count, env, global_map, local_env, local_map)
-                        .map(|expr| Labelled { label, expr })
+                    recursion(expr).map(|expr| Labelled { label, expr })
                 })
                 .collect::<Result<_, _>>()?;
-            let rest = rest
-                .map(|e| trans_expr_inner(*e, meta_count, env, global_map, local_env, local_map))
-                .transpose()?;
+            let rest = rest.map(|e| recursion(*e)).transpose()?;
             Ok(Abs::row_polymorphic_type(info, kind, labels, rest))
         }
         Expr::Tup(tup_vec) => Ok(tup_vec
-            .try_map(|e| trans_expr_inner(e, meta_count, env, global_map, local_env, local_map))?
+            .try_map(recursion)?
             .fold1(|pair, abs| Abs::pair(abs.syntax_info(), pair, abs))),
         Expr::Sig(initial, last) => trans_dependent_type(
             meta_count, env, global_map, local_env, local_map, initial, *last, Sigma,
@@ -158,11 +153,7 @@ fn trans_expr_inner(
         Expr::Pi(params, result) => trans_dependent_type(
             meta_count, env, global_map, local_env, local_map, params, *result, Pi,
         ),
-        Expr::Lift(info, levels, inner) => {
-            let inner =
-                trans_expr_inner(*inner, meta_count, env, global_map, local_env, local_map)?;
-            Ok(Abs::lift(info, levels, inner))
-        }
+        Expr::Lift(info, levels, inner) => Ok(Abs::lift(info, levels, recursion(*inner)?)),
     }
 }
 
