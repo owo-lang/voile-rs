@@ -21,18 +21,7 @@ impl Display for Abs {
             Abs::Pair(_, a, b) => write!(f, "({}, {})", a, b),
             Abs::Fst(_, p) => write!(f, "({}.1)", p),
             Abs::Snd(_, p) => write!(f, "({}.2)", p),
-            Abs::Sum(_, variants) => {
-                let mut started = false;
-                for variant in variants {
-                    if started {
-                        f.write_str(" + ")?;
-                    } else {
-                        started = true;
-                    }
-                    variant.fmt(f)?;
-                }
-                Ok(())
-            }
+            Abs::RowPoly(_, _, _, _) => unimplemented!(),
         }
     }
 }

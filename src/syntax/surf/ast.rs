@@ -1,15 +1,8 @@
-use crate::syntax::common::{Ident, SyntaxInfo, VarRec};
+use crate::syntax::common::{Ident, Labelled, SyntaxInfo, VarRec};
 use crate::syntax::level::Level;
 use crate::util::vec1::Vec1;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-/// Typed label
-pub struct Labelled {
-    /// Label is an identifier
-    pub label: Ident,
-    /// The thing attached on this label
-    pub expr: Expr,
-}
+pub type LabExpr = Labelled<Expr>;
 
 /// Surface syntax tree node: Parameter.
 ///
@@ -51,7 +44,7 @@ pub enum Expr {
     /// instead of `Tup(Tup(a, b), c)`.
     Tup(Box<Vec1<Self>>),
     /// Row-polymorphic types, either record types or variant types.
-    RowPoly(Vec<Labelled>, VarRec, Option<Box<Self>>),
+    RowPoly(SyntaxInfo, VarRec, Vec<LabExpr>, Option<Box<Self>>),
     /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`
     /// instead of `Pi(a, Pi(b, c))`.
     /// `a` and `b` here can introduce telescopes.
@@ -85,16 +78,21 @@ impl Expr {
         Expr::Pipe(Box::new(Vec1::new(first, functions)))
     }
 
-    pub fn row_polymorphic_type(labels: Vec<Labelled>, kind: VarRec, rest: Option<Self>) -> Self {
-        Expr::RowPoly(labels, kind, rest.map(Box::new))
+    pub fn row_polymorphic_type(
+        info: SyntaxInfo,
+        labels: Vec<LabExpr>,
+        kind: VarRec,
+        rest: Option<Self>,
+    ) -> Self {
+        Expr::RowPoly(info, kind, labels, rest.map(Box::new))
     }
 
-    pub fn sum(labels: Vec<Labelled>, rest: Option<Self>) -> Self {
-        Self::row_polymorphic_type(labels, VarRec::Variant, rest)
+    pub fn sum(info: SyntaxInfo, labels: Vec<LabExpr>, rest: Option<Self>) -> Self {
+        Self::row_polymorphic_type(info, labels, VarRec::Variant, rest)
     }
 
-    pub fn rec(labels: Vec<Labelled>, rest: Option<Self>) -> Self {
-        Self::row_polymorphic_type(labels, VarRec::Record, rest)
+    pub fn rec(info: SyntaxInfo, labels: Vec<LabExpr>, rest: Option<Self>) -> Self {
+        Self::row_polymorphic_type(info, labels, VarRec::Record, rest)
     }
 
     pub fn tup(first: Self, rest: Vec<Self>) -> Self {

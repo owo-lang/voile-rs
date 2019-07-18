@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use crate::syntax::abs::Abs;
 use crate::syntax::common::DtKind::*;
@@ -7,7 +7,6 @@ use crate::syntax::core::{Closure, LiftEx, TVal, Val};
 
 use super::eval::{compile_cons, compile_variant};
 use super::monad::{ValTCM, TCE, TCM, TCS};
-use crate::syntax::level::Level;
 
 /**
 $$
@@ -221,25 +220,7 @@ fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(info);
             Ok((dt, tcs))
         }
-        Sum(_, variants) => {
-            let mut sum = BTreeMap::default();
-            for variant in variants {
-                let (variant, new_tcs) = tcs.check_type(variant).map_err(|e| e.wrap(info))?;
-                tcs = new_tcs;
-                let info = variant.info;
-                let mut new = match variant.ast.try_into_sum() {
-                    Ok(new) => new,
-                    Err(e) => return Err(TCE::NotSumVal(info, e)),
-                };
-                for new_variant in new.keys() {
-                    if sum.contains_key(new_variant) {
-                        return Err(TCE::OverlappingVariant(info, new_variant.clone()));
-                    }
-                }
-                sum.append(&mut new);
-            }
-            Ok((Val::Sum(sum).into_info(info), tcs))
-        }
+        RowPoly(_, _, _, _) => unimplemented!(),
         e => {
             let (ty, tcs) = tcs.infer(e).map_err(|e| e.wrap(info))?;
             if ty.ast.is_universe() {
@@ -348,29 +329,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
-        Sum(_, variants) => {
-            let mut known = BTreeSet::default();
-            let mut level = Level::default();
-            for variant in variants {
-                let (variant, new_tcs) = tcs.check_type(variant).map_err(|e| e.wrap(info))?;
-                tcs = new_tcs;
-                level = level.max(variant.ast.level());
-                let info = variant.info;
-                match variant.ast.try_into_sum() {
-                    Ok(variants) => {
-                        for (name, _) in variants {
-                            if known.contains(&name) {
-                                return Err(TCE::OverlappingVariant(info, name));
-                            } else {
-                                known.insert(name);
-                            }
-                        }
-                    }
-                    Err(e) => return Err(TCE::NotSumVal(info, e)),
-                }
-            }
-            Ok((Val::Type(level).into_info(info), tcs))
-        }
+        RowPoly(_, _, _, _) => unimplemented!(),
         App(_, f, a) => match &**f {
             Cons(variant_info) => {
                 let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap(info))?;

@@ -7,7 +7,7 @@ use crate::syntax::pest_util::end_of_rule;
 
 use super::ast::Param;
 use super::{Decl, DeclKind, Expr};
-use crate::syntax::surf::Labelled;
+use crate::syntax::surf::LabExpr;
 
 #[derive(Parser)]
 #[grammar = "syntax/surf/grammar.pest"]
@@ -66,12 +66,12 @@ fn declarations(the_rule: Tok) -> Vec<Decl> {
     decls
 }
 
-fn labelled(rules: Tok) -> Labelled {
+fn labelled(rules: Tok) -> LabExpr {
     let mut inner: Tik = rules.into_inner();
     let label = next_ident(&mut inner);
     let expr = next_rule!(inner, expr);
     end_of_rule(&mut inner);
-    Labelled { expr, label }
+    LabExpr { expr, label }
 }
 
 fn row_rest(rules: Tok) -> Expr {
@@ -81,12 +81,13 @@ fn row_rest(rules: Tok) -> Expr {
     expr
 }
 
-many_prefix_parser!(row_polymorphic, Labelled, labelled, row_rest);
+many_prefix_parser!(row_polymorphic, LabExpr, labelled, row_rest);
 
 fn variant_record(rules: Tok, kind: VarRec) -> Expr {
+    let info = SyntaxInfo::from(rules.as_span());
     let mut inner: Tik = rules.into_inner();
     let (labels, rest) = next_rule!(inner, row_polymorphic);
-    Expr::row_polymorphic_type(labels, kind, rest)
+    Expr::row_polymorphic_type(info, labels, kind, rest)
 }
 
 fn declaration(rules: Tok) -> Decl {

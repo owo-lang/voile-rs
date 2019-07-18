@@ -1,6 +1,8 @@
 use crate::syntax::common::*;
 use crate::syntax::level::Level;
 
+pub type LabAbs = Labelled<Abs>;
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Abs {
     Type(SyntaxInfo, Level),
@@ -26,7 +28,8 @@ pub enum Abs {
     Pair(SyntaxInfo, Box<Self>, Box<Self>),
     Fst(SyntaxInfo, Box<Self>),
     Snd(SyntaxInfo, Box<Self>),
-    Sum(SyntaxInfo, Vec<Self>),
+    /// Row-polymorphic types, corresponds to [RowPoly](crate::syntax::surf::Expr::RowPoly)
+    RowPoly(SyntaxInfo, VarRec, Vec<LabAbs>, Option<Box<Self>>),
 }
 
 impl ToSyntaxInfo for Abs {
@@ -39,7 +42,7 @@ impl ToSyntaxInfo for Abs {
             | Abs::Pair(info, ..)
             | Abs::Fst(info, ..)
             | Abs::Snd(info, ..)
-            | Abs::Sum(info, ..)
+            | Abs::RowPoly(info, ..)
             | Abs::Lift(info, ..)
             | Abs::Lam(info, ..) => *info,
             Abs::Var(ident, ..) | Abs::Ref(ident, ..) | Abs::Meta(ident, ..) | Abs::Cons(ident) => {
@@ -52,6 +55,15 @@ impl ToSyntaxInfo for Abs {
 impl Abs {
     pub fn dependent_type(info: SyntaxInfo, kind: DtKind, name: UID, a: Self, b: Self) -> Self {
         Abs::Dt(info, kind, name, Box::new(a), Box::new(b))
+    }
+
+    pub fn row_polymorphic_type(
+        info: SyntaxInfo,
+        kind: VarRec,
+        labels: Vec<LabAbs>,
+        rest: Option<Self>,
+    ) -> Self {
+        Abs::RowPoly(info, kind, labels, rest.map(Box::new))
     }
 
     pub fn app(info: SyntaxInfo, function: Self, argument: Self) -> Self {

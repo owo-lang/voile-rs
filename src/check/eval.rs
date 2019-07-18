@@ -32,19 +32,6 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let term = Val::dependent_type(kind, param_ty.ast, ret_ty.ast);
             (term.into_info(info), tcs)
         }
-        Sum(info, sums) => {
-            let mut variants = BTreeMap::default();
-            for sum in sums {
-                let (val, new_tcs) = evaluate(tcs, sum);
-                tcs = new_tcs;
-                if let Val::Sum(mut new) = val.ast {
-                    variants.append(&mut new);
-                } else {
-                    panic!("Compile failed: not a sum, at {}.", val.info);
-                }
-            }
-            (Val::Sum(variants).into_info(info), tcs)
-        }
         Pair(info, a, b) => {
             let (a, tcs) = evaluate(tcs, *a);
             let (b, tcs) = evaluate(tcs, *b);
@@ -71,6 +58,7 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             (expr.lift(levels).into_info(info), tcs)
         }
         Meta(ident, mi) => (Val::meta(mi).into_info(ident.info), tcs),
+        RowPoly(_, _, _, _) => unimplemented!(),
     }
 }
 

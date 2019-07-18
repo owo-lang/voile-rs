@@ -122,7 +122,19 @@ fn trans_expr_inner(
         }
         Expr::Cons(ident) => Ok(Abs::Cons(ident.clone())),
         Expr::Bot(info) => Ok(Abs::Bot(info)),
-        Expr::RowPoly(labels, kind, variants) => unimplemented!(),
+        Expr::RowPoly(info, kind, labels, rest) => {
+            let labels = labels
+                .into_iter()
+                .map(|Labelled { expr, label }| {
+                    trans_expr_inner(expr, meta_count, env, global_map, local_env, local_map)
+                        .map(|expr| Labelled { label, expr })
+                })
+                .collect::<Result<_, _>>()?;
+            let rest = rest
+                .map(|e| trans_expr_inner(*e, meta_count, env, global_map, local_env, local_map))
+                .transpose()?;
+            Ok(Abs::row_polymorphic_type(info, kind, labels, rest))
+        }
         Expr::Tup(tup_vec) => Ok(tup_vec
             .try_map(|e| trans_expr_inner(e, meta_count, env, global_map, local_env, local_map))?
             .fold1(|pair, abs| Abs::pair(abs.syntax_info(), pair, abs))),
