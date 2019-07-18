@@ -1,5 +1,6 @@
 use crate::syntax::common::{Ident, SyntaxInfo, VarRec};
 use crate::syntax::level::Level;
+use crate::util::vec1::Vec1;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 /// Typed label
@@ -40,15 +41,15 @@ pub enum Expr {
     /// Function application.<br/>
     /// Application operator, where `f a b c` is represented as `App(f, vec![a, b, c])`
     /// instead of `App(App(App(f, a), b), c)`.
-    App(Box<Self>, Vec<Self>),
+    App(Box<Vec1<Self>>),
     /// Function composition.<br/>
     /// Pipeline operator, where `a |> b |> f` is represented as `Pipe(vec![a, b, f])`
     /// instead of `Pipe(Pipe(Pipe(f, a), b), c)`.
-    Pipe(Box<Self>, Vec<Self>),
+    Pipe(Box<Vec1<Self>>),
     /// Tuple constructor.<br/>
     /// Comma operator, where `a, b, c` is represented as `Tup(a, vec![b, c])`
     /// instead of `Tup(Tup(a, b), c)`.
-    Tup(Box<Self>, Vec<Self>),
+    Tup(Box<Vec1<Self>>),
     /// Row-polymorphic types, either record types or variant types.
     RowPoly(Vec<Labelled>, VarRec, Option<Box<Self>>),
     /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`
@@ -73,7 +74,7 @@ impl Expr {
     }
 
     pub fn app(applied: Self, arguments: Vec<Self>) -> Self {
-        Expr::App(Box::new(applied), arguments)
+        Expr::App(Box::new(Vec1::new(applied, arguments)))
     }
 
     pub fn lift(info: SyntaxInfo, count: u32, target: Self) -> Self {
@@ -81,7 +82,7 @@ impl Expr {
     }
 
     pub fn pipe(first: Self, functions: Vec<Self>) -> Self {
-        Expr::Pipe(Box::new(first), functions)
+        Expr::Pipe(Box::new(Vec1::new(first, functions)))
     }
 
     pub fn row_polymorphic_type(labels: Vec<Labelled>, kind: VarRec, rest: Option<Self>) -> Self {
@@ -97,7 +98,7 @@ impl Expr {
     }
 
     pub fn tup(first: Self, rest: Vec<Self>) -> Self {
-        Expr::Tup(Box::new(first), rest)
+        Expr::Tup(Box::new(Vec1::new(first, rest)))
     }
 
     pub fn sig(params: Vec<Param>, expr: Self) -> Self {

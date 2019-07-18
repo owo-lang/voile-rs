@@ -7,12 +7,15 @@ pub struct Vec1<T> {
     tail: Vec<T>,
 }
 
+impl<T> From<T> for Vec1<T> {
+    fn from(head: T) -> Self {
+        Self::new(head, Default::default())
+    }
+}
+
 impl<T> Vec1<T> {
-    pub fn new(head: T) -> Self {
-        Self {
-            head,
-            tail: Default::default(),
-        }
+    pub fn new(head: T, tail: Vec<T>) -> Self {
+        Self { head, tail }
     }
 
     pub fn push(&mut self, new: T) {
@@ -29,10 +32,14 @@ impl<T> Vec1<T> {
     }
 
     pub fn map<R>(self, mut f: impl FnMut(T) -> R) -> Vec1<R> {
-        Vec1 {
-            head: f(self.head),
-            tail: self.tail.into_iter().map(f).collect(),
-        }
+        Vec1::new(f(self.head), self.tail.into_iter().map(f).collect())
+    }
+
+    pub fn try_map<E, R>(self, mut f: impl FnMut(T) -> Result<R, E>) -> Result<Vec1<R>, E> {
+        Ok(Vec1::new(
+            f(self.head)?,
+            self.tail.into_iter().map(f).collect::<Result<_, _>>()?,
+        ))
     }
 
     pub fn try_fold1<E>(self, mut f: impl FnMut(T, T) -> Result<T, E>) -> Result<T, E> {
@@ -47,10 +54,14 @@ impl<T> Vec1<T> {
     pub fn fold1(self, f: impl FnMut(T, T) -> T) -> T {
         self.tail.into_iter().fold(self.head, f)
     }
+
+    pub fn rev_fold1(self, f: impl FnMut(T, T) -> T) -> T {
+        self.tail.into_iter().rev().fold(self.head, f)
+    }
 }
 
 impl<T: Default> Default for Vec1<T> {
     fn default() -> Self {
-        Self::new(Default::default())
+        Self::from(T::default())
     }
 }

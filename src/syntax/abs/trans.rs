@@ -102,25 +102,21 @@ fn trans_expr_inner(
                 Err(TCE::LookUpFailed(ident.clone()))
             }
         }
-        Expr::App(applied, app_vec) => app_vec.iter().try_fold(
-            trans_expr_inner(applied, meta_count, env, global_map, local_env, local_map)?,
-            |result, each_expr| -> TCM<_> {
-                let abs =
-                    trans_expr_inner(each_expr, meta_count, env, global_map, local_env, local_map)?;
+        Expr::App(app_vec) => Ok(app_vec
+            .clone()
+            .try_map(|e| trans_expr_inner(&e, meta_count, env, global_map, local_env, local_map))?
+            .fold1(|result: Abs, abs: Abs| {
                 let info = result.syntax_info() + abs.syntax_info();
-                Ok(Abs::app(info, result, abs))
-            },
-        ),
+                Abs::app(info, result, abs)
+            })),
         // I really hope I can reuse the code with `App` here :(
-        Expr::Pipe(startup, pipe_vec) => pipe_vec.iter().rev().try_fold(
-            trans_expr_inner(startup, meta_count, env, global_map, local_env, local_map)?,
-            |result, each_expr| -> TCM<_> {
-                let abs =
-                    trans_expr_inner(each_expr, meta_count, env, global_map, local_env, local_map)?;
+        Expr::Pipe(pipe_vec) => Ok(pipe_vec
+            .clone()
+            .try_map(|e| trans_expr_inner(&e, meta_count, env, global_map, local_env, local_map))?
+            .rev_fold1(|result, abs| {
                 let info = result.syntax_info() + abs.syntax_info();
-                Ok(Abs::app(info, result, abs))
-            },
-        ),
+                Abs::app(info, result, abs)
+            })),
         Expr::Meta(ident) => {
             let ret = Ok(Abs::Meta(ident.clone(), *meta_count));
             *meta_count += 1;
@@ -129,14 +125,10 @@ fn trans_expr_inner(
         Expr::Cons(ident) => Ok(Abs::Cons(ident.clone())),
         Expr::Bot(info) => Ok(Abs::Bot(*info)),
         Expr::RowPoly(labels, kind, variants) => unimplemented!(),
-        Expr::Tup(first, tup_vec) => tup_vec.iter().try_fold(
-            trans_expr_inner(first, meta_count, env, global_map, local_env, local_map)?,
-            |pair, expr| {
-                let abs =
-                    trans_expr_inner(expr, meta_count, env, global_map, local_env, local_map)?;
-                Ok(Abs::pair(abs.syntax_info(), pair, abs))
-            },
-        ),
+        Expr::Tup(tup_vec) => Ok(tup_vec
+            .clone()
+            .try_map(|e| trans_expr_inner(&e, meta_count, env, global_map, local_env, local_map))?
+            .fold1(|pair, abs| Abs::pair(abs.syntax_info(), pair, abs))),
         Expr::Sig(initial, last) => trans_dependent_type(
             meta_count, env, global_map, local_env, local_map, initial, &*last, Sigma,
         ),
