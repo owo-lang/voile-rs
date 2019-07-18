@@ -358,6 +358,15 @@ fn check_subtype(tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
     use Val::*;
     match (subtype, supertype) {
         (Type(sub_level), Type(super_level)) if sub_level <= super_level => Ok(tcs),
+        (Dt(k0, input_a, clos_a), Dt(k1, input_b, clos_b)) if k0 == k1 => {
+            // Parameter invariance
+            let tcs = tcs.unify(input_a, input_b)?;
+            let p = Val::fresh_axiom();
+            let a = clos_a.instantiate_cloned_borrow(&p);
+            let b = clos_b.instantiate_cloned(p);
+            // Return value covariance
+            tcs.check_subtype(&a, &b)
+        }
         (e, t) => tcs.unify(e, t),
     }
 }

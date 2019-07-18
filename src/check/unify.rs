@@ -1,5 +1,5 @@
 use crate::syntax::common::MI;
-use crate::syntax::core::{Neutral, Val};
+use crate::syntax::core::{Closure, Neutral, Val};
 
 use super::monad::{MetaSolution, TCE, TCM, TCS};
 
@@ -21,7 +21,8 @@ fn solve_with(mut tcs: TCS, meta: MI, solution: Val) -> TCM {
 }
 
 /**
-Try to unify two well-typed terms.
+Try to unify two well-typed terms,
+using a conversion check algorithm.
 This may lead to meta variable resolution.
 */
 fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
@@ -37,12 +38,10 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
         }
         */
         (Neut(Ref(x)), Neut(Ref(y))) if x == y => Ok(tcs),
-        (Lam(a), Lam(b)) => {
-            let p = Val::fresh_axiom();
-            let a = a.instantiate_cloned_borrow(&p);
-            let b = b.instantiate_cloned(p);
-            tcs.unify(&a, &b)
+        (Dt(k0, input_a, clos_a), Dt(k1, input_b, clos_b)) if k0 == k1 => {
+            tcs.unify(input_a, input_b)?.unify_closure(clos_a, clos_b)
         }
+        (Lam(a), Lam(b)) => unify_closure(tcs, a, b),
         (Cons(_, a), Cons(_, b)) => tcs.unify(&**a, &**b),
         (Pair(a0, a1), Pair(b0, b1)) => tcs.unify(&**a0, &**b0)?.unify(&**a1, &**b1),
         (Sum(a_variants), Sum(b_variants)) if a_variants.len() == b_variants.len() => {
@@ -64,6 +63,13 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
         (Neut(a), Neut(b)) => tcs.unify_neutral(a, b),
         (e, t) => Err(TCE::CannotUnify(e.clone(), t.clone())),
     }
+}
+
+fn unify_closure(tcs: TCS, a: &Closure, b: &Closure) -> TCM {
+    let p = Val::fresh_axiom();
+    let a = a.instantiate_cloned_borrow(&p);
+    let b = b.instantiate_cloned(p);
+    tcs.unify(&a, &b)
 }
 
 fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
@@ -88,5 +94,10 @@ impl TCS {
     #[inline]
     fn unify_neutral(self, a: &Neutral, b: &Neutral) -> TCM {
         unify_neutral(self, a, b)
+    }
+
+    #[inline]
+    fn unify_closure(self, a: &Closure, b: &Closure) -> TCM {
+        unify_closure(self, a, b)
     }
 }
