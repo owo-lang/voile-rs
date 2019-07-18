@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::syntax::abs::Abs;
-use crate::syntax::common::DtKind::*;
+use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
 use crate::syntax::core::{Closure, LiftEx, TVal, Val};
 

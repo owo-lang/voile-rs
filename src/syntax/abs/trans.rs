@@ -1,7 +1,7 @@
 use std::collections::btree_map::BTreeMap;
 
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::common::{DtKind::*, *};
+use crate::syntax::common::{PiSig::*, *};
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;
@@ -187,7 +187,7 @@ fn trans_dependent_type(
     local_map: &LocalCtx,
     params: Vec<Param>,
     result: Expr,
-    kind: DtKind,
+    kind: PiSig,
 ) -> TCM<Abs> {
     let mut pi_env = local_env.to_vec();
     let mut pi_map = local_map.clone();

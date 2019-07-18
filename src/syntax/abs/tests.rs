@@ -1,6 +1,6 @@
 use crate::check::monad::TCE;
 use crate::syntax::abs::{trans_expr, Abs};
-use crate::syntax::common::{DtKind, Ident, DBI, GI, MI};
+use crate::syntax::common::{Ident, PiSig, DBI, GI, MI};
 use crate::syntax::surf::parse_str_err_printed;
 
 use super::{trans_decls, AbsDecl};
@@ -68,7 +68,7 @@ fn must_be_app(abs: Abs) -> Abs {
 
 fn must_be_pi(abs: Abs) -> (Abs, Abs) {
     match abs {
-        Abs::Dt(_, DtKind::Pi, _, param, abs) => (*param, *abs),
+        Abs::Dt(_, PiSig::Pi, _, param, abs) => (*param, *abs),
         e => panic!("`{:?}` is not an `Abs::Dt(_, Pi, _, _)`.", e),
     }
 }

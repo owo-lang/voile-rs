@@ -21,7 +21,7 @@ pub enum Abs {
     /// Apply or Pipeline in surface
     App(SyntaxInfo, Box<Self>, Box<Self>),
     /// Dependent Type, `(a -> b -> c)` as `Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))`
-    Dt(SyntaxInfo, DtKind, UID, Box<Self>, Box<Self>),
+    Dt(SyntaxInfo, PiSig, UID, Box<Self>, Box<Self>),
     /// The first `SyntaxInfo` is the syntax info of this whole lambda,
     /// while the second is about its parameter
     Lam(SyntaxInfo, Ident, UID, Box<Self>),
@@ -53,7 +53,7 @@ impl ToSyntaxInfo for Abs {
 }
 
 impl Abs {
-    pub fn dependent_type(info: SyntaxInfo, kind: DtKind, name: UID, a: Self, b: Self) -> Self {
+    pub fn dependent_type(info: SyntaxInfo, kind: PiSig, name: UID, a: Self, b: Self) -> Self {
         Abs::Dt(info, kind, name, Box::new(a), Box::new(b))
     }
 
@@ -91,11 +91,11 @@ impl Abs {
     }
 
     pub fn pi(info: SyntaxInfo, name: UID, input: Self, output: Self) -> Self {
-        Self::dependent_type(info, DtKind::Pi, name, input, output)
+        Self::dependent_type(info, PiSig::Pi, name, input, output)
     }
 
     pub fn sig(info: SyntaxInfo, name: UID, first: Self, second: Self) -> Self {
-        Self::dependent_type(info, DtKind::Sigma, name, first, second)
+        Self::dependent_type(info, PiSig::Sigma, name, first, second)
     }
 }
 

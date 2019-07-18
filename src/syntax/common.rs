@@ -11,7 +11,7 @@ pub enum VarRec {
 
 /// Various kinds of dependent types
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
-pub enum DtKind {
+pub enum PiSig {
     Pi,
     Sigma,
 }

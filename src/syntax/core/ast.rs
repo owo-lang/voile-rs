@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::syntax::common::{next_uid, DtKind, DBI, GI, MI, UID};
+use crate::syntax::common::{next_uid, PiSig, DBI, GI, MI, UID};
 use crate::syntax::level::Level;
 
 use super::level::*;
@@ -276,7 +276,7 @@ pub enum Val {
     /// For untyped closures, it can be represented as `Neut` directly.
     Lam(Closure),
     /// Pi-like types (dependent types), with parameter explicitly typed.
-    Dt(DtKind, Box<Self>, Closure),
+    Dt(PiSig, Box<Self>, Closure),
     /// Sum type literal.
     Sum(Variants),
     /// Constructor invocation.
@@ -373,16 +373,16 @@ impl Val {
         Val::Neut(Neutral::Snd(Box::new(pair)))
     }
 
-    pub fn dependent_type(kind: DtKind, param_type: TVal, body: TVal) -> TVal {
+    pub fn dependent_type(kind: PiSig, param_type: TVal, body: TVal) -> TVal {
         Val::Dt(kind, Box::new(param_type), Closure::new(body))
     }
 
     pub fn pi(param_type: TVal, body: TVal) -> TVal {
-        Self::dependent_type(DtKind::Pi, param_type, body)
+        Self::dependent_type(PiSig::Pi, param_type, body)
     }
 
     pub fn sig(param_type: TVal, body: TVal) -> TVal {
-        Self::dependent_type(DtKind::Sigma, param_type, body)
+        Self::dependent_type(PiSig::Sigma, param_type, body)
     }
 
     pub fn into_neutral(self) -> Result<Neutral, Self> {

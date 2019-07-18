@@ -1,9 +1,9 @@
 use std::fmt::{Display, Error, Formatter};
 
-use DtKind::*;
+use PiSig::*;
 use VarRec::*;
 
-use crate::syntax::common::{DtKind, Labelled, VarRec};
+use crate::syntax::common::{Labelled, PiSig, VarRec};
 
 use super::{Abs, AbsDecl, LabAbs};
 
@@ -26,15 +26,17 @@ impl Display for Abs {
             Abs::Pair(_, a, b) => write!(f, "({}, {})", a, b),
             Abs::Fst(_, p) => write!(f, "({}.1)", p),
             Abs::Snd(_, p) => write!(f, "({}.2)", p),
-            Abs::RowPoly(_, kind, labels, Some(rest)) => {
-                write!(f, "{} {{ ", prefix(kind))?;
+            Abs::RowPoly(_, kind, labels, rest) => {
+                let prefix = match kind {
+                    Variant => "Sum",
+                    Record => "Rec",
+                };
+                write!(f, "{} {{ ", prefix)?;
                 pretty_labels(f, labels)?;
-                write!(f, "... = {} }}", rest)
-            }
-            Abs::RowPoly(_, kind, labels, None) => {
-                write!(f, "{} {{ ", prefix(kind))?;
-                pretty_labels(f, labels)?;
-                write!(f, "}}")
+                match rest {
+                    Some(rest) => write!(f, "... = {} }}", rest),
+                    None => write!(f, "}}"),
+                }
             }
         }
     }
@@ -45,13 +47,6 @@ fn pretty_labels(f: &mut Formatter, labels: &Vec<LabAbs>) -> MonadFmt {
         writeln!(f, "{}: {}; ", label.label.text, label.expr)?;
     }
     Ok(())
-}
-
-fn prefix(kind: &VarRec) -> &str {
-    match kind {
-        Variant => "Sum",
-        Record => "Rec",
-    }
 }
 
 impl Display for AbsDecl {
