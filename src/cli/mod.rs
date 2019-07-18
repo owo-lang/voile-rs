@@ -27,7 +27,7 @@ fn main() {
                 let abs_decls = trans_decls_contextual(Default::default(), decls)
                     .map_err(|err| eprintln!("{}", err))
                     .unwrap_or_else(|()| {
-                        eprintln!("Scope-Check failed.");
+                        eprintln!("Nou!");
                         std::process::exit(1)
                     });
 
@@ -37,7 +37,7 @@ fn main() {
                 let checked = check_decls(tcs, abs_decls.decls.clone())
                     .map_err(|err| eprintln!("{}", err))
                     .unwrap_or_else(|()| {
-                        eprintln!("Type-Check failed.");
+                        eprintln!("Change my mind!");
                         std::process::exit(1)
                     });
 

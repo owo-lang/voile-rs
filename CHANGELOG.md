@@ -2,6 +2,10 @@
 
 # 0.0.15
 
++ Error message is now "change my mind" (#126)
++ Introduce `vec1` (#127)
++ New syntax for `Rec` and `Sum`
+
 # 0.0.14
 
 + Documentation cleanup
