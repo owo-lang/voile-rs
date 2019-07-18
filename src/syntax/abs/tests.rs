@@ -93,7 +93,7 @@ fn trans_pi_env() {
         .unwrap()
         .remove(0)
         .body;
-    let pi_expr = trans_expr(&pi_expr, &[], &mut Default::default(), &Default::default())
+    let pi_expr = trans_expr(pi_expr, &[], &mut Default::default(), &Default::default())
         .expect("Parse failed.");
     println!("{}", pi_expr);
     let (_, bc) = must_be_pi(pi_expr);
@@ -109,7 +109,7 @@ fn trans_pi_env() {
 fn trans_pi_shadowing() {
     let code = "val t : ((a : Type) -> (b : Type(a)) -> (b: Type(b)) -> Type(a));";
     let pi_expr = parse_str_err_printed(code).unwrap().remove(0).body;
-    let pi_abs = trans_expr(&pi_expr, &[], &mut Default::default(), &Default::default()).unwrap();
+    let pi_abs = trans_expr(pi_expr, &[], &mut Default::default(), &Default::default()).unwrap();
     println!("{}", pi_abs);
     let (_, bc) = must_be_pi(pi_abs);
     let (b1, bc) = must_be_pi(bc);
@@ -127,7 +127,7 @@ fn trans_pi_shadowing() {
 fn trans_lam() {
     let code = r"let l = \a . \b . \a . b a;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
-    let lam_abs = trans_expr(&lam_expr, &[], &mut Default::default(), &Default::default()).unwrap();
+    let lam_abs = trans_expr(lam_expr, &[], &mut Default::default(), &Default::default()).unwrap();
     println!("{}", lam_abs);
     let abs_lam_ba = must_be_lam(lam_abs);
     let abs_lam_a = must_be_lam(abs_lam_ba);
@@ -145,7 +145,7 @@ fn trans_lam() {
 fn trans_multi_param_lam() {
     let code = r"let l = \a b a . b a;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
-    let lam_abs = trans_expr(&lam_expr, &[], &mut Default::default(), &Default::default()).unwrap();
+    let lam_abs = trans_expr(lam_expr, &[], &mut Default::default(), &Default::default()).unwrap();
     println!("{}", lam_abs);
     let abs_lam_ba = must_be_lam(lam_abs);
     let abs_lam_a = must_be_lam(abs_lam_ba);
@@ -163,7 +163,7 @@ fn trans_multi_param_lam() {
 fn trans_lam_lookup_failed() {
     let code = r"let l = \a . b;";
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
-    let tce = trans_expr(&lam_expr, &[], &mut Default::default(), &Default::default()).unwrap_err();
+    let tce = trans_expr(lam_expr, &[], &mut Default::default(), &Default::default()).unwrap_err();
     match tce {
         TCE::LookUpFailed(ident) => assert_eq!(ident.text, "b"),
         _ => panic!(),
@@ -179,7 +179,7 @@ fn trans_lam_global() {
         info: Default::default(),
     };
     let lam_abs = trans_expr(
-        &lam_expr,
+        lam_expr,
         &[AbsDecl::Decl(Abs::Meta(ident, MI(0)))],
         &mut MI(1),
         &[("b".to_string(), GI(0))].iter().cloned().collect(),

@@ -199,9 +199,8 @@ fn update_tcs(tcs: TCS, decls: Vec<Decl>) -> TCS {
 pub fn code_to_abs(tcs: &mut TCS, code: &str) -> Option<Abs> {
     let trans_state = &mut tcs.1;
     trans_state.meta_count = MI(tcs.0.meta_solutions().len());
-    let expr = parse_expr_err_printed(code).ok()?;
     trans_expr(
-        &expr,
+        parse_expr_err_printed(code).ok()?,
         &trans_state.decls,
         &mut trans_state.meta_count,
         &trans_state.context_mapping,
