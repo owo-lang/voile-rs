@@ -7,7 +7,6 @@ fn simple_declaration_parsing() {
     parse_str_err_printed("a : b").unwrap_err();
     parse_str_err_printed("let a = b;").unwrap();
     parse_str_err_printed("a = b").unwrap_err();
-    parse_str_err_printed("a = !").unwrap_err();
 }
 
 #[test]

@@ -6,8 +6,6 @@ pub type LabAbs = Labelled<Abs>;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Abs {
     Type(SyntaxInfo, Level),
-    /// Bottom type
-    Bot(SyntaxInfo),
     /// Local variable
     Var(Ident, UID, DBI),
     /// Global variable
@@ -36,7 +34,6 @@ impl ToSyntaxInfo for Abs {
     fn syntax_info(&self) -> SyntaxInfo {
         match self {
             Abs::Type(info, ..)
-            | Abs::Bot(info)
             | Abs::App(info, ..)
             | Abs::Dt(info, ..)
             | Abs::Pair(info, ..)

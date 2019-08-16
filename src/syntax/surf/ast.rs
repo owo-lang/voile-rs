@@ -23,8 +23,6 @@ pub enum Expr {
     Var(Ident),
     /// Constructor call
     Cons(Ident),
-    /// Empty type
-    Bot(SyntaxInfo),
     /// Explicit meta variable
     Meta(Ident),
     /// Lift an expression many times

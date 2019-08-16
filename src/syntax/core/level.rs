@@ -34,7 +34,8 @@ impl LiftEx for Val {
                 Box::new(param_type.lift(levels)),
                 closure.lift(levels),
             ),
-            Val::Sum(variants) => Val::Sum(
+            Val::RowPoly(kind, variants) => Val::RowPoly(
+                kind,
                 variants
                     .into_iter()
                     .map(|(name, e)| (name, e.lift(levels)))
@@ -49,7 +50,7 @@ impl LiftEx for Val {
     fn calc_level(&self) -> LevelCalcState {
         match self {
             Val::Type(level) => Some(*level + 1),
-            Val::Sum(variants) => {
+            Val::RowPoly(_, variants) => {
                 let mut maximum = Level::default();
                 for variant in variants.values() {
                     maximum = maximum.max(variant.calc_level()?);

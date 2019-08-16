@@ -13,7 +13,6 @@ impl Display for Abs {
     fn fmt(&self, f: &mut Formatter) -> MonadFmt {
         match self {
             Abs::Type(_, level) => write!(f, "set{}", level),
-            Abs::Bot(_) => write!(f, "Bot"),
             Abs::Var(info, name, dbi) => write!(f, "{}[{:?},{:?}]", info.text, name, dbi),
             Abs::Ref(_, dbi) => write!(f, "<{:?}>", dbi),
             Abs::Meta(_, mi) => write!(f, "?{:?}", mi),

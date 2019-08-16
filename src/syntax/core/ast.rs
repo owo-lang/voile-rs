@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::syntax::common::{next_uid, PiSig, DBI, GI, MI, UID};
+use crate::syntax::common::{next_uid, PiSig, VarRec, DBI, GI, MI, UID};
 use crate::syntax::level::Level;
 
 use super::level::*;
@@ -118,7 +118,8 @@ impl RedEx for Val {
                 param_type.reduce_with_dbi_borrow(&arg, dbi),
                 body.reduce_with_dbi(arg, dbi + 1),
             ),
-            Val::Sum(variants) => Val::Sum(
+            Val::RowPoly(kind, variants) => Val::RowPoly(
+                kind,
                 variants
                     .into_iter()
                     .map(|(name, ty)| (name, ty.reduce_with_dbi_borrow(&arg, dbi)))
@@ -142,7 +143,8 @@ impl RedEx for Val {
                 param_type.reduce_with_dbi_borrow(arg, dbi),
                 body.reduce_with_dbi_borrow(arg, dbi + 1),
             ),
-            Val::Sum(variants) => Val::Sum(
+            Val::RowPoly(kind, variants) => Val::RowPoly(
+                kind,
                 variants
                     .into_iter()
                     .map(|(name, ty)| (name, ty.reduce_with_dbi_borrow(arg, dbi)))
@@ -278,7 +280,7 @@ pub enum Val {
     /// Pi-like types (dependent types), with parameter explicitly typed.
     Dt(PiSig, Box<Self>, Closure),
     /// Sum type literal.
-    Sum(Variants),
+    RowPoly(VarRec, Variants),
     /// Constructor invocation.
     Cons(String, Box<Self>),
     /// Sigma instance.
@@ -291,7 +293,7 @@ impl Val {
     pub fn is_type(&self) -> bool {
         use Val::*;
         match self {
-            Type(..) | Dt(..) | Sum(..) => true,
+            Type(..) | Dt(..) | RowPoly(..) => true,
             // In case it's neutral, we use `is_universe` on its type.
             // In case it's a meta, we're supposed to solve it.
             Lam(..) | Cons(..) | Pair(..) | Neut(..) => false,
@@ -302,13 +304,6 @@ impl Val {
         match self {
             Val::Type(_) => true,
             _ => false,
-        }
-    }
-
-    pub fn try_into_sum(self) -> Result<Variants, Self> {
-        match self {
-            Val::Sum(variants) => Ok(variants),
-            e => Err(e),
         }
     }
 
@@ -334,10 +329,6 @@ impl Val {
 
     pub fn lam(body: Self) -> Self {
         Val::Lam(Closure::new(body))
-    }
-
-    pub fn bot() -> TVal {
-        Val::Sum(Default::default())
     }
 
     pub fn glob(index: GI) -> Self {
@@ -377,6 +368,14 @@ impl Val {
         Val::Dt(kind, Box::new(param_type), Closure::new(body))
     }
 
+    pub fn variant_type(variants: Variants) -> TVal {
+        Val::RowPoly(VarRec::Variant, variants)
+    }
+
+    pub fn record_type(fields: Variants) -> TVal {
+        Val::RowPoly(VarRec::Record, fields)
+    }
+
     pub fn pi(param_type: TVal, body: TVal) -> TVal {
         Self::dependent_type(PiSig::Pi, param_type, body)
     }
@@ -406,11 +405,11 @@ impl Val {
         match self {
             Val::Neut(n) => f(n),
             Val::Pair(a, b) => Ok(Self::pair(a.try_map_neutral(f)?, b.try_map_neutral(f)?)),
-            Val::Sum(v) => v
+            Val::RowPoly(kind, v) => v
                 .into_iter()
                 .map(|(k, v)| v.try_map_neutral(f).map(|v| (k, v)))
                 .collect::<Result<_, _>>()
-                .map(Val::Sum),
+                .map(|vs| Val::RowPoly(kind, vs)),
             Val::Lam(Closure { body }) => body.try_map_neutral(f).map(Self::lam),
             Val::Dt(kind, param_type, Closure { body }) => Ok(Self::dependent_type(
                 kind,
@@ -459,7 +458,7 @@ impl Val {
             Val::Pair(a, b) => a
                 .try_fold_neutral(init, f)
                 .and_then(|r| b.try_fold_neutral(r, f)),
-            Val::Sum(v) => v
+            Val::RowPoly(_, v) => v
                 .into_iter()
                 .try_fold(init, |a, (_, v)| v.try_fold_neutral(a, f)),
             Val::Lam(Closure { body }) => body.try_fold_neutral(init, f),

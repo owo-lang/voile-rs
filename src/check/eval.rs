@@ -11,7 +11,6 @@ fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
     use Abs::*;
     match abs {
         Type(info, level) => (Val::Type(level).into_info(info), tcs),
-        Bot(info) => (Val::bot().into_info(info), tcs),
         Var(ident, _, i) => {
             let resolved = tcs.local_val(i).ast.clone().attach_dbi(i);
             (resolved.into_info(ident.info), tcs)
@@ -82,7 +81,7 @@ pub fn compile_variant(info: Ident) -> ValInfo {
     let mut text = info.text;
     text.remove(0);
     variant.insert(text, Val::var(DBI(0)));
-    Val::lam(Val::Sum(variant)).into_info(info.info)
+    Val::lam(Val::variant_type(variant)).into_info(info.info)
 }
 
 pub fn compile_cons(info: Ident) -> ValInfo {

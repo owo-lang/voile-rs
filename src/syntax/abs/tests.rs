@@ -6,26 +6,6 @@ use crate::syntax::surf::parse_str_err_printed;
 use super::{trans_decls, AbsDecl};
 
 #[test]
-fn trans_bot() {
-    let surf = parse_str_err_printed(
-        "val a : Type;\n\
-         let a = !;",
-    )
-    .unwrap();
-    let mut ctx = trans_decls(surf).unwrap();
-    assert_eq!(2, ctx.len());
-    let decl = ctx.pop().unwrap();
-    println!("{:?}", decl);
-    match decl {
-        AbsDecl::Impl(abs, ty_dbi) => {
-            println!("val {};", ty_dbi);
-            println!("let {};", abs);
-        }
-        _ => panic!(),
-    };
-}
-
-#[test]
 fn many_decls() {
     let surf = parse_str_err_printed(
         "val a : Type1;\n\

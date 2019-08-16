@@ -112,7 +112,6 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let cons = compile_cons(info.clone());
             Ok((cons, tcs))
         }
-        (Bot(info), Val::Type(_)) => Ok((Val::bot().into_info(*info), tcs)),
         (Dt(info, kind, uid, param, ret), Val::Type(l)) => {
             let (param, mut tcs) = tcs.check_type(&**param).map_err(|e| e.wrap(*info))?;
             let param_level = param.ast.level();
@@ -335,7 +334,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
                 let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap(info))?;
                 let mut variant = BTreeMap::default();
                 variant.insert(variant_info.text[1..].to_owned(), a.ast);
-                Ok((Val::Sum(variant).into_info(info), tcs))
+                Ok((Val::variant_type(variant).into_info(info), tcs))
             }
             f => {
                 let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap(info))?;

@@ -44,7 +44,9 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
         (Lam(a), Lam(b)) => unify_closure(tcs, a, b),
         (Cons(_, a), Cons(_, b)) => tcs.unify(&**a, &**b),
         (Pair(a0, a1), Pair(b0, b1)) => tcs.unify(&**a0, &**b0)?.unify(&**a1, &**b1),
-        (Sum(a_variants), Sum(b_variants)) if a_variants.len() == b_variants.len() => {
+        (RowPoly(a_kind, a_variants), RowPoly(b_kind, b_variants))
+            if a_kind == b_kind && a_variants.len() == b_variants.len() =>
+        {
             a_variants.iter().try_fold(tcs, |tcs, (name, ty)| {
                 let counterpart = b_variants
                     .get(name)

@@ -3,6 +3,7 @@ use std::fmt::{Display, Error, Formatter};
 use crate::syntax::common::PiSig::*;
 
 use super::{Axiom, Closure, Neutral, Val, ValInfo};
+use crate::syntax::common::VarRec;
 
 impl Display for Neutral {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
@@ -55,20 +56,22 @@ impl Display for Val {
         match self {
             Val::Type(l) => write!(f, "set{}", l),
             Val::Lam(clos) => write!(f, "(\\ {})", clos),
-            Val::Sum(variants) => {
+            Val::RowPoly(kind, variants) => {
+                match kind {
+                    VarRec::Variant => f.write_str("Sum"),
+                    VarRec::Record => f.write_str("Rec"),
+                }?;
+                f.write_str(" {")?;
                 let mut started = false;
                 for (name, param) in variants {
                     if started {
-                        f.write_str(" + ")?;
+                        f.write_str(", ")?;
                     } else {
                         started = true;
                     }
-                    write!(f, "'{} {}", name, param)?;
+                    write!(f, "{}: {}", name, param)?;
                 }
-                if !started {
-                    f.write_str("!")?;
-                }
-                Ok(())
+                f.write_str("}")
             }
             Val::Dt(Pi, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
             Val::Dt(Sigma, param_ty, clos) => write!(f, "({} * {})", param_ty, clos),
