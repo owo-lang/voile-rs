@@ -50,7 +50,7 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
             a_variants.iter().try_fold(tcs, |tcs, (name, ty)| {
                 let counterpart = b_variants
                     .get(name)
-                    .ok_or_else(|| TCE::MissingVariant(name.clone()))?;
+                    .ok_or_else(|| TCE::MissingVariant(*a_kind, name.clone()))?;
                 tcs.unify(ty, counterpart)
             })
         }

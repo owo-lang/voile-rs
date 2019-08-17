@@ -1,5 +1,3 @@
-use std::collections::btree_map::BTreeMap;
-
 use crate::check::monad::{MetaSolution, TCS};
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{Ident, DBI};
@@ -74,14 +72,6 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
         neut => Val::Neut(neut),
     });
     (val, tcs)
-}
-
-pub fn compile_variant(info: Ident) -> ValInfo {
-    let mut variant = BTreeMap::default();
-    let mut text = info.text;
-    text.remove(0);
-    variant.insert(text, Val::var(DBI(0)));
-    Val::lam(Val::variant_type(variant)).into_info(info.info)
 }
 
 pub fn compile_cons(info: Ident) -> ValInfo {

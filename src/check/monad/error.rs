@@ -1,7 +1,7 @@
 use std::fmt::{Display, Error as FmtError, Formatter};
 
 use crate::syntax::abs::Abs;
-use crate::syntax::common::{Ident, SyntaxInfo, DBI, MI};
+use crate::syntax::common::{Ident, SyntaxInfo, VarRec, DBI, MI};
 use crate::syntax::core::{TVal, Val};
 use crate::syntax::level::Level;
 
@@ -28,7 +28,7 @@ pub enum TCE {
     // == Elaboration ==
     TypeNotInGamma(SyntaxInfo),
     OverlappingVariant(SyntaxInfo, String),
-    MissingVariant(String),
+    MissingVariant(VarRec, String),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
     /// Expected the first level to be smaller than second.
@@ -89,7 +89,12 @@ impl Display for TCE {
                 "Expected a sum type expression, got: `{}` at {}.",
                 val, id
             ),
-            TCE::MissingVariant(variant) => write!(f, "Expect variant `{}`, but missing.", variant),
+            TCE::MissingVariant(VarRec::Variant, variant) => {
+                write!(f, "Expect variant `{}`, but missing.", variant)
+            }
+            TCE::MissingVariant(VarRec::Record, field) => {
+                write!(f, "Expect field `{}`, but missing.", field)
+            }
             TCE::OverlappingVariant(id, variant) => write!(
                 f,
                 "Unexpected overlapping variant: `{}` at {}.",

@@ -279,7 +279,7 @@ pub enum Val {
     Lam(Closure),
     /// Pi-like types (dependent types), with parameter explicitly typed.
     Dt(PiSig, Box<Self>, Closure),
-    /// Sum type literal.
+    /// Row-polymorphic type literal.
     RowPoly(VarRec, Variants),
     /// Constructor invocation.
     Cons(String, Box<Self>),

@@ -5,7 +5,7 @@ use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
 use crate::syntax::core::{Closure, LiftEx, TVal, Val};
 
-use super::eval::{compile_cons, compile_variant};
+use super::eval::compile_cons;
 use super::monad::{ValTCM, TCE, TCM, TCS};
 
 /**

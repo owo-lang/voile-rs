@@ -3,6 +3,7 @@ use std::ops::{Add, AddAssign};
 
 use pest::Span;
 
+/// Row-polymorphic types.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum VarRec {
     Variant,
