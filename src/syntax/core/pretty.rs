@@ -4,6 +4,7 @@ use crate::syntax::common::PiSig::*;
 
 use super::{Axiom, Closure, Neutral, Val, ValInfo};
 use crate::syntax::common::VarRec;
+use crate::syntax::core::Variants;
 
 impl Display for Neutral {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
@@ -24,6 +25,15 @@ impl Display for Neutral {
             Fst(p) => write!(f, "({}.1)", p),
             Snd(p) => write!(f, "({}.2)", p),
             Lift(levels, p) => write!(f, "(^[{:?}] {})", levels, p),
+            Row(kind, variants, ext) => {
+                match kind {
+                    VarRec::Variant => f.write_str("Sum"),
+                    VarRec::Record => f.write_str("Rec"),
+                }?;
+                f.write_str(" {")?;
+                write_variants(f, variants)?;
+                write!(f, " | {}}}", ext)
+            }
         }
     }
 }
@@ -62,15 +72,7 @@ impl Display for Val {
                     VarRec::Record => f.write_str("Rec"),
                 }?;
                 f.write_str(" {")?;
-                let mut started = false;
-                for (name, param) in variants {
-                    if started {
-                        f.write_str(", ")?;
-                    } else {
-                        started = true;
-                    }
-                    write!(f, "{}: {}", name, param)?;
-                }
+                write_variants(f, variants)?;
                 f.write_str("}")
             }
             Val::Dt(Pi, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
@@ -80,4 +82,17 @@ impl Display for Val {
             Val::Cons(name, a) => write!(f, "(@{} {})", name, a),
         }
     }
+}
+
+fn write_variants(f: &mut Formatter, variants: &Variants) -> Result<(), Error> {
+    let mut started = false;
+    for (name, param) in variants {
+        if started {
+            f.write_str(", ")?;
+        } else {
+            started = true;
+        }
+        write!(f, "{}: {}", name, param)?;
+    }
+    Ok(())
 }

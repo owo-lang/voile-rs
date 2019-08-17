@@ -179,6 +179,8 @@ pub enum Neutral {
     Fst(Box<Self>),
     /// Projecting the second element of a pair.
     Snd(Box<Self>),
+    /// Row-polymorphic types.
+    Row(VarRec, Variants, Box<Self>),
 }
 
 /// Postulated value (or temporarily irreducible expressions), aka axioms.
@@ -220,6 +222,14 @@ impl Neutral {
             Ref(n) => Ref(n),
             Meta(n) => Meta(n),
             Lift(levels, expr) => Lift(levels, Box::new(expr.map_axiom(f))),
+            Row(kind, variants, ext) => {
+                let mapper = &mut |n: Neutral| Val::Neut(n.map_axiom(f));
+                let variants = variants
+                    .into_iter()
+                    .map(|(k, v)| (k, v.map_neutral(mapper)))
+                    .collect();
+                Row(kind, variants, Box::new(ext.map_axiom(f)))
+            }
         }
     }
 }
@@ -242,6 +252,7 @@ impl RedEx for Neutral {
             Fst(pair) => pair.reduce_with_dbi(arg, dbi).first(),
             Snd(pair) => pair.reduce_with_dbi(arg, dbi).second(),
             Lift(levels, neut) => neut.reduce_with_dbi(arg, dbi).lift(levels),
+            Row(..) => unimplemented!(), // TODO: calculation
         }
     }
 
@@ -262,6 +273,7 @@ impl RedEx for Neutral {
             Fst(pair) => pair.reduce_with_dbi_borrow(arg, dbi).first(),
             Snd(pair) => pair.reduce_with_dbi_borrow(arg, dbi).second(),
             Lift(levels, neut) => neut.reduce_with_dbi_borrow(arg, dbi).lift(levels),
+            Row(..) => unimplemented!(), // TODO: calculation
         }
     }
 }

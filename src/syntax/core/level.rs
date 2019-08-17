@@ -95,6 +95,11 @@ impl LiftEx for Neutral {
                 let args = args?.into_iter().max();
                 Some(f.calc_level()?.max(args.unwrap_or_default()))
             }
+            Row(_, vs, ext) => {
+                let vs: Option<Vec<Level>> = vs.iter().map(|(_, x)| x.calc_level()).collect();
+                let vs = vs?.into_iter().max();
+                Some(ext.calc_level()?.max(vs.unwrap_or_default()))
+            }
         }
     }
 }
