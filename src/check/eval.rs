@@ -5,7 +5,7 @@ use crate::syntax::core::{LiftEx, Neutral, Val, ValInfo};
 
 /// Ensure `abs` is well-typed before invoking this,
 /// otherwise this function may panic or produce ill-typed core term.
-fn evaluate(mut tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
+fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
     use Abs::*;
     match abs {
         Type(info, level) => (Val::Type(level).into_info(info), tcs),

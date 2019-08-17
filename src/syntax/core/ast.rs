@@ -123,7 +123,7 @@ impl Val {
                 variants.append(&mut ext);
                 RowPoly(kind, variants).extend(Neut(*more))
             }
-            (RowPoly(kind, mut variants), Neut(otherwise)) => {
+            (RowPoly(kind, variants), Neut(otherwise)) => {
                 Self::neutral_row_type(kind, variants, otherwise)
             }
             (a, b) => panic!("Cannot extend `{}` by `{}`.", a, b),
@@ -156,13 +156,9 @@ impl RedEx for Val {
                 param_type.reduce_with_dbi_borrow(&arg, dbi),
                 body.reduce_with_dbi(arg, dbi + 1),
             ),
-            Val::RowPoly(kind, variants) => Val::RowPoly(
-                kind,
-                variants
-                    .into_iter()
-                    .map(|(name, ty)| (name, ty.reduce_with_dbi_borrow(&arg, dbi)))
-                    .collect(),
-            ),
+            Val::RowPoly(kind, variants) => {
+                Val::RowPoly(kind, reduce_variants_with_dbi(variants, dbi, &arg))
+            }
             Val::Cons(name, a) => Self::cons(name, a.reduce_with_dbi(arg, dbi)),
             Val::Type(n) => Val::Type(n),
         }
@@ -181,13 +177,9 @@ impl RedEx for Val {
                 param_type.reduce_with_dbi_borrow(arg, dbi),
                 body.reduce_with_dbi_borrow(arg, dbi + 1),
             ),
-            Val::RowPoly(kind, variants) => Val::RowPoly(
-                kind,
-                variants
-                    .into_iter()
-                    .map(|(name, ty)| (name, ty.reduce_with_dbi_borrow(arg, dbi)))
-                    .collect(),
-            ),
+            Val::RowPoly(kind, variants) => {
+                Val::RowPoly(kind, reduce_variants_with_dbi(variants, dbi, arg))
+            }
             Val::Cons(name, a) => Self::cons(name, a.reduce_with_dbi_borrow(arg, dbi)),
             Val::Type(n) => Val::Type(n),
         }
@@ -290,7 +282,11 @@ impl RedEx for Neutral {
             Fst(pair) => pair.reduce_with_dbi(arg, dbi).first(),
             Snd(pair) => pair.reduce_with_dbi(arg, dbi).second(),
             Lift(levels, neut) => neut.reduce_with_dbi(arg, dbi).lift(levels),
-            Row(..) => unimplemented!(), // TODO: calculation
+            Row(kind, variants, ext) => {
+                let variants = reduce_variants_with_dbi(variants, dbi, &arg);
+                let ext = ext.reduce_with_dbi(arg, dbi);
+                Val::RowPoly(kind, variants).extend(ext)
+            }
         }
     }
 
@@ -311,7 +307,11 @@ impl RedEx for Neutral {
             Fst(pair) => pair.reduce_with_dbi_borrow(arg, dbi).first(),
             Snd(pair) => pair.reduce_with_dbi_borrow(arg, dbi).second(),
             Lift(levels, neut) => neut.reduce_with_dbi_borrow(arg, dbi).lift(levels),
-            Row(..) => unimplemented!(), // TODO: calculation
+            Row(kind, variants, ext) => {
+                let variants = reduce_variants_with_dbi(variants, dbi, arg);
+                let ext = ext.reduce_with_dbi_borrow(&arg, dbi);
+                Val::RowPoly(kind, variants).extend(ext)
+            }
         }
     }
 }
@@ -570,4 +570,11 @@ impl Closure {
             .clone()
             .reduce_with_dbi_borrow(arg, Default::default())
     }
+}
+
+fn reduce_variants_with_dbi(variants: Variants, dbi: DBI, arg: &Val) -> Variants {
+    variants
+        .into_iter()
+        .map(|(name, ty)| (name, ty.reduce_with_dbi_borrow(&arg, dbi)))
+        .collect()
 }

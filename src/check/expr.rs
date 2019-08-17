@@ -197,7 +197,7 @@ $$
 $$
 Check if an expression is a valid type expression.
 */
-fn check_type(mut tcs: TCS, expr: &Abs) -> ValTCM {
+fn check_type(tcs: TCS, expr: &Abs) -> ValTCM {
     use Abs::*;
     let info = expr.syntax_info();
     match expr {
