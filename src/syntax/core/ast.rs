@@ -18,6 +18,7 @@ pub trait RedEx: Sized {
     fn reduce_with_dbi_borrow(self, arg: &Val, dbi: DBI) -> Val;
 }
 
+/// Reduction functions.
 impl Val {
     /**
     $$
@@ -30,7 +31,7 @@ impl Val {
     $$
     For evaluation during beta-reduction.
     */
-    pub fn apply(self, arg: Val) -> Val {
+    pub fn apply(self, arg: Val) -> Self {
         match self {
             Val::Lam(closure) => closure.instantiate(arg),
             Val::Neut(Neutral::App(f, mut a)) => {
@@ -38,11 +39,11 @@ impl Val {
                 Val::app(*f, a)
             }
             Val::Neut(n) => Val::app(n, vec![arg]),
-            e => panic!("Cannot apply on `{:?}`.", e),
+            e => panic!("Cannot apply on `{}`.", e),
         }
     }
 
-    pub fn apply_borrow(self, arg: &Val) -> Val {
+    pub fn apply_borrow(self, arg: &Val) -> Self {
         match self {
             Val::Lam(closure) => closure.instantiate_borrow(arg),
             Val::Neut(Neutral::App(f, mut a)) => {
@@ -50,7 +51,7 @@ impl Val {
                 Val::app(*f, a)
             }
             Val::Neut(n) => Val::app(n, vec![arg.clone()]),
-            e => panic!("Cannot apply on `{:?}`.", e),
+            e => panic!("Cannot apply on `{}`.", e),
         }
     }
 
@@ -65,11 +66,11 @@ impl Val {
     $$
     For evaluation during beta-reduction.
     */
-    pub fn first(self) -> Val {
+    pub fn first(self) -> Self {
         match self {
             Val::Pair(a, _) => *a,
             Val::Neut(n) => Val::fst(n),
-            e => panic!("Cannot project on `{:?}`.", e),
+            e => panic!("Cannot project on `{}`.", e),
         }
     }
 
@@ -88,7 +89,44 @@ impl Val {
         match self {
             Val::Pair(_, b) => *b,
             Val::Neut(n) => Val::snd(n),
-            e => panic!("Cannot project on `{:?}`.", e),
+            e => panic!("Cannot project on `{}`.", e),
+        }
+    }
+
+    pub fn extend(self, ext: Self) -> Self {
+        use Val::*;
+        use VarRec::*;
+        match (self, ext) {
+            (RowPoly(Record, mut fields), RowPoly(Record, mut ext)) => {
+                fields.append(&mut ext);
+                Self::record_type(fields)
+            }
+            (RowPoly(Record, mut fields), Neut(Neutral::Row(Record, mut ext, more))) => {
+                fields.append(&mut ext);
+                Self::record_type(fields).extend(Neut(*more))
+            }
+            (RowPoly(Variant, mut variants), RowPoly(Variant, mut ext)) => {
+                variants.append(&mut ext);
+                Self::variant_type(variants)
+            }
+            (RowPoly(Variant, mut variants), Neut(Neutral::Row(Variant, mut ext, more))) => {
+                variants.append(&mut ext);
+                Self::variant_type(variants).extend(Neut(*more))
+            }
+            (RowPoly(kind, mut variants), RowPoly(_, mut ext)) => {
+                eprintln!("Warning: incorrect row extension!");
+                variants.append(&mut ext);
+                RowPoly(kind, variants)
+            }
+            (RowPoly(kind, mut variants), Neut(Neutral::Row(_, mut ext, more))) => {
+                eprintln!("Warning: incorrect row extension!");
+                variants.append(&mut ext);
+                RowPoly(kind, variants).extend(Neut(*more))
+            }
+            (RowPoly(kind, mut variants), Neut(otherwise)) => {
+                Self::neutral_row_type(kind, variants, otherwise)
+            }
+            (a, b) => panic!("Cannot extend `{}` by `{}`.", a, b),
         }
     }
 
@@ -301,6 +339,7 @@ pub enum Val {
     Neut(Neutral),
 }
 
+/// Constructors and traversal functions.
 impl Val {
     pub fn is_type(&self) -> bool {
         use Val::*;
@@ -386,6 +425,18 @@ impl Val {
 
     pub fn record_type(fields: Variants) -> TVal {
         Val::RowPoly(VarRec::Record, fields)
+    }
+
+    pub fn neutral_row_type(kind: VarRec, variants: Variants, ext: Neutral) -> TVal {
+        Val::Neut(Neutral::Row(kind, variants, Box::new(ext)))
+    }
+
+    pub fn neutral_variant_type(variants: Variants, ext: Neutral) -> TVal {
+        Self::neutral_row_type(VarRec::Variant, variants, ext)
+    }
+
+    pub fn neutral_record_type(fields: Variants, ext: Neutral) -> TVal {
+        Self::neutral_row_type(VarRec::Record, fields, ext)
     }
 
     pub fn pi(param_type: TVal, body: TVal) -> TVal {
