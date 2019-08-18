@@ -205,47 +205,6 @@ fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -
 }
 
 /**
-Check if an expression is a valid type expression.
-
-TODO: replace with `check(expr, Type(Omega))`.
-*/
-fn check_type(tcs: TCS, expr: &Abs) -> ValTCM {
-    use Abs::*;
-    let info = expr.syntax_info();
-    match expr {
-        Type(_, level) => Ok((Val::Type(*level).into_info(info), tcs)),
-        Var(_, uid, dbi) if tcs.local_is_type(*dbi) => {
-            Ok((Val::generate(*uid, *dbi).into_info(info), tcs))
-        }
-        Lift(_, levels, expr) => {
-            let (expr, tcs) = tcs.check_type(&**expr).map_err(|e| e.wrap(info))?;
-            Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
-        }
-        Dt(_, kind, uid, param, ret) => {
-            let (param, mut tcs) = tcs.check_type(&**param).map_err(|e| e.wrap(info))?;
-            tcs.local_gamma.push(param.clone());
-            let axiom = Val::postulate(*uid).into_info(param.syntax_info());
-            tcs.local_env.push(axiom);
-            let (ret, mut tcs) = tcs.check_type(&**ret).map_err(|e| e.wrap(info))?;
-            tcs.pop_local();
-            let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(info);
-            Ok((dt, tcs))
-        }
-        RowPoly(_, kind, variants, ext) => {
-            check_row_polymorphic_type(tcs, info, Level::Omega, *kind, variants, ext, &[])
-        }
-        e => {
-            let (ty, tcs) = tcs.infer(e).map_err(|e| e.wrap(info))?;
-            if ty.ast.is_universe() {
-                Ok(tcs.evaluate(e.clone()))
-            } else {
-                Err(TCE::NotUniverseVal(info, ty.ast))
-            }
-        }
-    }
-}
-
-/**
 $$
 \newcommand{\xx}[0]{\texttt{x}}
 \newcommand{\istype}[0]{\vdash_\texttt{t}}
@@ -405,8 +364,11 @@ impl TCS {
         check_subtype(self, subtype, supertype)
     }
 
+    /**
+     * Check if an expression is a valid type expression.
+     */
     #[inline]
     pub fn check_type(self, expr: &Abs) -> ValTCM {
-        check_type(self, expr)
+        self.check(expr, &Val::Type(Level::Omega))
     }
 }
