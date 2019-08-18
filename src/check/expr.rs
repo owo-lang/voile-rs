@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 use crate::syntax::abs::Abs;
 use crate::syntax::common::PiSig::*;
-use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
-use crate::syntax::core::{Closure, LiftEx, TVal, Val};
+use crate::syntax::common::{Labelled, SyntaxInfo, ToSyntaxInfo};
+use crate::syntax::core::{Closure, LiftEx, TVal, Val, Variants};
 
 use super::eval::compile_cons;
 use super::monad::{ValTCM, TCE, TCM, TCS};
@@ -219,7 +219,29 @@ fn check_type(tcs: TCS, expr: &Abs) -> ValTCM {
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(info);
             Ok((dt, tcs))
         }
-        RowPoly(_, _, _, _) => unimplemented!(),
+        RowPoly(_, kind, variants, ext) => {
+            let mut tcs = tcs;
+            let mut out_variants = Variants::new();
+            for labelled in variants {
+                let (val, new_tcs) = tcs.check_type(&labelled.expr)?;
+                tcs = new_tcs;
+                let label = &labelled.label.text;
+                if out_variants.contains_key(label) {
+                    return Err(TCE::OverlappingVariant(val.info, label.clone()));
+                }
+                out_variants.insert(label.clone(), val.ast);
+            }
+            let row_poly = Val::RowPoly(*kind, out_variants);
+            match ext {
+                None => (row_poly, tcs),
+                Some(ext) => {
+                    let expected_kind =
+                        Val::RowKind(Default::default(), *kind, out_variants.keys().collect());
+                    let (ext, new_tcs) = tcs.check(&**ext, &expected_kind)?;
+                    (row_poly.extend(ext.ast), new_tcs)
+                }
+            }
+        }
         e => {
             let (ty, tcs) = tcs.infer(e).map_err(|e| e.wrap(info))?;
             if ty.ast.is_universe() {
