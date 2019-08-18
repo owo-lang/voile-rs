@@ -8,6 +8,8 @@ use crate::syntax::level::Level;
 /// Trying to lift this will result in omega, otherwise it should be computed as 0 level.
 type LevelCalcState = Option<Level>;
 
+pub const TYPE_OMEGA: Val = Val::Type(Level::Omega);
+
 /// Expression with universe level (which means they can be lifted).
 pub trait LiftEx: Sized {
     /// Lift the level of `self`.

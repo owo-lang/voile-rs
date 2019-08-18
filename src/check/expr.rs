@@ -359,12 +359,4 @@ impl TCS {
     pub fn check_subtype(self, subtype: &Val, supertype: &Val) -> TCM {
         check_subtype(self, subtype, supertype)
     }
-
-    /**
-     * Check if an expression is a valid type expression.
-     */
-    #[inline]
-    pub fn check_type(self, expr: &Abs) -> ValTCM {
-        self.check(expr, &Val::Type(Level::Omega))
-    }
 }
