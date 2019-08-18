@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use crate::syntax::abs::Abs;
 use crate::syntax::common::PiSig::*;
-use crate::syntax::common::{Labelled, SyntaxInfo, ToSyntaxInfo};
+use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
 use crate::syntax::core::{Closure, LiftEx, TVal, Val, Variants};
 
 use super::eval::compile_cons;
@@ -231,14 +231,16 @@ fn check_type(tcs: TCS, expr: &Abs) -> ValTCM {
                 }
                 out_variants.insert(label.clone(), val.ast);
             }
-            let row_poly = Val::RowPoly(*kind, out_variants);
             match ext {
-                None => (row_poly, tcs),
+                None => Ok((Val::RowPoly(*kind, out_variants).into_info(info), tcs)),
                 Some(ext) => {
-                    let expected_kind =
-                        Val::RowKind(Default::default(), *kind, out_variants.keys().collect());
+                    let known_labels = out_variants.keys().cloned().collect();
+                    let expected_kind = Val::RowKind(Default::default(), *kind, known_labels);
                     let (ext, new_tcs) = tcs.check(&**ext, &expected_kind)?;
-                    (row_poly.extend(ext.ast), new_tcs)
+                    let row_poly = Val::RowPoly(*kind, out_variants)
+                        .extend(ext.ast)
+                        .into_info(info);
+                    Ok((row_poly, new_tcs))
                 }
             }
         }
