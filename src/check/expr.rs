@@ -147,7 +147,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
         (expr, anything) => {
             let (inferred, tcs) = tcs.infer(expr)?;
             let tcs: TCS = tcs
-                .check_subtype(&inferred.ast, anything)
+                .subtype(&inferred.ast, anything)
                 .map_err(|e| e.wrap(inferred.info))?;
             Ok(tcs.evaluate(expr.clone()))
         }
@@ -322,11 +322,11 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
 }
 
 /// Check if `subtype` is a subtype of `supertype`.
-fn check_subtype(tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
+fn subtype(tcs: TCS, sub: &Val, sup: &Val) -> TCM {
     use Val::*;
-    match (subtype, supertype) {
-        (RowKind(sub_level, ..), Type(super_level)) | (Type(sub_level), Type(super_level))
-            if sub_level <= super_level =>
+    match (sub, sup) {
+        (RowKind(sub_level, ..), Type(sup_level)) | (Type(sub_level), Type(sup_level))
+            if sub_level <= sup_level =>
         {
             Ok(tcs)
         }
@@ -337,7 +337,7 @@ fn check_subtype(tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
             let a = clos_a.instantiate_cloned_borrow(&p);
             let b = clos_b.instantiate_cloned(p);
             // Return value covariance
-            tcs.check_subtype(&a, &b)
+            tcs.subtype(&a, &b)
         }
         (e, t) => tcs.unify(e, t),
     }
@@ -356,7 +356,7 @@ impl TCS {
     }
 
     #[inline]
-    pub fn check_subtype(self, subtype: &Val, supertype: &Val) -> TCM {
-        check_subtype(self, subtype, supertype)
+    pub fn subtype(self, sub: &Val, sup: &Val) -> TCM {
+        subtype(self, sub, sup)
     }
 }
