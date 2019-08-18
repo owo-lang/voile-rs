@@ -28,6 +28,7 @@ impl LiftEx for Val {
     fn lift(self, levels: u32) -> Val {
         match self {
             Val::Type(l) => Val::Type(l + levels),
+            Val::RowKind(l, k, ls) => Val::RowKind(l + levels, k, ls),
             Val::Lam(closure) => Val::Lam(closure.lift(levels)),
             Val::Dt(kind, param_type, closure) => Val::Dt(
                 kind,
@@ -49,7 +50,7 @@ impl LiftEx for Val {
 
     fn calc_level(&self) -> LevelCalcState {
         match self {
-            Val::Type(level) => Some(*level + 1),
+            Val::Type(level) | Val::RowKind(level, ..) => Some(*level + 1),
             Val::RowPoly(_, variants) => {
                 let mut maximum = Level::default();
                 for variant in variants.values() {

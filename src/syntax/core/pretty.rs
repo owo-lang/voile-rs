@@ -65,6 +65,23 @@ impl Display for Val {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             Val::Type(l) => write!(f, "set{}", l),
+            Val::RowKind(l, kind, labels) => {
+                match kind {
+                    VarRec::Variant => f.write_str("Sum"),
+                    VarRec::Record => f.write_str("Rec"),
+                }?;
+                write!(f, "{} {{", l)?;
+                let mut started = false;
+                for label in labels {
+                    if started {
+                        f.write_str(", ")?;
+                    } else {
+                        started = true;
+                    }
+                    f.write_str(label)?;
+                }
+                f.write_str("}")
+            }
             Val::Lam(clos) => write!(f, "(\\ {})", clos),
             Val::RowPoly(kind, variants) => {
                 match kind {

@@ -161,6 +161,7 @@ impl RedEx for Val {
             }
             Val::Cons(name, a) => Self::cons(name, a.reduce_with_dbi(arg, dbi)),
             Val::Type(n) => Val::Type(n),
+            Val::RowKind(l, k, ls) => Val::RowKind(l, k, ls),
         }
     }
 
@@ -182,6 +183,7 @@ impl RedEx for Val {
             }
             Val::Cons(name, a) => Self::cons(name, a.reduce_with_dbi_borrow(arg, dbi)),
             Val::Type(n) => Val::Type(n),
+            Val::RowKind(l, k, ls) => Val::RowKind(l, k, ls),
         }
     }
 }
@@ -331,6 +333,8 @@ pub enum Val {
     Dt(PiSig, Box<Self>, Closure),
     /// Row-polymorphic type literal.
     RowPoly(VarRec, Variants),
+    /// Row kind literals -- subtype of `Type`.
+    RowKind(Level, VarRec, Vec<String>),
     /// Constructor invocation.
     Cons(String, Box<Self>),
     /// Sigma instance.
@@ -344,7 +348,7 @@ impl Val {
     pub fn is_type(&self) -> bool {
         use Val::*;
         match self {
-            Type(..) | Dt(..) | RowPoly(..) => true,
+            Type(..) | Dt(..) | RowPoly(..) | RowKind(..) => true,
             // In case it's neutral, we use `is_universe` on its type.
             // In case it's a meta, we're supposed to solve it.
             Lam(..) | Cons(..) | Pair(..) | Neut(..) => false,
@@ -529,7 +533,7 @@ impl Val {
                 .try_fold_neutral(init, f)
                 .and_then(|r| param_ty.try_fold_neutral(r, f)),
             Val::Cons(_, a) => a.try_fold_neutral(init, f),
-            Val::Type(_) => Ok(init),
+            Val::Type(..) | Val::RowKind(..) => Ok(init),
         }
     }
 }
