@@ -28,6 +28,7 @@ pub enum TCE {
     // == Elaboration ==
     TypeNotInGamma(SyntaxInfo),
     OverlappingVariant(SyntaxInfo, String),
+    UnexpectedVariant(SyntaxInfo, String),
     MissingVariant(VarRec, String),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
@@ -95,11 +96,12 @@ impl Display for TCE {
             TCE::MissingVariant(VarRec::Record, field) => {
                 write!(f, "Expect field `{}`, but missing.", field)
             }
-            TCE::OverlappingVariant(id, variant) => write!(
-                f,
-                "Unexpected overlapping variant: `{}` at {}.",
-                variant, id
-            ),
+            TCE::OverlappingVariant(id, variant) => {
+                write!(f, "Duplicate variant: `{}` at {}.", variant, id)
+            }
+            TCE::UnexpectedVariant(id, variant) => {
+                write!(f, "Unexpected variant: `{}` at {}.", variant, id)
+            }
             TCE::NotUniverseVal(id, val) => write!(
                 f,
                 "Expected an universe expression, got: `{}` at {}.",

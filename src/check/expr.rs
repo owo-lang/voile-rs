@@ -1,9 +1,12 @@
 use std::collections::BTreeMap;
 
-use crate::syntax::abs::Abs;
+use VarRec::*;
+
+use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
-use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
+use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo, VarRec};
 use crate::syntax::core::{Closure, LiftEx, TVal, Val, Variants};
+use crate::syntax::level::Level;
 
 use super::eval::compile_cons;
 use super::monad::{ValTCM, TCE, TCM, TCS};
@@ -130,6 +133,15 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(*info);
             Ok((dt, tcs))
         }
+        (RowPoly(info, Record, variants, ext), Val::RowKind(l, Record, labels)) => {
+            check_row_polymorphic_type(tcs, *info, *l, Record, variants, ext, labels)
+        }
+        (RowPoly(info, Variant, variants, ext), Val::RowKind(l, Variant, labels)) => {
+            check_row_polymorphic_type(tcs, *info, *l, Variant, variants, ext, labels)
+        }
+        (RowPoly(info, kind, variants, ext), Val::Type(l)) => {
+            check_row_polymorphic_type(tcs, *info, *l, *kind, variants, ext, &[])
+        }
         (Lift(info, levels, expr), anything) => {
             let (expr, tcs) = tcs
                 .check(&**expr, &anything.clone().lift(0 - *levels))
@@ -146,6 +158,41 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     }
 }
 
+fn check_row_polymorphic_type(
+    mut tcs: TCS,
+    info: SyntaxInfo,
+    level: Level,
+    kind: VarRec,
+    variants: &[LabAbs],
+    ext: &Option<Box<Abs>>,
+    labels: &[String],
+) -> ValTCM {
+    let mut out_variants = Variants::new();
+    for labelled in variants {
+        let (val, new_tcs) = tcs.check(&labelled.expr, &Val::Type(level))?;
+        tcs = new_tcs;
+        let label = &labelled.label.text;
+        if out_variants.contains_key(label) {
+            return Err(TCE::OverlappingVariant(val.info, label.clone()));
+        } else if labels.contains(label) {
+            return Err(TCE::UnexpectedVariant(val.info, label.clone()));
+        }
+        out_variants.insert(label.clone(), val.ast);
+    }
+    match ext {
+        None => Ok((Val::RowPoly(kind, out_variants).into_info(info), tcs)),
+        Some(ext) => {
+            let known_labels = out_variants.keys().chain(labels.iter()).cloned().collect();
+            let expected_kind = Val::RowKind(Default::default(), kind, known_labels);
+            let (ext, new_tcs) = tcs.check(&**ext, &expected_kind)?;
+            let row_poly = Val::RowPoly(kind, out_variants)
+                .extend(ext.ast)
+                .into_info(info);
+            Ok((row_poly, new_tcs))
+        }
+    }
+}
+
 fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -> TCM<()> {
     if !param_ty.is_type() {
         Err(TCE::NotTypeVal(*info, param_ty.clone()))
@@ -158,44 +205,9 @@ fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -
 }
 
 /**
-$$
-\newcommand{\xx}[0]{\texttt{x}}
-\newcommand{\istype}[0]{\vdash_\texttt{t}}
-\newcommand{\Gistype}[0]{\Gamma \istype}
-\newcommand{\tyck}[0]{\vdash_\texttt{c}}
-\newcommand{\Gtyck}[0]{\Gamma \tyck}
-\newcommand{\infer}[0]{\vdash_\texttt{i}}
-\newcommand{\Ginfer}[0]{\Gamma \infer}
-\newcommand{\subtype}[0]{\vdash_{<:}}
-\newcommand{\Gsubtype}[0]{\Gamma \subtype}
-\newcommand{\ty}[0]{\textsf{Type}}
-\newcommand{\Sum}[0]{\texttt{Sum}\\ }
-\newcommand{\merge}[0]{\texttt{merge}}
-\newcommand{\eval}[0]{\texttt{eval}}
-\newcommand{\inst}[0]{\texttt{inst}}
-\newcommand{\first}[0]{\texttt{first}}
-\newcommand{\second}[0]{\texttt{second}}
-\newcommand{\ctor}[0]{\texttt{Cons}\\ }
-\newcommand{\app}[0]{\texttt{app}}
-\\cfrac{}{\\Gistype \\ty \\Rightarrow \\ty}
-\\quad
-\\cfrac{}{\\Gistype \\bot \\Rightarrow \\Sum ()}
-\\\\ \space \\\\ \space
-\\cfrac{\\Gistype a \\Rightarrow n \\quad
-        \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
-       {\\Gistype \\Sigma \\xx:a.b \\Rightarrow
-            \\Sigma n. \\lang m \\rang}
-\\\\ \space \\\\ \space
-\\cfrac{\\Gistype a \\Rightarrow n \\quad
-        \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
-       {\\Gistype \\Pi \\xx:a.b \\Rightarrow
-            \\Pi n. \\lang m \\rang}
-\\\\ \space \\\\ \space
-\\cfrac{\\Gistype a \\Rightarrow \\Sum S_1 \\quad
-        \\Gistype b \\Rightarrow \\Sum S_2}
-       {\\Gistype a+b \\Rightarrow \\Sum \\merge(S_1, S_2)}
-$$
 Check if an expression is a valid type expression.
+
+TODO: replace with `check(expr, Type(Omega))`.
 */
 fn check_type(tcs: TCS, expr: &Abs) -> ValTCM {
     use Abs::*;
@@ -220,29 +232,7 @@ fn check_type(tcs: TCS, expr: &Abs) -> ValTCM {
             Ok((dt, tcs))
         }
         RowPoly(_, kind, variants, ext) => {
-            let mut tcs = tcs;
-            let mut out_variants = Variants::new();
-            for labelled in variants {
-                let (val, new_tcs) = tcs.check_type(&labelled.expr)?;
-                tcs = new_tcs;
-                let label = &labelled.label.text;
-                if out_variants.contains_key(label) {
-                    return Err(TCE::OverlappingVariant(val.info, label.clone()));
-                }
-                out_variants.insert(label.clone(), val.ast);
-            }
-            match ext {
-                None => Ok((Val::RowPoly(*kind, out_variants).into_info(info), tcs)),
-                Some(ext) => {
-                    let known_labels = out_variants.keys().cloned().collect();
-                    let expected_kind = Val::RowKind(Default::default(), *kind, known_labels);
-                    let (ext, new_tcs) = tcs.check(&**ext, &expected_kind)?;
-                    let row_poly = Val::RowPoly(*kind, out_variants)
-                        .extend(ext.ast)
-                        .into_info(info);
-                    Ok((row_poly, new_tcs))
-                }
-            }
+            check_row_polymorphic_type(tcs, info, Level::Omega, *kind, variants, ext, &[])
         }
         e => {
             let (ty, tcs) = tcs.infer(e).map_err(|e| e.wrap(info))?;
@@ -380,7 +370,11 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
 fn check_subtype(tcs: TCS, subtype: &Val, supertype: &Val) -> TCM {
     use Val::*;
     match (subtype, supertype) {
-        (Type(sub_level), Type(super_level)) if sub_level <= super_level => Ok(tcs),
+        (RowKind(sub_level, ..), Type(super_level)) | (Type(sub_level), Type(super_level))
+            if sub_level <= super_level =>
+        {
+            Ok(tcs)
+        }
         (Dt(k0, input_a, clos_a), Dt(k1, input_b, clos_b)) if k0 == k1 => {
             // Parameter invariance
             let tcs = tcs.unify(input_a, input_b)?;
