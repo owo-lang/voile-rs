@@ -115,20 +115,16 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let cons = compile_cons(info.clone());
             Ok((cons, tcs))
         }
-        (Dt(info, kind, uid, param, ret), Val::Type(l)) => {
-            let (param, mut tcs) = tcs.check_type(&**param).map_err(|e| e.wrap(*info))?;
-            let param_level = param.ast.level();
-            if param_level >= *l {
-                return Err(TCE::LevelMismatch(*info, param_level - 1, *l));
-            }
+        (Dt(info, kind, uid, param, ret), Val::Type(..)) => {
+            let (param, mut tcs) = tcs
+                .check(&**param, expected_type)
+                .map_err(|e| e.wrap(*info))?;
             tcs.local_gamma.push(param.clone());
             let axiom = Val::postulate(*uid).into_info(param.syntax_info());
             tcs.local_env.push(axiom);
-            let (ret, mut tcs) = tcs.check_type(&**ret).map_err(|e| e.wrap(*info))?;
-            let ret_level = ret.ast.level();
-            if ret_level >= *l {
-                return Err(TCE::LevelMismatch(*info, ret_level - 1, *l));
-            }
+            let (ret, mut tcs) = tcs
+                .check(&**ret, expected_type)
+                .map_err(|e| e.wrap(*info))?;
             tcs.pop_local();
             let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(*info);
             Ok((dt, tcs))
