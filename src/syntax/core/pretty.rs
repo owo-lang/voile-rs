@@ -67,8 +67,8 @@ impl Display for Val {
             Val::Type(l) => write!(f, "set{}", l),
             Val::RowKind(l, kind, labels) => {
                 match kind {
-                    VarRec::Variant => f.write_str("Sum"),
-                    VarRec::Record => f.write_str("Rec"),
+                    VarRec::Variant => f.write_str("sum"),
+                    VarRec::Record => f.write_str("rec"),
                 }?;
                 write!(f, "{} {{", l)?;
                 let mut started = false;
