@@ -601,7 +601,10 @@ impl Closure {
         init: R,
         f: impl Fn(R, Neutral) -> Result<R, E> + Copy,
     ) -> Result<R, E> {
-        unimplemented!()
+        use Closure::*;
+        match self {
+            Plain(body) => body.try_fold_neutral(init, f),
+        }
     }
 
     /// Map all neutrals in this closure.
@@ -609,7 +612,10 @@ impl Closure {
         self,
         f: &mut impl FnMut(Neutral) -> Result<Val, R>,
     ) -> Result<Closure, R> {
-        unimplemented!()
+        use Closure::*;
+        match self {
+            Plain(body) => body.try_map_neutral(f).map(Self::plain),
+        }
     }
 }
 
