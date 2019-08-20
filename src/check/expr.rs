@@ -215,6 +215,41 @@ fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -
 
 /**
 Infer type of an abstract term, if it's well-typed.
+$$
+\newcommand{\tyck}[4]{#1 \vdash_\texttt{c} #2 : #3 \Rightarrow #4}
+\newcommand{\Gtyck}[3]{\tyck{\Gamma}{#1}{#2}{#3}}
+\newcommand{\eval}[1]{\llbracket #1 \rrbracket} % {\texttt{eval}(#1)}
+\newcommand{\infer}[3]{#1 \vdash_\texttt{i} #2 \Leftarrow #3}
+\newcommand{\Ginfer}[2]{\infer{\Gamma}{#1}{#2}}
+\newcommand{\subt}[0]{<:}
+\newcommand{\xx}[0]{\texttt{x}}
+\newcommand{\ty}[0]{\tau}
+\newcommand{\piTy}[1]{\Pi \langle #1 \rangle}
+\newcommand{\sigTy}[1]{\Sigma \langle #1 \rangle}
+\newcommand{\cA}[0]{\mathcal A}
+\newcommand{\cB}[0]{\mathcal B}
+\cfrac{
+  \Gtyck{A}{\ty}{\cA}\quad
+  \tyck{\Gamma, (\xx : \cA)}{B}{\ty}{\cB}
+}{
+  \Ginfer{\piTy{\xx : A . B}}{\ty} \quad
+  \Ginfer{\sigTy{\xx : A . B}}{\ty}
+} \quad
+\cfrac{}{\Ginfer{\ty}{\ty}}
+\\\\ \space \\\\
+\cfrac{
+  \Ginfer{a}{\sigTy{\xx : \cA . \cB}}
+}{
+  \Ginfer{a.1}{\cA} \quad
+  \Ginfer{a.2}{\cB[\xx := \eval{a.1}]}
+} \quad
+\cfrac{
+  \Ginfer{a}{\piTy{\xx : \cB . \cA}} \quad
+  \Gtyck{b}{\cB}{\beta}
+}{
+  \Ginfer{a\ b}{\cA [\xx := \eval{b}]}
+}
+$$
 */
 fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
     use Abs::*;
