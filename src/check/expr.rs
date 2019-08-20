@@ -10,6 +10,7 @@ use crate::syntax::level::Level;
 
 use super::eval::compile_cons;
 use super::monad::{ValTCM, TCE, TCM, TCS};
+use crate::check::unify_variants;
 
 /**
 $$
@@ -297,7 +298,6 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
-        RowPoly(_, _, _, _) => unimplemented!(),
         App(_, f, a) => match &**f {
             Cons(variant_info) => {
                 let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap(info))?;
@@ -325,10 +325,12 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
 fn subtype(tcs: TCS, sub: &Val, sup: &Val) -> TCM {
     use Val::*;
     match (sub, sup) {
-        (RowKind(sub_level, ..), Type(sup_level)) | (Type(sub_level), Type(sup_level))
-            if sub_level <= sup_level =>
-        {
-            Ok(tcs)
+        (RowKind(sub_l, ..), Type(sup_l)) | (Type(sub_l), Type(sup_l)) if sub_l <= sup_l => Ok(tcs),
+        (RowPoly(Record, sub_vs), RowPoly(Record, sup_vs)) => {
+            tcs.unify_variants(Record, sup_vs, sub_vs)
+        }
+        (RowPoly(Variant, sub_vs), RowPoly(Variant, sup_vs)) => {
+            tcs.unify_variants(Variant, sub_vs, sup_vs)
         }
         (Dt(k0, input_a, clos_a), Dt(k1, input_b, clos_b)) if k0 == k1 => {
             // Parameter invariance

@@ -1,5 +1,5 @@
-use crate::syntax::common::MI;
-use crate::syntax::core::{Closure, Neutral, Val};
+use crate::syntax::common::{VarRec, MI};
+use crate::syntax::core::{Closure, Neutral, Val, Variants};
 
 use super::monad::{MetaSolution, TCE, TCM, TCS};
 
@@ -18,6 +18,15 @@ fn solve_with(mut tcs: TCS, meta: MI, solution: Val) -> TCM {
     tcs.solve_meta(meta, anticipated_solution);
 
     Ok(tcs)
+}
+
+fn unify_variants(tcs: TCS, kind: VarRec, subset: &Variants, superset: &Variants) -> TCM {
+    subset.iter().try_fold(tcs, |tcs, (name, ty)| {
+        let counterpart = superset
+            .get(name)
+            .ok_or_else(|| TCE::MissingVariant(kind, name.clone()))?;
+        tcs.unify(ty, counterpart)
+    })
 }
 
 /**
@@ -47,12 +56,7 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
         (RowPoly(a_kind, a_variants), RowPoly(b_kind, b_variants))
             if a_kind == b_kind && a_variants.len() == b_variants.len() =>
         {
-            a_variants.iter().try_fold(tcs, |tcs, (name, ty)| {
-                let counterpart = b_variants
-                    .get(name)
-                    .ok_or_else(|| TCE::MissingVariant(*a_kind, name.clone()))?;
-                tcs.unify(ty, counterpart)
-            })
+            tcs.unify_variants(*a_kind, a_variants, b_variants)
         }
         (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => match &tcs.meta_solutions()[mi.0] {
             MetaSolution::Unsolved => solve_with(tcs, *mi, term.clone()),
@@ -101,5 +105,15 @@ impl TCS {
     #[inline]
     fn unify_closure(self, a: &Closure, b: &Closure) -> TCM {
         unify_closure(self, a, b)
+    }
+
+    #[inline]
+    pub(crate) fn unify_variants(
+        self,
+        kind: VarRec,
+        subset: &Variants,
+        superset: &Variants,
+    ) -> TCM {
+        unify_variants(self, kind, subset, superset)
     }
 }
