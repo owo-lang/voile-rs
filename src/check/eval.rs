@@ -1,7 +1,7 @@
 use crate::check::monad::{MetaSolution, TCS};
 use crate::syntax::abs::Abs;
 use crate::syntax::common::{Ident, DBI};
-use crate::syntax::core::{LiftEx, Neutral, Val, ValInfo};
+use crate::syntax::core::{LiftEx, Neutral, Val, ValInfo, Variants};
 
 /// Ensure `abs` is well-typed before invoking this,
 /// otherwise this function may panic or produce ill-typed core term.
@@ -55,7 +55,23 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             (expr.lift(levels).into_info(info), tcs)
         }
         Meta(ident, mi) => (Val::meta(mi).into_info(ident.info), tcs),
-        RowPoly(_, _, _, _) => unimplemented!(),
+        RowPoly(info, kind, variants, ext) => {
+            let mut out_variants = Variants::new();
+            let mut tcs = tcs;
+            for labelled in variants.into_iter() {
+                let (expr, new_tcs) = tcs.evaluate(labelled.expr);
+                tcs = new_tcs;
+                out_variants.insert(labelled.label.text, expr.ast);
+            }
+            let row_poly = Val::RowPoly(kind, out_variants);
+            match ext {
+                None => (row_poly.into_info(info), tcs),
+                Some(ext) => {
+                    let (ext, tcs) = tcs.evaluate(*ext);
+                    (row_poly.extend(ext.ast).into_info(info), tcs)
+                }
+            }
+        }
         RowKind(info, kind, labels) => {
             let labels = labels.into_iter().map(|l| l.text).collect();
             let expr = Val::RowKind(Default::default(), kind, labels);

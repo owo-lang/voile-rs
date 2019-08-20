@@ -6,6 +6,7 @@ use crate::syntax::core::{Neutral, Val, ValInfo, TYPE_OMEGA};
 
 use super::monad::{ValTCM, TCE, TCM, TCS};
 
+/// Checking a list of declarations.
 pub fn check_decls(tcs: TCS, decls: Vec<AbsDecl>) -> TCM {
     decls.into_iter().try_fold(tcs, check_decl)
 }
@@ -32,6 +33,52 @@ fn inline_metas(mut tcs: TCS, val: ValInfo) -> ValTCM {
     Ok((val.into_info(info), tcs))
 }
 
+/**
+Checking one declaration.
+$$
+\newcommand{\cdecl}[2]{#1 \vdash_\texttt{d} #2 \ \textbf{ok}}
+\newcommand{\Gcdecl}[1]{\cdecl{\Gamma}{#1}}
+\newcommand{\infer}[3]{#1 \vdash_\texttt{i} #2 \Leftarrow #3}
+\newcommand{\xx}[0]{\texttt{x}}
+\newcommand{\tyck}[4]{#1 \vdash_\texttt{c} #2 : #3 \Rightarrow #4}
+\newcommand{\Gtyck}[3]{\tyck{\Gamma}{#1}{#2}{#3}}
+\newcommand{\ty}[0]{\tau}
+\newcommand{\cA}[0]{\mathcal A}
+\newcommand{\cB}[0]{\mathcal B}
+\cfrac{}{\cdecl{}{}}
+\quad
+\cfrac{}{
+  \infer{
+    \Gamma, \textbf{val } \xx' : \cA
+  }{\xx'}{\cA}
+}
+\quad
+\cfrac{
+  \Gtyck{A}{\ty}{\cA} \quad
+  \cdecl{
+    \Gamma, \textbf{val } \xx' : \cA
+  }{D}
+}{
+  \Gcdecl{\textbf{val } \xx' : A; D}
+}
+\\\\ \space \\\\
+\cfrac{
+  \tyck{
+    \Gamma, \xx' : \cA
+  }{a}{\cA}{\alpha}
+  \quad
+  \cdecl{
+    \Gamma,
+    \textbf{val } \xx' : \cA,
+    \textbf{let } \xx' = \alpha
+  }{D}
+}{
+  \cdecl{
+    \Gamma, \textbf{val } \xx' : \cA
+  }{\textbf{let } \xx' = a; D}
+}
+$$
+*/
 fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
     debug_assert_eq!(tcs.gamma.len(), tcs.env.len());
     let tcs = match decl {

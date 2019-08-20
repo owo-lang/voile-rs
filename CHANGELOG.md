@@ -1,9 +1,10 @@
 # Change Log
 
-# 0.0.15
+# 0.1.0
 
 + Fix core language `is_type` judgement
 + Update mod rustdoc
++ Evaluation for `RowPoly`
 
 # 0.0.15
 
