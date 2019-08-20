@@ -86,11 +86,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let lam = Val::lam(lam_term.ast);
             Ok((lam.into_info(*full_info), tcs))
         }
-        (Cons(info), Val::Dt(Pi, param_ty, ret_ty)) => {
-            check_variant_or_cons(info.info, param_ty, ret_ty).map_err(|e| e.wrap(info.info))?;
-            let cons = compile_cons(info.clone());
-            Ok((cons, tcs))
-        }
+        (Cons(info), Val::Dt(Pi, _param_ty, ret_ty)) => Ok((compile_cons(info.clone()), tcs)),
         (Dt(info, kind, uid, param, ret), Val::Type(..)) => {
             let (param, mut tcs) = tcs
                 .check(&**param, expected_type)
@@ -199,17 +195,6 @@ fn check_row_polymorphic_type(
                 .into_info(info);
             Ok((row_poly, new_tcs))
         }
-    }
-}
-
-fn check_variant_or_cons(info: SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -> TCM<()> {
-    if !param_ty.is_type() {
-        Err(TCE::NotTypeVal(info, param_ty.clone()))
-    } else if !ret_ty.body.is_universe() {
-        let ret_ty = ret_ty.instantiate_cloned(Default::default());
-        Err(TCE::NotUniverseVal(info, ret_ty))
-    } else {
-        Ok(())
     }
 }
 
