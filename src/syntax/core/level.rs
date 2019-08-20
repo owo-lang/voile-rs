@@ -99,11 +99,17 @@ impl LiftEx for Neutral {
 
 impl LiftEx for Closure {
     fn lift(self, levels: u32) -> Self {
-        Self::new(self.body.lift(levels))
+        use Closure::*;
+        match self {
+            Plain(body) => Self::plain(body.lift(levels)),
+        }
     }
 
     fn calc_level(&self) -> LevelCalcState {
-        self.body.calc_level()
+        use Closure::*;
+        match self {
+            Plain(body) => body.calc_level(),
+        }
     }
 }
 

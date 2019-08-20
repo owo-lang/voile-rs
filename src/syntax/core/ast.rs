@@ -12,14 +12,14 @@ pub type Variants = BTreeMap<String, TVal>;
 pub type Fields = BTreeMap<String, Val>;
 
 /// Reducible expressions.
-pub trait RedEx: Sized {
+pub trait RedEx<T: Sized = Val>: Sized {
     /// This is primarily a private implementation-related API.
     /// Use at your own risk.
-    fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Val;
+    fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> T;
 
     /// When the argument is not likely to be used,
     /// prefer this over [`reduce_with_dbi`](reduce_with_dbi).
-    fn reduce_with_dbi_borrow(self, arg: &Val, dbi: DBI) -> Val;
+    fn reduce_with_dbi_borrow(self, arg: &Val, dbi: DBI) -> T;
 }
 
 /// Reduction functions.
@@ -154,11 +154,11 @@ impl RedEx for Val {
                 b.reduce_with_dbi(arg, dbi),
             ),
             Val::Neut(neutral_value) => neutral_value.reduce_with_dbi(arg, dbi),
-            Val::Lam(Closure { body }) => Val::closure_lam(body.reduce_with_dbi(arg, dbi + 1)),
-            Val::Dt(kind, param_type, Closure { body }) => Val::closure_dependent_type(
+            Val::Lam(closure) => Val::Lam(closure.reduce_with_dbi(arg, dbi + 1)),
+            Val::Dt(kind, param_type, closure) => Val::dependent_type(
                 kind,
                 param_type.reduce_with_dbi_borrow(&arg, dbi),
-                body.reduce_with_dbi(arg, dbi + 1),
+                closure.reduce_with_dbi(arg, dbi + 1),
             ),
             Val::RowPoly(kind, variants) => {
                 Val::RowPoly(kind, reduce_variants_with_dbi(variants, dbi, &arg))
@@ -177,13 +177,11 @@ impl RedEx for Val {
                 b.reduce_with_dbi_borrow(arg, dbi),
             ),
             Val::Neut(neutral_value) => neutral_value.reduce_with_dbi_borrow(arg, dbi),
-            Val::Lam(Closure { body }) => {
-                Val::closure_lam(body.reduce_with_dbi_borrow(arg, dbi + 1))
-            }
-            Val::Dt(kind, param_type, Closure { body }) => Val::closure_dependent_type(
+            Val::Lam(closure) => Val::Lam(closure.reduce_with_dbi_borrow(arg, dbi + 1)),
+            Val::Dt(kind, param_type, closure) => Val::dependent_type(
                 kind,
                 param_type.reduce_with_dbi_borrow(arg, dbi),
-                body.reduce_with_dbi_borrow(arg, dbi + 1),
+                closure.reduce_with_dbi_borrow(arg, dbi + 1),
             ),
             Val::RowPoly(kind, variants) => {
                 Val::RowPoly(kind, reduce_variants_with_dbi(variants, dbi, arg))
@@ -393,7 +391,7 @@ impl Val {
     }
 
     pub fn closure_lam(body: Self) -> Self {
-        Val::Lam(Closure::new(body))
+        Val::Lam(Closure::plain(body))
     }
 
     pub fn glob(index: GI) -> Self {
@@ -426,7 +424,7 @@ impl Val {
     }
 
     pub fn closure_dependent_type(kind: PiSig, param_type: TVal, body: TVal) -> TVal {
-        Self::dependent_type(kind, param_type, Closure::new(body))
+        Self::dependent_type(kind, param_type, Closure::plain(body))
     }
 
     pub fn dependent_type(kind: PiSig, param_type: TVal, closure: Closure) -> TVal {
@@ -492,11 +490,11 @@ impl Val {
                 .map(|(k, v)| v.try_map_neutral(f).map(|v| (k, v)))
                 .collect::<Result<_, _>>()
                 .map(Val::Rec),
-            Val::Lam(Closure { body }) => body.try_map_neutral(f).map(Self::closure_lam),
-            Val::Dt(kind, param_type, Closure { body }) => Ok(Self::closure_dependent_type(
+            Val::Lam(closure) => closure.try_map_neutral(f).map(Self::Lam),
+            Val::Dt(kind, param_type, closure) => Ok(Self::dependent_type(
                 kind,
                 param_type.try_map_neutral(f)?,
-                body.try_map_neutral(f)?,
+                closure.try_map_neutral(f)?,
             )),
             Val::Cons(name, a) => Ok(Self::cons(name, a.try_map_neutral(f)?)),
             e => Ok(e),
@@ -546,8 +544,8 @@ impl Val {
             Val::Rec(fields) => fields
                 .into_iter()
                 .try_fold(init, |a, (_, v)| v.try_fold_neutral(a, f)),
-            Val::Lam(Closure { body }) => body.try_fold_neutral(init, f),
-            Val::Dt(_, param_ty, Closure { body }) => body
+            Val::Lam(closure) => closure.try_fold_neutral(init, f),
+            Val::Dt(_, param_ty, closure) => closure
                 .try_fold_neutral(init, f)
                 .and_then(|r| param_ty.try_fold_neutral(r, f)),
             Val::Cons(_, a) => a.try_fold_neutral(init, f),
@@ -564,33 +562,70 @@ impl Default for Val {
 
 /// A closure with parameter type explicitly specified.
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Closure {
-    pub body: Box<Val>,
+pub enum Closure {
+    Plain(Box<Val>),
 }
 
 impl Closure {
-    pub fn new(body: Val) -> Self {
-        Self {
-            body: Box::new(body),
-        }
+    pub fn plain(body: Val) -> Self {
+        Closure::Plain(Box::new(body))
     }
 
     pub fn instantiate(self, arg: Val) -> Val {
-        self.body.reduce_with_dbi(arg, Default::default())
+        match self {
+            Closure::Plain(body) => body.reduce_with_dbi(arg, Default::default()),
+        }
     }
 
     pub fn instantiate_cloned(&self, arg: Val) -> Val {
-        self.body.clone().reduce_with_dbi(arg, Default::default())
+        match self {
+            Closure::Plain(body) => body.clone().reduce_with_dbi(arg, Default::default()),
+        }
     }
 
     pub fn instantiate_borrow(self, arg: &Val) -> Val {
-        self.body.reduce_with_dbi_borrow(arg, Default::default())
+        match self {
+            Closure::Plain(body) => body.reduce_with_dbi_borrow(arg, Default::default()),
+        }
     }
 
     pub fn instantiate_cloned_borrow(&self, arg: &Val) -> Val {
-        self.body
-            .clone()
-            .reduce_with_dbi_borrow(arg, Default::default())
+        match self {
+            Closure::Plain(body) => body.clone().reduce_with_dbi_borrow(arg, Default::default()),
+        }
+    }
+
+    /// Traverse all neutrals this closure.
+    pub fn try_fold_neutral<E, R>(
+        self,
+        init: R,
+        f: impl Fn(R, Neutral) -> Result<R, E> + Copy,
+    ) -> Result<R, E> {
+        unimplemented!()
+    }
+
+    /// Map all neutrals in this closure.
+    pub fn try_map_neutral<R>(
+        self,
+        f: &mut impl FnMut(Neutral) -> Result<Val, R>,
+    ) -> Result<Closure, R> {
+        unimplemented!()
+    }
+}
+
+impl RedEx<Closure> for Closure {
+    fn reduce_with_dbi(self, arg: Val, dbi: DBI) -> Self {
+        use Closure::*;
+        match self {
+            Plain(body) => Self::plain(body.reduce_with_dbi(arg, dbi)),
+        }
+    }
+
+    fn reduce_with_dbi_borrow(self, arg: &Val, dbi: DBI) -> Self {
+        use Closure::*;
+        match self {
+            Plain(body) => Self::plain(body.reduce_with_dbi_borrow(arg, dbi)),
+        }
     }
 }
 

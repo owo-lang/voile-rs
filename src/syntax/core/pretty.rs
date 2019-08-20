@@ -51,7 +51,10 @@ impl Display for Axiom {
 
 impl Display for Closure {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        self.body.fmt(f)
+        use Closure::*;
+        match self {
+            Plain(body) => body.fmt(f),
+        }
     }
 }
 
