@@ -16,7 +16,7 @@ Phrasing:
 */
 
 /*!
-Voile is a dependently-typed programming language evolved from [minitt].
+Voile is a dependently-typed row-polymorphic programming language.
 
 # Design
 
@@ -26,18 +26,6 @@ The focus of Voile is *extensible algebraic data types* on top of
 *dependent types*.
 It can solve the expression problem without using any design patterns (like
 visitor or object-algebra in Java, or finally-tagless or DTALC in Haskell).
-
-We're pretty much inspired by the coexistence of guarded recursion, coinductive
-data types, sized types and inductive types in [Agda],
-which is nice to have all of them but they do not work very well
-as we can see in a discussion [here][agda-bad-bad]
-about guarded recursion checker or in [a GitHub issue][agda-bad] about the
-incompatibility between size and guarded recursion.
-We can observe that sums, records, and (dependent) pattern matching in Agda only
-work well when being top-level bindings.
-
- [agda-bad-bad]: https://github.com/agda/cubical/pull/57#discussion_r253974409
- [agda-bad]: https://github.com/agda/agda/issues/1209
 
 ## Features
 
@@ -58,10 +46,26 @@ destruction of "records" can be done locally as an expression, without
 the need of declaring a record type globally, like:
 
 $$
-\newcommand{\Bool}[0]{(\texttt{True}\mid\texttt{False})}
+\newcommand{\Unit}[0]{\texttt{Rec} \\{ \\}}
+\newcommand{\Bool}[0]{\texttt{Sum} \\{ \texttt{true}: \Unit \mid \texttt{false}: \Unit \\}}
 \begin{alignedat}{2}
+&\texttt{not}&&:\Bool \\\\ \space
+& && \rarr \Bool \\\\ \space
+&\texttt{ifThenElse}&&:\forall A: \Bool \rarr A \rarr A \rarr A
+\end{alignedat}
+$$
+
+However, we can still extract the types as global definitions
+for readability:
+
+$$
+\newcommand{\Unit}[0]{\texttt{Unit}}
+\newcommand{\Bool}[0]{\texttt{Bool}}
+\begin{alignedat}{2}
+&\Unit&&=\texttt{Rec} \\{ \\} \\\\ \space
+&\Bool&&=\texttt{Sum} \\{ \texttt{true}: \Unit \mid \texttt{false}: \Unit \\} \\\\ \space
 &\texttt{not}&&:\Bool \rarr \Bool \\\\ \space
-&\texttt{ifThenElse}&&:\forall A. \Bool \rarr A \rarr A \rarr A
+&\texttt{ifThenElse}&&:\forall A: \Bool \rarr A \rarr A \rarr A
 \end{alignedat}
 $$
 
@@ -70,37 +74,42 @@ records (in other words, [row-polymorphism][row-poly]), like:
 
 $$
 \newcommand{\xx}[0]{\texttt{X}}
-\newcommand{\T}[0]{\lBrace\xx:A, ...=r\rBrace}
+\newcommand{\T}[0]{\texttt{Rec} \\{\xx:A, ...=r\\}}
 \begin{alignedat}{2}
-&\texttt{getX}&&:\forall A. \T \rarr A \\\\ \space
+&\texttt{getX}&&:\forall A: \T \rarr A \\\\ \space
 &\texttt{getX}&&=\lambda s. (s.\xx) \\\\ \space
-&\texttt{setX}&&:\forall A. \T \rarr A \rarr \T \\\\ \space
-&\texttt{setX}&&= [\textnormal{syntax undecided yet}]
+&\texttt{setX}&&:\forall A: \T \rarr A \rarr \T \\\\ \space
+&\texttt{setX}&&= [\text{syntax undecided yet}]
 \end{alignedat}
 $$
 
 Existing row-polymorphism implementation divides into two groups
 according to how they support such generalization,
-either by making "record type"/"record value" first-class expressions,
-or by introducing a standalone "row" (the type of $r$ above) type.
+either by qualifying records/variants with constraints,
+or by introducing a standalone "row" (the type of $r$ above) kind
+and put all the magic into the new kind.
 
 The study on extensible records has a long history,
-but there isn't much research and implementations on extensible sums
-and the combination of bidirectional type-checking and row-polymorphism yet.
+but there isn't much research and implementations on the
+combination of bidirectional type-checking and row-polymorphism yet.
 <br/>
 Currently, I can only find one programming language, [MLPolyR]
 (there's a [language spec][spec], a paper [first-class cases][fc-c],
 a PhD thesis [type-safe extensible programming][tse] and an
-[IntelliJ plugin][ij-dtlc]), whose pattern matching is first-class
+[IntelliJ plugin][ij-dtlc]), whose case-split is first class
 (in the papers it's called "first-class cases").
 
-First-class pattern matching is useful because it solves the expression
-for free, which means that library authors using such languages
-can split their library features into several sub-libraries
+Row polymorphism is useful because it
+solves the expression problem at language level,
+which means that library authors
+can split the library features into several sub-libraries
 -- one core library with many extensions. Library users can
 combine the core with extensions they want like a Jigsaw
 and exclude everything else (to avoid unwanted dependencies) or create their
 own extensions without touching the original codebase.
+
+Extensible variant type is also useful
+for simulating exception-handling.
 
  [rec-calc]: https://dl.acm.org/citation.cfm?id=218572
  [ext-rec]: https://wiki.haskell.org/Extensible_record
@@ -111,111 +120,17 @@ own extensions without touching the original codebase.
  [spec]: https://people.cs.uchicago.edu/~blume/classes/spr2005/cmsc22620/docs/langspec.pdf
  [ij-dtlc]: https://github.com/owo-lang/intellij-dtlc
 
-### Exceptions (undecided yet)
-
-MLPolyR exploits first-class sums in error-handling -- exceptions
-are treated as first-class sums while `try`-`catch` clauses are pattern
-matching on them ("consumes" a variant in a sum).
-Putting exceptions into function signatures
-looks like Java's `checked exceptions`, but with full type-inference.
-In this way, we can have cross-control-flow exceptions (instead of monadic)
-safely, because it's easy to ensure that an expression is exception-free
-simply by looking at its type.
-
-We can denote function from $A$ to $B$ that may throw exception $E$ like this:
-
-$$
-A \xrightarrow{E} B
-$$
-
-A higher-order function taking an exception-throwing function and handles one
-exception will have signature like this (convert langauge-level exceptions to
-monadic exceptions):
-
-$$
-(A \xrightarrow{E \mid r} B) \rarr (E \rarr B) \rarr (A \xrightarrow{r} B)
-$$
-
-However, without the help of dependent types, there can be false positives
-such as conditionally-thrown exceptions -- consider a function `f` like this
-(assume $e : E$):
-
-```mlpolyr
-fun f a = if a then throw e else 0
-```
-
-Invocation `f false` is not going to raise any exception, but the compiler
-disagrees because of the type of `f` inferred
-(something like $\mathbb{B} \xrightarrow{E} \mathbb{Z}$)
-is irrelevant to the argument applied.
-In the industry of dependent types, there isn't much development on
-exceptions. We might have a try here.
-
-### Induction and Coinduction
-
-According to elementary-school discrete math, induction has something
-to do with recursion.
-However, recursion on sum types is a huge problem against the design of
-first-class sum types.
-
-In the cliché programming languages with non-first-class sums (where the
-sum types need to be declared globally before usage), type-checking against
-recursive sums can be easily supported because the types are known to the
-type-checker -- there's no need of reduction on an already-resolved sum type.
-Once a term is known to be some sum type, it becomes a canonical value.
-
-For Voile, arbitrary expressions can appear inside of a sum type term,
-which means reduction is still needed before checking some other terms against
-this sum-type-term.
-If there's recursion on a sum-type-term, like the natural number definition:
-
-$$
-\mathbb{N}=\texttt{Zero} \mid \texttt{Suc}\ \mathbb{N}
-$$
-
-The type-checker will infinitely loop on its reduction.
-
-The above definition will actually be rejected by the termination checker,
-but recursion on sum-types *have* to be supported because we have been using
-it for a long time -- we shouldn't sacrifice this fundamental language feature.
-
-We choose to annotate types with the so-called sized types
-(present in [MiniAgda]) to inform the compiler about how data size are changed
-in a function.
-This will also help recursive type definitions, because it acts as an
-argument to the recursive call in the type definition!
-
-$$
-\mathbb{N}^{(\texttt{s}\ i)}=\texttt{Zero} \mid \texttt{Suc}\ \mathbb{N}^i
-$$
-
-This function now perfectly terminates.
-We may also write it in a more inductive way:
-
-$$
-\begin{alignedat}{2}
-&\mathbb{N}^0&&=\texttt{Zero}\\\\ \space
-&\mathbb{N}^{(\texttt{s}\ i)}&&=\texttt{Suc}\ \mathbb{N}^i
-\end{alignedat}
-$$
-
-Depends on how sized types are designed in Voile.
-
 # Implementation
 
-Voile's implementation is inspired from [Agda], [mlang], [MiniAgda] and its
+Voile's implementation is inspired from [Agda], [mlang] and its
 prototype, [minitt].
-
-[MiniAgda] supports induction, coinduction with sized types.
-
-<p style="color: yellowgreen;">
-TODO Something needs to be written here.
-</span>
+The language design has been influenced by the [Trex] Haskell extension.
 
  [Agda]: http://www.cse.chalmers.se/~ulfn/papers/thesis.pdf
  [MiniAgda]: http://www.cse.chalmers.se/~abela/miniagda
  [mlang]: https://github.com/molikto/mlang
  [minitt]: https://lib.rs/crates/minitt
+ [Trex]: https://www.microsoft.com/en-us/research/publication/lightweight-extensible-records-for-haskell
 
 <br/>
 <span>
