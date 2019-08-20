@@ -101,13 +101,9 @@ fn declaration(rules: Tok) -> Decl {
     };
     let mut inner: Tik = the_rule.into_inner();
     let name = next_ident(&mut inner);
-    let expr = next_rule!(inner, expr);
+    let body = next_rule!(inner, expr);
     end_of_rule(&mut inner);
-    Decl {
-        kind,
-        name,
-        body: expr,
-    }
+    Decl { kind, name, body }
 }
 
 expr_parser!(dollar_expr, comma_expr, app);

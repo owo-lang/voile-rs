@@ -76,11 +76,16 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     use Abs::*;
     match (expr, expected_type) {
         (Type(info, lower), Val::Type(upper)) => {
-            if *upper > *lower {
+            if upper > lower {
                 Ok((Val::Type(*lower).into_info(*info), tcs))
             } else {
                 Err(TCE::LevelMismatch(expr.syntax_info(), *lower + 1, *upper))
             }
+        }
+        (RowKind(info, kind, labels), Val::Type(upper)) if *upper > From::from(0u32) => {
+            let labels = labels.iter().map(|l| &l.text).cloned().collect();
+            let expr = Val::RowKind(Default::default(), *kind, labels);
+            Ok((expr.into_info(*info), tcs))
         }
         (Meta(ident, mi), _) => Ok((Val::meta(*mi).into_info(ident.info), tcs)),
         (Pair(info, fst, snd), Val::Dt(Sigma, param_ty, closure)) => {
@@ -252,6 +257,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
     let info = value.syntax_info();
     match value {
         Type(_, level) => Ok((Val::Type(*level + 1).into_info(info), tcs)),
+        RowKind(..) => Ok((Val::Type(From::from(1u32)).into_info(info), tcs)),
         Var(_, _, dbi) => {
             let local = tcs.local_type(*dbi).ast.clone().attach_dbi(*dbi);
             Ok((local.into_info(info), tcs))
