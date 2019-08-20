@@ -17,7 +17,22 @@ $$
 \newcommand{\recordR}[1]{\mathbb{Rec}\\  #1}
 \newcommand{\cA}[0]{\mathcal A}
 \newcommand{\cB}[0]{\mathcal B}
+\newcommand{\labels}[1]{\texttt{labels}(#1)}
+\newcommand{\fields}[1]{\texttt{fields}(#1)}
+\newcommand{\tyLab}[0]{\bar \gamma}
+\newcommand{\labVal}[0]{\bar \delta}
+\newcommand{\ctyLab}[0]{\gamma}
+\newcommand{\clabVal}[0]{\delta}
+\newcommand{\caseTr}[0]{\text{ct}}
+\newcommand{\recordext}[2]{\record{#1 \mid #2}}
+\newcommand{\recExt}[1]{\mid #1}
+\newcommand{\variantextS}[2]{\variant{#1, \ldots = #2}}
+\newcommand{\recordextS}[2]{\record{#1, \ldots = #2}}
+\newcommand{\variantext}[2]{\variant{#1 \mid #2}}
 \begin{alignedat}{2}
+& \labels{\emptyset} &&= \emptyset \\\\
+& \labels{n : a, \tyLab} &&= n : \eval{a}, \labels{\tyLab} \\\\
+& && \\\\
 & \eval{a, b} &&= \eval{a}, \eval{b} \\\\
 & \eval{a.1} &&= \left\\{\begin{matrix}
   [k.1] & \text{if} & \eval{a} = [k] \\\\
@@ -35,6 +50,22 @@ $$
 \end{matrix}\right\\} \\\\
 & \eval{\piTy{\xx : a.b}} &&= \Pi\\ \eval{a}\\ \langle \xx . \eval{b} \rangle \\\\
 & \eval{\sigTy{\xx : a.b}} &&= \Sigma\\ \eval{a}\\ \langle \xx . \eval{b} \rangle \\\\
+& \eval{\variantR{ns}} &&= \variantR{ns} \\\\
+& \eval{\recordR{ns}} &&= \recordR{ns} \\\\
+& \eval{\variant{\tyLab}} &&= \variant{\labels{\tyLab}} \\\\
+& \eval{\record{\tyLab}} &&= \record{\labels{\tyLab}} \\\\
+& \eval{\variantextS{\tyLab_0}{a}} &&=
+\left\\{\begin{matrix}
+  [\variantext{\labels{\tyLab_0}}{k}] & \text{if} & \eval{a} = [k] \\\\
+  \variant{\labels{\tyLab\_0} \cup \ctyLab\_1} & \text{if} & \eval{a} = \variant{\ctyLab_1} \\\\
+  [\variantext{\labels{\tyLab\_0} \cup \ctyLab\_1}{k}] & \text{if} & \eval{a} = [\variantext{\ctyLab_1}{k}] \\\\
+\end{matrix}\right\\} \\\\
+& \eval{\recordextS{\tyLab_0}{a}} &&=
+\left\\{\begin{matrix}
+  [\recordext{\labels{\tyLab_0}}{k}] & \text{if} & \eval{a} = [k] \\\\
+  \record{\labels{\tyLab\_0} \cup \ctyLab\_1} & \text{if} & \eval{a} = \record{\ctyLab_1} \\\\
+  [\recordext{\labels{\tyLab\_0} \cup \ctyLab\_1}{k}] & \text{if} & \eval{a} = [\recordext{\ctyLab_1}{k}] \\\\
+\end{matrix}\right\\} \\\\
 & \eval{\ty} &&= \ty
 \end{alignedat}
 $$
