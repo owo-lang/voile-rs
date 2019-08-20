@@ -163,6 +163,7 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
     (val, tcs)
 }
 
+/// Evaluate a single constructor as a lambda.
 pub fn compile_cons(info: Ident) -> ValInfo {
     let mut text = info.text;
     text.remove(0);

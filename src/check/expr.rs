@@ -12,65 +12,7 @@ use super::eval::compile_cons;
 use super::monad::{ValTCM, TCE, TCM, TCS};
 
 /**
-$$
-\newcommand{\xx}[0]{\texttt{x}}
-\newcommand{\istype}[0]{\vdash_\texttt{t}}
-\newcommand{\Gistype}[0]{\Gamma \istype}
-\newcommand{\tyck}[0]{\vdash_\texttt{c}}
-\newcommand{\Gtyck}[0]{\Gamma \tyck}
-\newcommand{\infer}[0]{\vdash_\texttt{i}}
-\newcommand{\Ginfer}[0]{\Gamma \infer}
-\newcommand{\subtype}[0]{\vdash_{<:}}
-\newcommand{\Gsubtype}[0]{\Gamma \subtype}
-\newcommand{\ty}[0]{\textsf{Type}}
-\newcommand{\Sum}[0]{\texttt{Sum}\\ }
-\newcommand{\merge}[0]{\texttt{merge}}
-\newcommand{\eval}[0]{\texttt{eval}}
-\newcommand{\inst}[0]{\texttt{inst}}
-\newcommand{\first}[0]{\texttt{first}}
-\newcommand{\second}[0]{\texttt{second}}
-\newcommand{\ctor}[0]{\texttt{Cons}\\ }
-\newcommand{\app}[0]{\texttt{app}}
-\\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
-        \\Gamma,n:o \\tyck b:\\inst(C, n) \\Rightarrow m}
-       {\\Gtyck a, b : \\Sigma\\ C \\Rightarrow n, m}
-\\\\ \space \\\\ \space
-\\cfrac{\\Gamma,[\\xx]:o \\tyck a:\\app(n, [\\xx])}
-       {\\Gtyck \\lambda \\xx.a :\\Pi o. \\lang n \\rang
-            \\Rightarrow \\lambda \\lang n \\rang}
-\\\\ \space \\\\ \space
-\\cfrac{\\Gtyck a:o \\Rightarrow n \\quad
-        \\Gistype c \\Rightarrow m}
-       {\\Gtyck a:o+m \\Rightarrow n}
-\\\\ \space \\\\ \space
-\\cfrac{}{\\Gtyck \`\\ctor:\\Pi o. \\lang n \\rang
-           \\Rightarrow \\lambda \\lang n \\rang}
-\\\\ \space \\\\ \space
-\\cfrac{\\Gistype a \\Rightarrow n \\quad
-        \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
-       {\\Gtyck (\\Sigma \\xx:a.b):\\ty \\Rightarrow
-            \\Sigma n. \\lang m \\rang}
-\\\\ \space \\\\ \space
-\\cfrac{\\Gistype a \\Rightarrow n \\quad
-        \\Gamma, [\\xx]:n \\istype b \\Rightarrow m}
-       {\\Gtyck (\\Pi \\xx:a.b):\\ty \\Rightarrow
-            \\Pi n. \\lang m \\rang}
-\\\\ \space \\\\ \space
-\\cfrac{\\Ginfer a \\Rightarrow n \\quad
-        \\Gsubtype n <: m}
-       {\\Gtyck a:m \\Rightarrow \\eval(a)}
-$$
 Abstract Term -> Core Term under an expected type.
-
-Some additional operations:
-
-$$
-\\newcommand{\\merge}[0]{\\texttt{merge}}
-\\begin{alignedat}{1}
-\\merge((), S) &= S \\\\
-\\merge((\`L\\ a, S\_1), S\_2) &= \\merge(S\_1, (\`L a, S\_2))
-\\end{alignedat}
-$$
 */
 fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     use Abs::*;
@@ -206,50 +148,6 @@ fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -
 }
 
 /**
-$$
-\newcommand{\xx}[0]{\texttt{x}}
-\newcommand{\istype}[0]{\vdash_\texttt{t}}
-\newcommand{\Gistype}[0]{\Gamma \istype}
-\newcommand{\tyck}[0]{\vdash_\texttt{c}}
-\newcommand{\Gtyck}[0]{\Gamma \tyck}
-\newcommand{\infer}[0]{\vdash_\texttt{i}}
-\newcommand{\Ginfer}[0]{\Gamma \infer}
-\newcommand{\subtype}[0]{\vdash_{<:}}
-\newcommand{\Gsubtype}[0]{\Gamma \subtype}
-\newcommand{\ty}[0]{\textsf{Type}}
-\newcommand{\Sum}[0]{\texttt{Sum}\\ }
-\newcommand{\merge}[0]{\texttt{merge}}
-\newcommand{\eval}[0]{\texttt{eval}}
-\newcommand{\inst}[0]{\texttt{inst}}
-\newcommand{\first}[0]{\texttt{first}}
-\newcommand{\second}[0]{\texttt{second}}
-\newcommand{\ctor}[0]{\texttt{Cons}\\ }
-\newcommand{\app}[0]{\texttt{app}}
-\\cfrac{\\Gamma(\\xx) = o}{\\Ginfer \\xx \\Rightarrow o}
-\\quad
-\\cfrac{}{\\Ginfer \\ty \\Rightarrow \\ty}
-\\\\ \space \\\\ \space
-\\cfrac{\\Ginfer a \\Rightarrow \\Sigma n. \\lang m \\rang}
-       {\\Ginfer a\\ .1 \\Rightarrow n}
-\\\\ \space \\\\ \space
-\\cfrac{\\Ginfer a \\Rightarrow n \\quad \\Ginfer b \\Rightarrow m}
-       {\\Ginfer a,b \\Rightarrow \\Sigma n. \\lang m \\rang}
-\\\\ \space \\\\ \space
-\\cfrac{\\Gistype a \\Rightarrow o}{\\Ginfer \`\\ctor a \\Rightarrow \\ty}
-\\\\ \space \\\\ \space
-\\cfrac{\\Ginfer a \\Rightarrow o}{\\Ginfer \\ctor a \\Rightarrow \\sum (\`\\ctor o, ())}
-\\\\ \space \\\\ \space
-\\cfrac{\\Ginfer a \\Rightarrow \\Pi o. \\lang n \\rang \\quad
-        \\Gtyck b:o \\Rightarrow m}
-       {\\Ginfer a \\ b \\Rightarrow \\inst(n, m)}
-\\\\ \space \\\\ \space
-\\cfrac{\\Gistype a \\Rightarrow \\Sum S_1 \\quad
-        \\Gistype b \\Rightarrow \\Sum S_2}
-       {\\Ginfer a+b \\Rightarrow \\ty}
-\\\\ \space \\\\ \space
-\\cfrac{\\Ginfer a \\Rightarrow \\Sigma n. \\lang m \\rang}
-       {\\Ginfer a\\ .2 \\Rightarrow \\inst(m, \\first(a))}
-$$
 Infer type of a value.
 */
 fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
@@ -326,7 +224,43 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
     }
 }
 
-/// Check if `subtype` is a subtype of `supertype`.
+/**
+Check if `subtype` is a subtype of `supertype`.
+$$
+\newcommand{\Gvdash}[0]{\Gamma \vdash}
+\newcommand{\subt}[0]{<:}
+\newcommand{\xx}[0]{\texttt{x}}
+\newcommand{\ty}[0]{\tau}
+\newcommand{\piTy}[1]{\Pi \langle #1 \rangle}
+\newcommand{\sigTy}[1]{\Sigma \langle #1 \rangle}
+\newcommand{\variant}[1]{\textbf{Sum}\\ \\{ #1 \\}}
+\newcommand{\record}[1]{\textbf{Rec}\\ \\{ #1 \\}}
+\newcommand{\cA}[0]{\mathcal A}
+\newcommand{\cB}[0]{\mathcal B}
+\newcommand{\ctyLab}[0]{\gamma}
+\newcommand{\clabVal}[0]{\delta}
+\newcommand{\recordext}[2]{\record{#1 \mid #2}}
+\newcommand{\recExt}[1]{\mid #1}
+\newcommand{\variantext}[2]{\variant{#1 \mid #2}}
+\cfrac{
+  \Gvdash \cA\_0 \simeq \cA\_1 \quad
+  \Gvdash \cB\_0 \subt \cB\_1
+}{
+  \Gvdash \piTy{
+    \xx : \cA\_0 . \cB\_0
+  } \subt \piTy{\xx : \cA\_1 . \cB\_1} \quad
+  \Gvdash \sigTy{
+    \xx : \cA\_0 . \cB\_0
+  } \subt \sigTy{\xx : \cA\_1 . \cB\_1}
+} \\\\ \space \\\\
+\cfrac{
+  \Gvdash \cA\_0 \subt \cA\_1 \quad \Gvdash \cA\_1 \subt \cA\_2
+}{
+  \Gvdash \cA\_0 \subt \cA\_2
+} \quad
+\cfrac{\Gvdash \cA \simeq \cB}{\Gvdash \cB \simeq \cA \quad \Gvdash \cA \subt \cB}
+$$
+*/
 fn subtype(tcs: TCS, sub: &Val, sup: &Val) -> TCM {
     use Val::*;
     match (sub, sup) {

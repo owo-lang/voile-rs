@@ -31,6 +31,7 @@ impl MetaSolution {
     }
 }
 
+/// Type-checking state.
 #[derive(Debug, Clone, Default)]
 pub struct TCS {
     /// Global value context.

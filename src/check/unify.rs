@@ -33,6 +33,25 @@ fn unify_variants(tcs: TCS, kind: VarRec, subset: &Variants, superset: &Variants
 Try to unify two well-typed terms,
 using a conversion check algorithm.
 This may lead to meta variable resolution.
+$$
+\newcommand{\Gvdash}[0]{\Gamma \vdash}
+\newcommand{\variant}[1]{\textbf{Sum}\\ \\{ #1 \\}}
+\newcommand{\record}[1]{\textbf{Rec}\\ \\{ #1 \\}}
+\newcommand{\cA}[0]{\mathcal A}
+\newcommand{\cB}[0]{\mathcal B}
+\newcommand{\ctyLab}[0]{\gamma}
+\newcommand{\clabVal}[0]{\delta}
+\newcommand{\recordext}[2]{\record{#1 \mid #2}}
+\newcommand{\recExt}[1]{\mid #1}
+\newcommand{\variantext}[2]{\variant{#1 \mid #2}}
+\cfrac{
+  \Gvdash \cA\_0 \simeq \cA\_1 \quad \Gvdash \cA\_1 \simeq \cA\_2
+}{
+  \Gvdash \cA\_0 \simeq \cA\_2
+}
+\quad
+\cfrac{}{\Gvdash \cA \simeq \cA}
+$$
 */
 fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
     // use Axiom::Generated as Gen;
@@ -71,6 +90,18 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
     }
 }
 
+/**
+Beta-rule in `unify`.
+$$
+\newcommand{\xx}[0]{\texttt{x}}
+\newcommand{\Gvdash}[0]{\Gamma \vdash}
+\cfrac{
+  \Gvdash \alpha\_0 [\xx := \alpha] \simeq \alpha_1\\ \alpha
+}{
+  \Gvdash (\lambda \xx . \alpha\_0) \simeq \alpha_1
+}
+$$
+*/
 fn unify_closure(tcs: TCS, a: &Closure, b: &Closure) -> TCM {
     let p = Val::fresh_axiom();
     let a = a.instantiate_cloned_borrow(&p);
