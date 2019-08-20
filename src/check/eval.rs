@@ -56,6 +56,11 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
         }
         Meta(ident, mi) => (Val::meta(mi).into_info(ident.info), tcs),
         RowPoly(_, _, _, _) => unimplemented!(),
+        RowKind(info, kind, labels) => {
+            let labels = labels.into_iter().map(|l| l.text).collect();
+            let expr = Val::RowKind(Default::default(), kind, labels);
+            (expr.into_info(info), tcs)
+        }
     }
 }
 

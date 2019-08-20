@@ -119,7 +119,8 @@ fn trans_expr_inner(
             ret
         }
         Expr::Cons(ident) => Ok(Abs::Cons(ident.clone())),
-        Expr::RowKind(..) => unimplemented!(),
+        // TODO: check uniqueness?
+        Expr::RowKind(info, kind, labels) => Ok(Abs::RowKind(info, kind, labels)),
         Expr::RowPoly(info, kind, labels, rest) => {
             let labels = labels
                 .into_iter()
