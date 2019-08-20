@@ -20,6 +20,39 @@ fn solve_with(mut tcs: TCS, meta: MI, solution: Val) -> TCM {
     Ok(tcs)
 }
 
+/**
+Unify two row-polymorphic types.
+$$
+\newcommand{\Gvdash}[0]{\Gamma \vdash}
+\newcommand{\tyck}[4]{#1 \vdash_\texttt{c} #2 : #3 \Rightarrow #4}
+\newcommand{\Gtyck}[3]{\tyck{\Gamma}{#1}{#2}{#3}}
+\newcommand{\ty}[0]{\tau}
+\newcommand{\cA}[0]{\mathcal A}
+\newcommand{\cB}[0]{\mathcal B}
+\newcommand{\ctyLab}[0]{\gamma}
+\newcommand{\clabVal}[0]{\delta}
+\newcommand{\variant}[1]{\textbf{Sum}\\ \\{ #1 \\}}
+\newcommand{\record}[1]{\textbf{Rec}\\ \\{ #1 \\}}
+\cfrac{
+  \Gtyck{A\_0}{\ty}{\cA\_0} \quad
+  \Gtyck{A\_1}{\ty}{\cA\_1} \quad
+  \Gvdash \cA\_0 \simeq \cA\_1 \quad
+  (n : \cA\_0) \notin \ctyLab\_0 \quad
+  (n : \cA\_1) \notin \ctyLab\_1
+}{
+  \cfrac{
+    \Gvdash \record{\ctyLab\_0} \simeq \record{\ctyLab\_1}
+  }{
+    \Gvdash \record{n : \cA\_0, \ctyLab\_0} \simeq \record{n : \cA\_1, \ctyLab\_1}
+  } \quad
+  \cfrac{
+    \Gvdash \variant{\ctyLab\_0} \simeq \variant{\ctyLab\_1}
+  }{
+    \Gvdash \variant{n : \cA\_0, \ctyLab\_0} \simeq \variant{n : \cA\_1, \ctyLab\_1}
+  }
+}
+$$
+*/
 fn unify_variants(tcs: TCS, kind: VarRec, subset: &Variants, superset: &Variants) -> TCM {
     subset.iter().try_fold(tcs, |tcs, (name, ty)| {
         let counterpart = superset
@@ -35,12 +68,8 @@ using a conversion check algorithm.
 This may lead to meta variable resolution.
 $$
 \newcommand{\Gvdash}[0]{\Gamma \vdash}
-\newcommand{\variant}[1]{\textbf{Sum}\\ \\{ #1 \\}}
-\newcommand{\record}[1]{\textbf{Rec}\\ \\{ #1 \\}}
 \newcommand{\cA}[0]{\mathcal A}
 \newcommand{\cB}[0]{\mathcal B}
-\newcommand{\ctyLab}[0]{\gamma}
-\newcommand{\clabVal}[0]{\delta}
 \newcommand{\recordext}[2]{\record{#1 \mid #2}}
 \newcommand{\recExt}[1]{\mid #1}
 \newcommand{\variantext}[2]{\variant{#1 \mid #2}}

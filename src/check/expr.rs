@@ -13,6 +13,13 @@ use super::monad::{ValTCM, TCE, TCM, TCS};
 
 /**
 Abstract Term -> Core Term under an expected type.
+$$
+\cfrac{
+}{
+  \Gtyck{\record{}}{\recordR{ns}}{\record{}} \quad
+  \Gtyck{\variant{}}{\variantR{ns}}{\variant{}}
+}
+$$
 */
 fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     use Abs::*;
@@ -228,6 +235,8 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
 Check if `subtype` is a subtype of `supertype`.
 $$
 \newcommand{\Gvdash}[0]{\Gamma \vdash}
+\newcommand{\tyck}[4]{#1 \vdash_\texttt{c} #2 : #3 \Rightarrow #4}
+\newcommand{\Gtyck}[3]{\tyck{\Gamma}{#1}{#2}{#3}}
 \newcommand{\subt}[0]{<:}
 \newcommand{\xx}[0]{\texttt{x}}
 \newcommand{\ty}[0]{\tau}
@@ -242,6 +251,8 @@ $$
 \newcommand{\recordext}[2]{\record{#1 \mid #2}}
 \newcommand{\recExt}[1]{\mid #1}
 \newcommand{\variantext}[2]{\variant{#1 \mid #2}}
+\newcommand{\variantR}[1]{\mathbb{Sum}\ #1}
+\newcommand{\recordR}[1]{\mathbb{Rec}\  #1}
 \cfrac{
   \Gvdash \cA\_0 \simeq \cA\_1 \quad
   \Gvdash \cB\_0 \subt \cB\_1
@@ -259,6 +270,35 @@ $$
   \Gvdash \cA\_0 \subt \cA\_2
 } \quad
 \cfrac{\Gvdash \cA \simeq \cB}{\Gvdash \cB \simeq \cA \quad \Gvdash \cA \subt \cB}
+\\\\ \space \\\\
+\cfrac{
+  n \notin ns
+}{
+  \Gvdash \variantR{n,ns} \subt \variantR{ns} \quad
+  \Gvdash \recordR{ns} \subt \recordR{n,ns}
+}
+\\\\ \space \\\\
+\cfrac{
+  \Gtyck{A}{\ty}{\cA} \quad
+  (n : \cA) \notin \ctyLab_0
+}{
+  \cfrac{
+    \Gvdash \variant{\ctyLab\_1} \subt \variant{\ctyLab_0}
+  }{
+    \Gvdash \variant{\ctyLab\_1} \subt \variant{n : \cA, \ctyLab_0}
+  } \quad
+  \cfrac{
+    \Gvdash \record{\ctyLab\_0} \subt \record{\ctyLab_1}
+  }{
+    \Gvdash \record{n : \cA, \ctyLab\_0} \subt \record{\ctyLab_1}
+  }
+}
+\\\\
+\cfrac{
+}{
+  \Gvdash \recordR{ns} \subt \ty \quad
+  \Gvdash \variantR{ns} \subt \ty
+}
 $$
 */
 fn subtype(tcs: TCS, sub: &Val, sup: &Val) -> TCM {
