@@ -119,6 +119,7 @@ fn trans_expr_inner(
             ret
         }
         Expr::Cons(ident) => Ok(Abs::Cons(ident.clone())),
+        Expr::RowKind(..) => unimplemented!(),
         Expr::RowPoly(info, kind, labels, rest) => {
             let labels = labels
                 .into_iter()

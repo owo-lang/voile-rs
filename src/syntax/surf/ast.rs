@@ -43,6 +43,8 @@ pub enum Expr {
     Tup(Box<Vec1<Self>>),
     /// Row-polymorphic types, either record types or variant types.
     RowPoly(SyntaxInfo, VarRec, Vec<LabExpr>, Option<Box<Self>>),
+    /// Row-polymorphic kinds, either record types or variant kinds.
+    RowKind(SyntaxInfo, VarRec, Vec<Ident>),
     /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`
     /// instead of `Pi(a, Pi(b, c))`.
     /// `a` and `b` here can introduce telescopes.

@@ -59,11 +59,7 @@ fn next_ident(inner: &mut Tik) -> Ident {
 }
 
 fn declarations(the_rule: Tok) -> Vec<Decl> {
-    let mut decls: Vec<Decl> = Default::default();
-    for prefix_parameter in the_rule.into_inner() {
-        decls.push(declaration(prefix_parameter));
-    }
-    decls
+    the_rule.into_inner().into_iter().map(declaration).collect()
 }
 
 fn labelled(rules: Tok) -> LabExpr {
@@ -88,6 +84,12 @@ fn variant_record(rules: Tok, kind: VarRec) -> Expr {
     let mut inner: Tik = rules.into_inner();
     let (labels, rest) = next_rule!(inner, row_polymorphic);
     Expr::row_polymorphic_type(info, labels, kind, rest)
+}
+
+fn variant_record_kind(rules: Tok, kind: VarRec) -> Expr {
+    let info = SyntaxInfo::from(rules.as_span());
+    let labels = rules.into_inner().into_iter().map(ident).collect();
+    Expr::RowKind(info, kind, labels)
 }
 
 fn declaration(rules: Tok) -> Decl {
@@ -155,8 +157,8 @@ fn primary_expr(rules: Tok) -> Expr {
         Rule::lambda => lambda(the_rule),
         Rule::record => variant_record(the_rule, VarRec::Record),
         Rule::variant => variant_record(the_rule, VarRec::Variant),
-        Rule::record_kind => unimplemented!(),
-        Rule::variant_kind => unimplemented!(),
+        Rule::record_kind => variant_record_kind(the_rule, VarRec::Record),
+        Rule::variant_kind => variant_record_kind(the_rule, VarRec::Variant),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
         e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
