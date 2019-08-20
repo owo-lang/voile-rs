@@ -5,7 +5,7 @@ use VarRec::*;
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo, VarRec};
-use crate::syntax::core::{LiftEx, Val, Variants};
+use crate::syntax::core::{Closure, LiftEx, Val, Variants};
 use crate::syntax::level::Level;
 
 use super::eval::compile_cons;
@@ -252,7 +252,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
             // let mocked = Val::postulate(*uid);
             // tcs.local_gamma.push(param_meta.clone().into_info(info));
             // tcs.local_env.push(mocked.clone().into_info(info));
-            let pi = Val::pi(param_meta, ret_meta);
+            let pi = Val::pi(param_meta, Closure::plain(ret_meta));
             let (_, tcs) = tcs.check(value, &pi)?;
             // tcs.pop_local();
             Ok((pi.into_info(info), tcs))
@@ -265,7 +265,7 @@ fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
         Pair(_, fst, snd) => {
             let (fst_ty, tcs) = tcs.infer(&**fst).map_err(|e| e.wrap(info))?;
             let (snd_ty, tcs) = tcs.infer(&**snd).map_err(|e| e.wrap(info))?;
-            let sigma = Val::sig(fst_ty.ast, snd_ty.ast).into_info(info);
+            let sigma = Val::sig(fst_ty.ast, Closure::plain(snd_ty.ast)).into_info(info);
             Ok((sigma, tcs))
         }
         Fst(_, pair) => {

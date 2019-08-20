@@ -451,12 +451,12 @@ impl Val {
         Self::neutral_row_type(VarRec::Record, fields, ext)
     }
 
-    pub fn pi(param_type: TVal, body: TVal) -> TVal {
-        Self::closure_dependent_type(PiSig::Pi, param_type, body)
+    pub fn pi(param_type: TVal, body: Closure) -> TVal {
+        Self::dependent_type(PiSig::Pi, param_type, body)
     }
 
-    pub fn sig(param_type: TVal, body: TVal) -> TVal {
-        Self::closure_dependent_type(PiSig::Sigma, param_type, body)
+    pub fn sig(param_type: TVal, body: Closure) -> TVal {
+        Self::dependent_type(PiSig::Sigma, param_type, body)
     }
 
     pub fn into_neutral(self) -> Result<Neutral, Self> {
