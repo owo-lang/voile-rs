@@ -3,8 +3,45 @@ use crate::syntax::abs::Abs;
 use crate::syntax::common::{Ident, DBI};
 use crate::syntax::core::{LiftEx, Neutral, Val, ValInfo, Variants};
 
-/// Ensure `abs` is well-typed before invoking this,
-/// otherwise this function may panic or produce ill-typed core term.
+/**
+Evaluation rules.
+$$
+\newcommand{\xx}[0]{\texttt{x}}
+\newcommand{\ty}[0]{\tau}
+\newcommand{\eval}[1]{\llbracket #1 \rrbracket} % {\texttt{eval}(#1)}
+\newcommand{\piTy}[1]{\Pi \langle #1 \rangle}
+\newcommand{\sigTy}[1]{\Sigma \langle #1 \rangle}
+\newcommand{\variant}[1]{\textbf{Sum}\\ \\{ #1 \\}}
+\newcommand{\record}[1]{\textbf{Rec}\\ \\{ #1 \\}}
+\newcommand{\variantR}[1]{\mathbb{Sum}\\ #1}
+\newcommand{\recordR}[1]{\mathbb{Rec}\\  #1}
+\newcommand{\cA}[0]{\mathcal A}
+\newcommand{\cB}[0]{\mathcal B}
+\begin{alignedat}{2}
+& \eval{a, b} &&= \eval{a}, \eval{b} \\\\
+& \eval{a.1} &&= \left\\{\begin{matrix}
+  [k.1] & \text{if} & \eval{a} = [k] \\\\
+  \alpha_0 & \text{if} & \eval{a} = \alpha\_0, \alpha\_1
+\end{matrix}\right\\} \\\\
+& \eval{a.2} &&= \left\\{\begin{matrix}
+  [k.2] & \text{if} & \eval{a} = [k] \\\\
+  \alpha_1 & \text{if} & \eval{a} = \alpha\_0, \alpha\_1
+\end{matrix}\right\\} \\\\
+& \eval{\lambda \xx. a} &&= \lambda \langle \xx . \eval{a} \rangle \\\\
+& \eval{\xx} &&= [\xx] \\\\
+& \eval{a\ b} &&= \left\\{\begin{matrix}
+  [k\\ \eval{b}] & \text{if} & \eval{a} = [k] \\\\
+  \alpha [\xx := \eval{b}] & \text{if} & \eval{a} = \lambda \langle \xx . \alpha \rangle
+\end{matrix}\right\\} \\\\
+& \eval{\piTy{\xx : a.b}} &&= \Pi\\ \eval{a}\\ \langle \xx . \eval{b} \rangle \\\\
+& \eval{\sigTy{\xx : a.b}} &&= \Sigma\\ \eval{a}\\ \langle \xx . \eval{b} \rangle \\\\
+& \eval{\ty} &&= \ty
+\end{alignedat}
+$$
+
+Ensure `abs` is well-typed before invoking this,
+otherwise this function may panic or produce ill-typed core term.
+*/
 fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
     use Abs::*;
     match abs {

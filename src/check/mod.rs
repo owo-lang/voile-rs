@@ -37,7 +37,7 @@ mod decl;
 /**
 Tooling functions that depends on neither `decl` nor `expr`.
 $$
-\llbracket a \rrbracket = a
+\llbracket a \rrbracket = \alpha
 $$
 */
 mod eval;
