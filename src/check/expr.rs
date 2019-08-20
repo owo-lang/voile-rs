@@ -12,12 +12,34 @@ use super::eval::compile_cons;
 use super::monad::{ValTCM, TCE, TCM, TCS};
 
 /**
-Abstract Term -> Core Term under an expected type.
+Check an abstract term against an expected type and produce a well-typed term.
 $$
+\newcommand{\tyck}[4]{#1 \vdash_\texttt{c} #2 : #3 \Rightarrow #4}
+\newcommand{\Gtyck}[3]{\tyck{\Gamma}{#1}{#2}{#3}}
+\newcommand{\eval}[1]{\llbracket #1 \rrbracket} % {\texttt{eval}(#1)}
+\newcommand{\cheval}[3]{#1 \vdash_\texttt{e} #2 \Rightarrow #3}
+\newcommand{\Gcheval}[2]{\cheval{\Gamma}{#1}{#2}}
+\newcommand{\subt}[0]{<:}
+\newcommand{\xx}[0]{\texttt{x}}
+\newcommand{\ty}[0]{\tau}
+\newcommand{\piTy}[1]{\Pi \langle #1 \rangle}
+\newcommand{\sigTy}[1]{\Sigma \langle #1 \rangle}
+\newcommand{\cA}[0]{\mathcal A}
+\newcommand{\cB}[0]{\mathcal B}
 \cfrac{
+  \Gtyck{a}{\cA}{\alpha} \quad
+  \Gtyck{b}{\cB[\xx := \alpha]}{\beta}
 }{
-  \Gtyck{\record{}}{\recordR{ns}}{\record{}} \quad
-  \Gtyck{\variant{}}{\variantR{ns}}{\variant{}}
+  \Gcheval{a, b}{\sigTy{\xx : \cA . \cB}}
+} \quad
+\cfrac{
+  \tyck{\Gamma, \xx : \cB}{a}{\cA}{\alpha}
+}{
+  \Gtyck{
+    \lambda \xx. \alpha}{\piTy{\xx : \cB . \cA}
+  }{
+    \lambda \langle \xx . \alpha \rangle
+  }
 }
 $$
 */
@@ -108,6 +130,43 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     }
 }
 
+/**
+Extracted from `check`.
+$$
+\newcommand{\ty}[0]{\tau}
+\newcommand{\tyck}[4]{#1 \vdash_\texttt{c} #2 : #3 \Rightarrow #4}
+\newcommand{\Gtyck}[3]{\tyck{\Gamma}{#1}{#2}{#3}}
+\newcommand{\cheval}[3]{#1 \vdash_\texttt{e} #2 \Rightarrow #3}
+\newcommand{\Gcheval}[2]{\cheval{\Gamma}{#1}{#2}}
+\newcommand{\variant}[1]{\textbf{Sum}\\ \\{ #1 \\}}
+\newcommand{\record}[1]{\textbf{Rec}\\ \\{ #1 \\}}
+\newcommand{\variantR}[1]{\mathbb{Sum}\ #1}
+\newcommand{\recordR}[1]{\mathbb{Rec}\  #1}
+\newcommand{\variantextS}[2]{\variant{#1, \ldots = #2}}
+\newcommand{\recordextS}[2]{\record{#1, \ldots = #2}}
+\newcommand{\cA}[0]{\mathcal A}
+\cfrac{
+  n \notin ns \quad \Gtyck{A}{\ty}{\cA}
+}{
+  \cfrac{
+    \Gcheval{B}{\recordR{n,ns}}
+  }{
+    \Gcheval{\recordextS{n : A}{B}}{\recordR{ns}}
+  } \quad
+  \cfrac{
+    \Gcheval{B}{\variantR{n,ns}}
+  }{
+    \Gcheval{\variantextS{n : A}{B}}{\variantR{ns}}
+  }
+}
+\\\\
+\cfrac{
+}{
+  \Gtyck{\record{}}{\recordR{ns}}{\record{}} \quad
+  \Gtyck{\variant{}}{\variantR{ns}}{\variant{}}
+}
+$$
+*/
 fn check_row_polymorphic_type(
     mut tcs: TCS,
     info: SyntaxInfo,
@@ -155,7 +214,7 @@ fn check_variant_or_cons(info: &SyntaxInfo, param_ty: &TVal, ret_ty: &Closure) -
 }
 
 /**
-Infer type of a value.
+Infer type of an abstract term, if it's well-typed.
 */
 fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
     use Abs::*;
