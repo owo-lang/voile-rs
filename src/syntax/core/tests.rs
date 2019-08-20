@@ -27,7 +27,7 @@ fn many_to_val(block: &[Lisp], lisp: &Lisp) -> Val {
         [Sym("type"), arg] => Val::Type(From::from(arg.as_dbi().unwrap().0)),
         [Sym("app"), fst, snd] => lisp_to_val(fst).apply(lisp_to_val(snd)),
         [Sym("pair"), fst, snd] => Val::pair(lisp_to_val(fst), lisp_to_val(snd)),
-        [Sym("lam"), snd] => Val::lam(lisp_to_val(snd)),
+        [Sym("lam"), snd] => Val::closure_lam(lisp_to_val(snd)),
         _ => panic!("Bad block: `{}`.", lisp),
     }
 }

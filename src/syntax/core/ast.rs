@@ -5,7 +5,11 @@ use crate::syntax::level::Level;
 
 use super::level::*;
 
+/// Row variants -- for both variant type and record type.
 pub type Variants = BTreeMap<String, TVal>;
+
+/// Record fields -- for record values.
+pub type Fields = BTreeMap<String, Val>;
 
 /// Reducible expressions.
 pub trait RedEx: Sized {
@@ -150,8 +154,8 @@ impl RedEx for Val {
                 b.reduce_with_dbi(arg, dbi),
             ),
             Val::Neut(neutral_value) => neutral_value.reduce_with_dbi(arg, dbi),
-            Val::Lam(Closure { body }) => Val::lam(body.reduce_with_dbi(arg, dbi + 1)),
-            Val::Dt(kind, param_type, Closure { body }) => Val::dependent_type(
+            Val::Lam(Closure { body }) => Val::closure_lam(body.reduce_with_dbi(arg, dbi + 1)),
+            Val::Dt(kind, param_type, Closure { body }) => Val::closure_dependent_type(
                 kind,
                 param_type.reduce_with_dbi_borrow(&arg, dbi),
                 body.reduce_with_dbi(arg, dbi + 1),
@@ -159,6 +163,7 @@ impl RedEx for Val {
             Val::RowPoly(kind, variants) => {
                 Val::RowPoly(kind, reduce_variants_with_dbi(variants, dbi, &arg))
             }
+            Val::Rec(fields) => Val::Rec(reduce_variants_with_dbi(fields, dbi, &arg)),
             Val::Cons(name, a) => Self::cons(name, a.reduce_with_dbi(arg, dbi)),
             Val::Type(n) => Val::Type(n),
             Val::RowKind(l, k, ls) => Val::RowKind(l, k, ls),
@@ -172,8 +177,10 @@ impl RedEx for Val {
                 b.reduce_with_dbi_borrow(arg, dbi),
             ),
             Val::Neut(neutral_value) => neutral_value.reduce_with_dbi_borrow(arg, dbi),
-            Val::Lam(Closure { body }) => Val::lam(body.reduce_with_dbi_borrow(arg, dbi + 1)),
-            Val::Dt(kind, param_type, Closure { body }) => Val::dependent_type(
+            Val::Lam(Closure { body }) => {
+                Val::closure_lam(body.reduce_with_dbi_borrow(arg, dbi + 1))
+            }
+            Val::Dt(kind, param_type, Closure { body }) => Val::closure_dependent_type(
                 kind,
                 param_type.reduce_with_dbi_borrow(arg, dbi),
                 body.reduce_with_dbi_borrow(arg, dbi + 1),
@@ -181,6 +188,7 @@ impl RedEx for Val {
             Val::RowPoly(kind, variants) => {
                 Val::RowPoly(kind, reduce_variants_with_dbi(variants, dbi, arg))
             }
+            Val::Rec(fields) => Val::Rec(reduce_variants_with_dbi(fields, dbi, arg)),
             Val::Cons(name, a) => Self::cons(name, a.reduce_with_dbi_borrow(arg, dbi)),
             Val::Type(n) => Val::Type(n),
             Val::RowKind(l, k, ls) => Val::RowKind(l, k, ls),
@@ -337,6 +345,8 @@ pub enum Val {
     RowKind(Level, VarRec, Vec<String>),
     /// Constructor invocation.
     Cons(String, Box<Self>),
+    /// Record literal, without extension.2
+    Rec(Fields),
     /// Sigma instance.
     Pair(Box<Self>, Box<Self>),
     /// Neutral value means irreducible but not canonical values.
@@ -351,7 +361,7 @@ impl Val {
             Type(..) | Dt(..) | RowPoly(..) | RowKind(..) | Neut(Neutral::Row(..)) => true,
             // In case it's neutral, we use `is_universe` on its type.
             // In case it's a meta, we're supposed to solve it.
-            Lam(..) | Cons(..) | Pair(..) | Neut(..) => false,
+            Lam(..) | Cons(..) | Rec(..) | Pair(..) | Neut(..) => false,
         }
     }
 
@@ -382,7 +392,7 @@ impl Val {
         Val::Neut(Neutral::Var(index))
     }
 
-    pub fn lam(body: Self) -> Self {
+    pub fn closure_lam(body: Self) -> Self {
         Val::Lam(Closure::new(body))
     }
 
@@ -419,8 +429,12 @@ impl Val {
         Val::Neut(Neutral::Snd(Box::new(pair)))
     }
 
-    pub fn dependent_type(kind: PiSig, param_type: TVal, body: TVal) -> TVal {
-        Val::Dt(kind, Box::new(param_type), Closure::new(body))
+    pub fn closure_dependent_type(kind: PiSig, param_type: TVal, body: TVal) -> TVal {
+        Self::dependent_type(kind, param_type, Closure::new(body))
+    }
+
+    pub fn dependent_type(kind: PiSig, param_type: TVal, closure: Closure) -> TVal {
+        Val::Dt(kind, Box::new(param_type), closure)
     }
 
     pub fn variant_type(variants: Variants) -> TVal {
@@ -444,11 +458,11 @@ impl Val {
     }
 
     pub fn pi(param_type: TVal, body: TVal) -> TVal {
-        Self::dependent_type(PiSig::Pi, param_type, body)
+        Self::closure_dependent_type(PiSig::Pi, param_type, body)
     }
 
     pub fn sig(param_type: TVal, body: TVal) -> TVal {
-        Self::dependent_type(PiSig::Sigma, param_type, body)
+        Self::closure_dependent_type(PiSig::Sigma, param_type, body)
     }
 
     pub fn into_neutral(self) -> Result<Neutral, Self> {
@@ -477,8 +491,13 @@ impl Val {
                 .map(|(k, v)| v.try_map_neutral(f).map(|v| (k, v)))
                 .collect::<Result<_, _>>()
                 .map(|vs| Val::RowPoly(kind, vs)),
-            Val::Lam(Closure { body }) => body.try_map_neutral(f).map(Self::lam),
-            Val::Dt(kind, param_type, Closure { body }) => Ok(Self::dependent_type(
+            Val::Rec(fields) => fields
+                .into_iter()
+                .map(|(k, v)| v.try_map_neutral(f).map(|v| (k, v)))
+                .collect::<Result<_, _>>()
+                .map(Val::Rec),
+            Val::Lam(Closure { body }) => body.try_map_neutral(f).map(Self::closure_lam),
+            Val::Dt(kind, param_type, Closure { body }) => Ok(Self::closure_dependent_type(
                 kind,
                 param_type.try_map_neutral(f)?,
                 body.try_map_neutral(f)?,
@@ -525,7 +544,10 @@ impl Val {
             Val::Pair(a, b) => a
                 .try_fold_neutral(init, f)
                 .and_then(|r| b.try_fold_neutral(r, f)),
-            Val::RowPoly(_, v) => v
+            Val::RowPoly(_, variants) => variants
+                .into_iter()
+                .try_fold(init, |a, (_, v)| v.try_fold_neutral(a, f)),
+            Val::Rec(fields) => fields
                 .into_iter()
                 .try_fold(init, |a, (_, v)| v.try_fold_neutral(a, f)),
             Val::Lam(Closure { body }) => body.try_fold_neutral(init, f),

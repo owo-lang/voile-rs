@@ -31,7 +31,7 @@ impl Display for Neutral {
                     VarRec::Record => f.write_str("Rec"),
                 }?;
                 f.write_str(" {")?;
-                write_variants(f, variants)?;
+                write_variants(f, variants, ":")?;
                 write!(f, " | {}}}", ext)
             }
         }
@@ -89,8 +89,13 @@ impl Display for Val {
                     VarRec::Record => f.write_str("Rec"),
                 }?;
                 f.write_str(" {")?;
-                write_variants(f, variants)?;
+                write_variants(f, variants, ":")?;
                 f.write_str("}")
+            }
+            Val::Rec(fields) => {
+                f.write_str("{|")?;
+                write_variants(f, fields, " =")?;
+                f.write_str("|}")
             }
             Val::Dt(Pi, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
             Val::Dt(Sigma, param_ty, clos) => write!(f, "({} * {})", param_ty, clos),
@@ -101,7 +106,7 @@ impl Display for Val {
     }
 }
 
-fn write_variants(f: &mut Formatter, variants: &Variants) -> Result<(), Error> {
+fn write_variants(f: &mut Formatter, variants: &Variants, sep: &str) -> Result<(), Error> {
     let mut started = false;
     for (name, param) in variants {
         if started {
@@ -109,7 +114,7 @@ fn write_variants(f: &mut Formatter, variants: &Variants) -> Result<(), Error> {
         } else {
             started = true;
         }
-        write!(f, "{}: {}", name, param)?;
+        write!(f, "{}{} {}", name, sep, param)?;
     }
     Ok(())
 }

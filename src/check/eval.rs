@@ -94,7 +94,7 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
         Dt(info, kind, _, param_ty, ret_ty) => {
             let (param_ty, tcs) = evaluate(tcs, *param_ty);
             let (ret_ty, tcs) = evaluate(tcs, *ret_ty);
-            let term = Val::dependent_type(kind, param_ty.ast, ret_ty.ast);
+            let term = Val::closure_dependent_type(kind, param_ty.ast, ret_ty.ast);
             (term.into_info(info), tcs)
         }
         Pair(info, a, b) => {
@@ -167,7 +167,7 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
 pub fn compile_cons(info: Ident) -> ValInfo {
     let mut text = info.text;
     text.remove(0);
-    Val::lam(Val::cons(text, Val::var(DBI(0)))).into_info(info.info)
+    Val::closure_lam(Val::cons(text, Val::var(DBI(0)))).into_info(info.info)
 }
 
 /// So you can do some functional programming based on method call chains.

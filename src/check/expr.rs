@@ -83,10 +83,10 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 .check(body, &ret_ty_body)
                 .map_err(|e| e.wrap(*full_info))?;
             tcs.pop_local();
-            let lam = Val::lam(lam_term.ast);
+            let lam = Val::closure_lam(lam_term.ast);
             Ok((lam.into_info(*full_info), tcs))
         }
-        (Cons(info), Val::Dt(Pi, _param_ty, ret_ty)) => Ok((compile_cons(info.clone()), tcs)),
+        (Cons(info), Val::Dt(Pi, ..)) => Ok((compile_cons(info.clone()), tcs)),
         (Dt(info, kind, uid, param, ret), Val::Type(..)) => {
             let (param, mut tcs) = tcs
                 .check(&**param, expected_type)
@@ -98,7 +98,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 .check(&**ret, expected_type)
                 .map_err(|e| e.wrap(*info))?;
             tcs.pop_local();
-            let dt = Val::dependent_type(*kind, param.ast, ret.ast).into_info(*info);
+            let dt = Val::closure_dependent_type(*kind, param.ast, ret.ast).into_info(*info);
             Ok((dt, tcs))
         }
         (RowPoly(info, Record, variants, ext), Val::RowKind(l, Record, labels)) => {

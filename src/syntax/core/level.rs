@@ -1,4 +1,4 @@
-use crate::syntax::core::{Closure, Neutral, Val};
+use crate::syntax::core::{Closure, Neutral, Val, Variants};
 use crate::syntax::level::Level;
 
 /// Internal API, public only because it's used in public traits' internal APIs.
@@ -37,13 +37,8 @@ impl LiftEx for Val {
                 Box::new(param_type.lift(levels)),
                 closure.lift(levels),
             ),
-            Val::RowPoly(kind, variants) => Val::RowPoly(
-                kind,
-                variants
-                    .into_iter()
-                    .map(|(name, e)| (name, e.lift(levels)))
-                    .collect(),
-            ),
+            Val::RowPoly(kind, variants) => Val::RowPoly(kind, lift_variants(levels, variants)),
+            Val::Rec(fields) => Val::Rec(lift_variants(levels, fields)),
             Val::Cons(name, e) => Val::cons(name, e.lift(levels)),
             Val::Pair(l, r) => Val::pair(l.lift(levels), r.lift(levels)),
             Val::Neut(neut) => Val::Neut(neut.lift(levels)),
@@ -53,13 +48,8 @@ impl LiftEx for Val {
     fn calc_level(&self) -> LevelCalcState {
         match self {
             Val::Type(level) | Val::RowKind(level, ..) => Some(*level + 1),
-            Val::RowPoly(_, variants) => {
-                let mut maximum = Level::default();
-                for variant in variants.values() {
-                    maximum = maximum.max(variant.calc_level()?);
-                }
-                Some(maximum)
-            }
+            Val::RowPoly(_, variants) => calc_variants_level(variants),
+            Val::Rec(fields) => calc_variants_level(fields),
             Val::Dt(_, param_ty, closure) => {
                 Some(param_ty.calc_level()?.max(closure.calc_level()?))
             }
@@ -115,4 +105,19 @@ impl LiftEx for Closure {
     fn calc_level(&self) -> LevelCalcState {
         self.body.calc_level()
     }
+}
+
+fn lift_variants(levels: u32, fields: Variants) -> Variants {
+    fields
+        .into_iter()
+        .map(|(name, e)| (name, e.lift(levels)))
+        .collect()
+}
+
+fn calc_variants_level(variants: &Variants) -> Option<Level> {
+    let mut maximum = Level::default();
+    for variant in variants.values() {
+        maximum = maximum.max(variant.calc_level()?);
+    }
+    Some(maximum)
 }
