@@ -1,0 +1,8 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-08-20
+// missing-label
+// Author: ice10
+//
+
+val missing_label : Sum { label: Type1; label2: Type; };
+let missing_label = @Label Type;

@@ -5,7 +5,7 @@
 //
 
 val one_sum : Type -> Type1;
-let one_sum = 'Label;
+let one_sum = \ t. Sum { name: t; };
 
-val two_sums : 'Label Type1 + 'Label2 Type;
-let two_sums = @Label Type;
+val two_sums : Sum { label: Type1; label2: Type; };
+let two_sums = @label Type;
