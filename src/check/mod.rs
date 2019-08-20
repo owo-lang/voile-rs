@@ -4,7 +4,7 @@ pub use self::expr::*;
 pub use self::unify::*;
 
 /**
-Type-checking monad is a `Result<State, Rrror>`.
+Type-checking monad is a `Result<State, Error>`.
 $$
 \\newcommand{\\xx}[0]{\\texttt{x}}
 \\Gamma

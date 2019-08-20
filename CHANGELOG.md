@@ -2,6 +2,11 @@
 
 # 0.0.15
 
++ Fix core language `is_type` judgement
++ Update mod rustdoc
+
+# 0.0.15
+
 + Error message is now "change my mind" (#126)
 + Introduce `vec1` (#127)
 + New syntax for `Rec` and `Sum`
@@ -9,6 +14,7 @@
 + Add subtyping back (#132)
 + Add row kinds according to the paper (#83)
 + Row-kinding type-checking (#137)
++ Update KaTeX and crate rustdoc
 
 # 0.0.14
 

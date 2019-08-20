@@ -348,7 +348,7 @@ impl Val {
     pub fn is_type(&self) -> bool {
         use Val::*;
         match self {
-            Type(..) | Dt(..) | RowPoly(..) | RowKind(..) => true,
+            Type(..) | Dt(..) | RowPoly(..) | RowKind(..) | Neut(Neutral::Row(..)) => true,
             // In case it's neutral, we use `is_universe` on its type.
             // In case it's a meta, we're supposed to solve it.
             Lam(..) | Cons(..) | Pair(..) | Neut(..) => false,
@@ -357,7 +357,7 @@ impl Val {
 
     pub fn is_universe(&self) -> bool {
         match self {
-            Val::Type(_) => true,
+            Val::Type(..) | Val::RowKind(..) => true,
             _ => false,
         }
     }
