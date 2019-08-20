@@ -5,7 +5,7 @@ use VarRec::*;
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo, VarRec};
-use crate::syntax::core::{Closure, LiftEx, TVal, Val, Variants};
+use crate::syntax::core::{LiftEx, Val, Variants};
 use crate::syntax::level::Level;
 
 use super::eval::compile_cons;

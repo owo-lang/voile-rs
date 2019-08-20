@@ -408,10 +408,6 @@ impl Val {
         Val::Neut(Neutral::Axi(Axiom::Postulated(uid)))
     }
 
-    pub(crate) fn generate(uid: UID, dbi: DBI) -> Self {
-        Val::Neut(Neutral::Axi(Axiom::Generated(uid, dbi)))
-    }
-
     pub fn fresh_unimplemented(index: GI) -> Self {
         let axiom = Axiom::Unimplemented(unsafe { next_uid() }, index);
         Val::Neut(Neutral::Axi(axiom))
@@ -528,23 +524,23 @@ impl Val {
     }
 
     /// Traverse through the AST in a stateful manner.
-    pub fn fold_neutral<R, F: Fn(R, Neutral) -> R + Copy>(self, init: R, f: F) -> R {
+    pub fn fold_neutral<R>(self, init: R, f: impl Fn(R, Neutral) -> R + Copy) -> R {
         self.try_fold_neutral(init, |r, v| Ok::<_, ()>(f(r, v)))
             .unwrap()
     }
 
     /// Traverse through the AST with possible error.
-    pub fn try_fold_neutral<E, R, F: Fn(R, Neutral) -> Result<R, E> + Copy>(
+    pub fn try_fold_neutral<E, R>(
         self,
         init: R,
-        f: F,
+        f: impl Fn(R, Neutral) -> Result<R, E> + Copy,
     ) -> Result<R, E> {
         match self {
             Val::Neut(n) => f(init, n),
             Val::Pair(a, b) => a
                 .try_fold_neutral(init, f)
                 .and_then(|r| b.try_fold_neutral(r, f)),
-            Val::RowPoly(_, variants) => variants
+            Val::RowPoly(_, v) => v
                 .into_iter()
                 .try_fold(init, |a, (_, v)| v.try_fold_neutral(a, f)),
             Val::Rec(fields) => fields
