@@ -5,6 +5,10 @@
 + Error message is now "change my mind" (#126)
 + Introduce `vec1` (#127)
 + New syntax for `Rec` and `Sum`
++ Remove `check_type(e)`, replace with `check(e, TypeOmega)` (#140)
++ Add subtyping back (#132)
++ Add row kinds according to the paper (#83)
++ Row-kinding type-checking (#137)
 
 # 0.0.14
 

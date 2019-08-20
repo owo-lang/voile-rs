@@ -10,7 +10,6 @@ use crate::syntax::level::Level;
 
 use super::eval::compile_cons;
 use super::monad::{ValTCM, TCE, TCM, TCS};
-use crate::check::unify_variants;
 
 /**
 $$
