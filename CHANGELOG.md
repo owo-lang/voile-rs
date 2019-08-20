@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.1.1
+
++ Update typing rule for `cons`
+
 # 0.1.0
 
 + Fix core language `is_type` judgement
