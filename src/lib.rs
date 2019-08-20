@@ -93,10 +93,11 @@ The study on extensible records has a long history,
 but there isn't much research and implementations on the
 combination of bidirectional type-checking and row-polymorphism yet.
 <br/>
-Currently, I can only find one programming language, [MLPolyR]
+Currently, there are some programming languages, such as [MLPolyR]
 (there's a [language spec][spec], a paper [first-class cases][fc-c],
 a PhD thesis [type-safe extensible programming][tse] and an
-[IntelliJ plugin][ij-dtlc]), whose case-split is first class
+[IntelliJ plugin][ij-dtlc]) or [Rose],
+whose case-split are first class
 (in the papers it's called "first-class cases").
 
 Row polymorphism is useful because it
@@ -119,6 +120,7 @@ for simulating exception-handling.
  [tse]: https://arxiv.org/abs/0910.2654
  [spec]: https://people.cs.uchicago.edu/~blume/classes/spr2005/cmsc22620/docs/langspec.pdf
  [ij-dtlc]: https://github.com/owo-lang/intellij-dtlc
+ [Rose]: https://dl.acm.org/citation.cfm?doid=3302515.3290325
 
 # Implementation
 
