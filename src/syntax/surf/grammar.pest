@@ -75,6 +75,10 @@ row_polymorphic =
  ~ "}"
  }
 
+record_kind = { rec_keyword ~ label_list }
+variant_kind = { sum_keyword ~ label_list }
+label_list = { "[" ~ ident+ ~ "]" }
+
 labelled = { ident ~ ":" ~ expr ~ ";" }
 row_rest = { "..." ~ "=" ~ expr }
 
@@ -106,6 +110,8 @@ primary_expr =
  | lambda
  | record
  | variant
+ | record_kind
+ | variant_kind
  | case_expr
  | ident
  | "(" ~ expr ~ ")"

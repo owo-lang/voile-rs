@@ -155,6 +155,8 @@ fn primary_expr(rules: Tok) -> Expr {
         Rule::lambda => lambda(the_rule),
         Rule::record => variant_record(the_rule, VarRec::Record),
         Rule::variant => variant_record(the_rule, VarRec::Variant),
+        Rule::record_kind => unimplemented!(),
+        Rule::variant_kind => unimplemented!(),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
         e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
