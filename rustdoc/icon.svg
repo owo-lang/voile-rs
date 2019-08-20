@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="40" height="40" viewBox="-40 -40 2.7467811 2.7467811" xmlns="http://www.w3.org/2000/svg">
+<svg width="80" height="80" viewBox="-40 -40 2.7467811 2.7467811" xmlns="http://www.w3.org/2000/svg">
 	<circle transform="matrix(.99851 .054558 -.057623 .99834 0 0)" cx="-40.792" cy="-36.46" r=".5" fill="#fff"/>
 	<circle cx="-38.447" cy="-38.792" r=".2" stroke-opacity=".9"/>
 	<path

@@ -75,8 +75,10 @@ impl_usize!(GI);
 pub struct UID(pub usize);
 impl_usize!(UID);
 
+/// Unique-ID generator internal counter.
 static mut UID_COUNT: usize = 0;
 
+/// Unique-ID generation function.
 pub(crate) unsafe fn next_uid() -> UID {
     let val = UID_COUNT;
     UID_COUNT += 1;
