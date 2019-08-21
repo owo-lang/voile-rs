@@ -84,13 +84,12 @@ impl LiftEx for Neutral {
             Fst(expr) => expr.calc_level(),
             Snd(expr) => expr.calc_level(),
             App(f, args) => {
-                let args: Option<Vec<Level>> = args.iter().map(|x| x.calc_level()).collect();
+                let args: Option<Vec<_>> = args.iter().map(LiftEx::calc_level).collect();
                 let args = args?.into_iter().max();
                 Some(f.calc_level()?.max(args.unwrap_or_default()))
             }
-            Row(_, vs, ext) => {
-                let vs: Option<Vec<Level>> = vs.iter().map(|(_, x)| x.calc_level()).collect();
-                let vs = vs?.into_iter().max();
+            Rec(vs, ext) | Row(_, vs, ext) => {
+                let vs = calc_variants_level(vs);
                 Some(ext.calc_level()?.max(vs.unwrap_or_default()))
             }
         }
@@ -121,9 +120,6 @@ fn lift_variants(levels: u32, fields: Variants) -> Variants {
 }
 
 fn calc_variants_level(variants: &Variants) -> Option<Level> {
-    let mut maximum = Level::default();
-    for variant in variants.values() {
-        maximum = maximum.max(variant.calc_level()?);
-    }
-    Some(maximum)
+    let levels: Option<Vec<_>> = variants.values().map(LiftEx::calc_level).collect();
+    Some(levels?.into_iter().max().unwrap_or_default())
 }

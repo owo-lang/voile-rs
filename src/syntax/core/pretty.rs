@@ -34,6 +34,11 @@ impl Display for Neutral {
                 write_variants(f, variants, ":")?;
                 write!(f, " | {}}}", ext)
             }
+            Rec(fields, ext) => {
+                f.write_str("{|")?;
+                write_variants(f, fields, " =")?;
+                write!(f, ", ... = {}|}}", ext)
+            }
         }
     }
 }

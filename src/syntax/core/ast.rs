@@ -97,6 +97,24 @@ impl Val {
         }
     }
 
+    /// Extension for records.
+    pub fn rec_extend(self, ext: Self) -> Self {
+        use Val::*;
+        match (self, ext) {
+            (Rec(mut fields), Rec(mut ext)) => {
+                fields.append(&mut ext);
+                Rec(fields)
+            }
+            (Rec(mut fields), Neut(Neutral::Rec(mut more, ext))) => {
+                fields.append(&mut more);
+                Rec(fields).extend(Neut(*ext))
+            }
+            (Rec(fields), Neut(otherwise)) => Self::neutral_record(fields, otherwise),
+            (a, b) => panic!("Cannot extend `{}` by `{}`.", a, b),
+        }
+    }
+
+    /// Extension for row-polymorphic types.
     pub fn extend(self, ext: Self) -> Self {
         use Val::*;
         use VarRec::*;
@@ -219,6 +237,8 @@ pub enum Neutral {
     Snd(Box<Self>),
     /// Row-polymorphic types.
     Row(VarRec, Variants, Box<Self>),
+    /// Record literal, with extension.
+    Rec(Fields, Box<Self>),
 }
 
 /// Postulated value (or temporarily irreducible expressions), aka axioms.
@@ -246,6 +266,8 @@ impl Axiom {
 impl Neutral {
     pub fn map_axiom(self, f: &mut impl FnMut(Axiom) -> Neutral) -> Self {
         use Neutral::*;
+        let mapper = &mut |n: Neutral| Val::Neut(n.map_axiom(f));
+        let map_val = |(k, v): (String, Val)| (k, v.map_neutral(mapper));
         match self {
             Axi(a) => f(a),
             App(fun, args) => App(
@@ -261,12 +283,12 @@ impl Neutral {
             Meta(n) => Meta(n),
             Lift(levels, expr) => Lift(levels, Box::new(expr.map_axiom(f))),
             Row(kind, variants, ext) => {
-                let mapper = &mut |n: Neutral| Val::Neut(n.map_axiom(f));
-                let variants = variants
-                    .into_iter()
-                    .map(|(k, v)| (k, v.map_neutral(mapper)))
-                    .collect();
+                let variants = variants.into_iter().map(map_val).collect();
                 Row(kind, variants, Box::new(ext.map_axiom(f)))
+            }
+            Rec(fields, ext) => {
+                let fields = fields.into_iter().map(map_val).collect();
+                Rec(fields, Box::new(ext.map_axiom(f)))
             }
         }
     }
@@ -295,6 +317,11 @@ impl RedEx for Neutral {
                 let ext = ext.reduce_with_dbi(arg, dbi);
                 Val::RowPoly(kind, variants).extend(ext)
             }
+            Rec(fields, ext) => {
+                let fields = reduce_variants_with_dbi(fields, dbi, &arg);
+                let ext = ext.reduce_with_dbi(arg, dbi);
+                Val::Rec(fields).extend(ext)
+            }
         }
     }
 
@@ -320,6 +347,11 @@ impl RedEx for Neutral {
                 let ext = ext.reduce_with_dbi_borrow(&arg, dbi);
                 Val::RowPoly(kind, variants).extend(ext)
             }
+            Rec(fields, ext) => {
+                let fields = reduce_variants_with_dbi(fields, dbi, arg);
+                let ext = ext.reduce_with_dbi_borrow(&arg, dbi);
+                Val::Rec(fields).extend(ext)
+            }
         }
     }
 }
@@ -343,7 +375,7 @@ pub enum Val {
     RowKind(Level, VarRec, Vec<String>),
     /// Constructor invocation.
     Cons(String, Box<Self>),
-    /// Record literal, without extension.2
+    /// Record literal, without extension.
     Rec(Fields),
     /// Sigma instance.
     Pair(Box<Self>, Box<Self>),
@@ -441,6 +473,10 @@ impl Val {
 
     pub fn neutral_row_type(kind: VarRec, variants: Variants, ext: Neutral) -> TVal {
         Val::Neut(Neutral::Row(kind, variants, Box::new(ext)))
+    }
+
+    pub fn neutral_record(fields: Fields, ext: Neutral) -> Self {
+        Val::Neut(Neutral::Rec(fields, Box::new(ext)))
     }
 
     pub fn neutral_variant_type(variants: Variants, ext: Neutral) -> TVal {
