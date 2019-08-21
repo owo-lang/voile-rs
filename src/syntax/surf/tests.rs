@@ -1,73 +1,68 @@
 use super::{parse_expr_err_printed, parse_str_err_printed};
 
+macro_rules! success {
+    ($str:literal) => {
+        parse_str_err_printed($str)
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
+    };
+}
+
+macro_rules! success_expr {
+    ($str:literal) => {
+        parse_expr_err_printed($str)
+            .map(|ast| println!("{:?}", ast))
+            .unwrap();
+    };
+}
+
 #[test]
 fn simple_declaration_parsing() {
-    parse_str_err_printed("val a : b;").unwrap();
+    success!("val a : b;");
     parse_str_err_printed("val a : b").unwrap_err();
     parse_str_err_printed("a : b").unwrap_err();
-    parse_str_err_printed("let a = b;").unwrap();
+    success!("let a = b;");
     parse_str_err_printed("a = b").unwrap_err();
 }
 
 #[test]
 fn primary_expr_parsing() {
-    parse_str_err_printed("let a = Type;").unwrap();
-    parse_str_err_printed("let a = Type233;").unwrap();
-    parse_str_err_printed("let van = (Type233);").unwrap();
+    success!("let a = Type;");
+    success!("let a = Type233;");
+    success!("let van = (Type233);");
     parse_str_err_printed("let darkholm = (Type233;").unwrap_err();
 }
 
 #[test]
 fn pi_type_parsing() {
-    parse_str_err_printed("val mayori : monika -> (a: A) -> (c d e : CDE) -> F;")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_str_err_printed("val star : platinum * (a: A) * F;")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
+    success!("val mayori : monika -> (a: A) -> (c d e : CDE) -> F;");
+    success!("val star : platinum * (a: A) * F;");
 }
 
 #[test]
 fn standalone_expr_parsing() {
-    parse_expr_err_printed("Agda").unwrap();
-    parse_expr_err_printed("Rec { n : Idris; }")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_expr_err_printed("Sum { n : Idris; }")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_expr_err_printed("Rec { n : Coq; ... = Epigram }")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_expr_err_printed("Sum { n : Coq; ... = Epigram }")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_expr_err_printed("Sum { n : HOL; m : Isabelle; ... = Epigram }")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
+    success_expr!("Agda");
+    success_expr!("Rec { n : Idris; }");
+    success_expr!("Sum { n : Idris; }");
+    success_expr!("Rec { n : Coq; ... = Epigram }");
+    success_expr!("Sum { n : Coq; ... = Epigram }");
+    success_expr!("Sum { n : HOL; m : Isabelle; ... = Epigram }");
 }
 
 #[test]
 fn simple_expr_parsing() {
-    parse_str_err_printed("let reimu = marisa|>alice;")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_str_err_printed("let madoka = homura sayaka kyoko;")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_str_err_printed("let touma = \\kazusa Setsuna. Ogiso;")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_str_err_printed("let komeji = satori$koishi orin$okku;")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_str_err_printed("let scarlet = devil, mansion;")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_str_err_printed("val deep : @Dark Fantasy;")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
-    parse_str_err_printed("val uw : ^^^pl se;")
-        .map(|ast| println!("{:?}", ast))
-        .unwrap();
+    success!("let reimu = marisa|>alice;");
+    success!("let madoka = homura sayaka kyoko;");
+    success!("let touma = \\kazusa Setsuna. Ogiso;");
+    success!("let komeji = satori$koishi orin$okku;");
+    success!("let scarlet = devil, mansion;");
+    success!("val deep : @Dark Fantasy;");
+    success!("val uw : ^^^pl se;");
+}
+
+#[test]
+fn row_polymorphic_type_def_expr_parsing() {
+    success!("val king : Rec {n: A;};");
+    success!("val crimson : Sum {};");
+    success!("val experience : Rec {};");
 }
