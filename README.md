@@ -20,13 +20,14 @@
 
 Voile is a dependently-typed programming language features in first-class
 sums and records.
+For language description, please head to the [docs.rs][doc-rs] page.
 
 ## Resources
 
-+ [Docs.rs][doc-rs] documentation (a tutorial is included)
-+ [Change Log](CHANGELOG.md)
-+ [IntelliJ Plugin][plugin]
-+ [Code examples](samples)
++ [Docs.rs][doc-rs] documentation, including KaTeX-rendered typing rules
++ [Change Log](CHANGELOG.md), useful resource for tracking language evolution
++ [IntelliJ Plugin][plugin], which can export your code as clickable HTML
++ [Code Examples](samples), which also acts as integration test suites
 
 ## Install
 
@@ -48,3 +49,13 @@ You can also start a REPL:
 ```bash
 voilec -i
 ```
+
+## Progress
+
++ [X] Basic dependent type (minitt-rs things)
++ [X] Universe level support
++ [X] Row-types and kinds
++ [ ] Record constructor
++ [ ] Record projection
++ [X] Variant constructor
++ [ ] Variant eliminator (case-split)
