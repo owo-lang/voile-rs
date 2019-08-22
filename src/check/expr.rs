@@ -5,7 +5,7 @@ use VarRec::*;
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo, VarRec};
-use crate::syntax::core::{Closure, LiftEx, Val, Variants};
+use crate::syntax::core::{Closure, LiftEx, Neutral, Val, Variants};
 use crate::syntax::level::Level;
 
 use super::eval::compile_cons;
@@ -236,17 +236,47 @@ $$
 }
 $$
 */
-fn infer(mut tcs: TCS, value: &Abs) -> ValTCM {
+fn infer(tcs: TCS, value: &Abs) -> ValTCM {
     use Abs::*;
     let info = value.syntax_info();
     match value {
         Type(_, level) => Ok((Val::Type(*level + 1).into_info(info), tcs)),
         RowKind(..) => Ok((Val::Type(From::from(1u32)).into_info(info), tcs)),
+        Rec(_, fields, ext) => {
+            let (ext, tcs) = ext
+                .as_ref()
+                .map(|abs| tcs.infer(&**abs))
+                .transpose()?
+                .unwrap_or_default();
+            let (mut ext_fields, more) = match ext.ast {
+                Val::RowPoly(Record, fields) => (fields, None),
+                Val::Neut(Neutral::Row(Record, fields, more)) => (fields, Some(*more)),
+                e => return Err(TCE::NotRecVal(ext.info, e)),
+            };
+            let mut tcs = tcs;
+            for field in fields {
+                if ext_fields.contains_key(&field.label.text) {
+                    return Err(TCE::DuplicateField(
+                        field.label.info,
+                        field.label.text.clone(),
+                    ));
+                }
+                let (inferred, new_tcs) = tcs.infer(&field.expr)?;
+                tcs = new_tcs;
+                ext_fields.insert(field.label.text.clone(), inferred.ast);
+            }
+            let ty = match more {
+                None => Val::record_type(ext_fields),
+                Some(more) => Val::neutral_record_type(ext_fields, more),
+            };
+            (ty.into_info(info), tcs)
+        }
         Var(_, _, dbi) => {
             let local = tcs.local_type(*dbi).ast.clone().attach_dbi(*dbi);
             Ok((local.into_info(info), tcs))
         }
         Lam(..) => {
+            let mut tcs = tcs;
             let param_meta = tcs.fresh_meta();
             let ret_meta = tcs.fresh_meta();
             // let mocked = Val::postulate(*uid);

@@ -22,12 +22,13 @@ pub enum TCE {
     NotSubtype(TVal, TVal),
     NotTypeAbs(SyntaxInfo, Abs),
     NotTypeVal(SyntaxInfo, Val),
-    NotSumVal(SyntaxInfo, Val),
+    NotRecVal(SyntaxInfo, Val),
     NotUniverseVal(SyntaxInfo, Val),
 
     // == Elaboration ==
     TypeNotInGamma(SyntaxInfo),
     OverlappingVariant(SyntaxInfo, String),
+    DuplicateField(SyntaxInfo, String),
     UnexpectedVariant(SyntaxInfo, String),
     MissingVariant(VarRec, String),
     /// Maximum `DBI` vs. Requested `DBI`
@@ -85,19 +86,18 @@ impl Display for TCE {
             TCE::NotTypeVal(id, val) => {
                 write!(f, "Expected a type expression, got: `{}` at {}.", val, id)
             }
-            TCE::NotSumVal(id, val) => write!(
-                f,
-                "Expected a sum type expression, got: `{}` at {}.",
-                val, id
-            ),
+            TCE::NotRecVal(id, val) => {
+                write!(f, "Expected a record expression, got: `{}` at {}.", val, id)
+            }
             TCE::MissingVariant(VarRec::Variant, variant) => {
-                write!(f, "Expect variant `{}`, but missing.", variant)
+                write!(f, "Missing variant `{}`.", variant)
             }
-            TCE::MissingVariant(VarRec::Record, field) => {
-                write!(f, "Expect field `{}`, but missing.", field)
-            }
+            TCE::MissingVariant(VarRec::Record, field) => write!(f, "Missing field `{}`.", field),
             TCE::OverlappingVariant(id, variant) => {
-                write!(f, "Duplicate variant: `{}` at {}.", variant, id)
+                write!(f, "Duplicated variant: `{}` at {}.", variant, id)
+            }
+            TCE::DuplicateField(id, variant) => {
+                write!(f, "Duplicated field: `{}` at {}.", variant, id)
             }
             TCE::UnexpectedVariant(id, variant) => {
                 write!(f, "Unexpected variant: `{}` at {}.", variant, id)
