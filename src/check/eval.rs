@@ -1,5 +1,5 @@
 use crate::check::monad::{MetaSolution, TCS};
-use crate::syntax::abs::Abs;
+use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::{Ident, DBI};
 use crate::syntax::core::{LiftEx, Neutral, Val, ValInfo, Variants};
 
@@ -81,6 +81,17 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let resolved = tcs.local_val(i).ast.clone().attach_dbi(i);
             (resolved.into_info(ident.info), tcs)
         }
+        Rec(info, fields, ext) => {
+            let (variants, tcs) = evaluate_variants(tcs, fields);
+            let record = Val::Rec(variants);
+            match ext {
+                None => (record.into_info(info), tcs),
+                Some(ext) => {
+                    let (ext, tcs) = tcs.evaluate(*ext);
+                    (record.rec_extend(ext.ast).into_info(info), tcs)
+                }
+            }
+        }
         Ref(ident, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(ident.info), tcs),
         Cons(info) => (compile_cons(info), tcs),
         App(info, f, a) => {
@@ -124,14 +135,8 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
         }
         Meta(ident, mi) => (Val::meta(mi).into_info(ident.info), tcs),
         RowPoly(info, kind, variants, ext) => {
-            let mut out_variants = Variants::new();
-            let mut tcs = tcs;
-            for labelled in variants.into_iter() {
-                let (expr, new_tcs) = tcs.evaluate(labelled.expr);
-                tcs = new_tcs;
-                out_variants.insert(labelled.label.text, expr.ast);
-            }
-            let row_poly = Val::RowPoly(kind, out_variants);
+            let (variants, tcs) = evaluate_variants(tcs, variants);
+            let row_poly = Val::RowPoly(kind, variants);
             match ext {
                 None => (row_poly.into_info(info), tcs),
                 Some(ext) => {
@@ -146,6 +151,16 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             (expr.into_info(info), tcs)
         }
     }
+}
+
+fn evaluate_variants(mut tcs: TCS, variants: Vec<LabAbs>) -> (Variants, TCS) {
+    let mut out_variants = Variants::new();
+    for labelled in variants.into_iter() {
+        let (expr, new_tcs) = tcs.evaluate(labelled.expr);
+        tcs = new_tcs;
+        out_variants.insert(labelled.label.text, expr.ast);
+    }
+    (out_variants, tcs)
 }
 
 /// Expand global references to concrete values,

@@ -42,19 +42,27 @@ impl Display for Abs {
                     Record => "Rec",
                 };
                 write!(f, "{} {{ ", prefix)?;
-                pretty_labels(f, labels)?;
+                pretty_labels(f, labels, ":")?;
                 match rest {
                     Some(rest) => write!(f, "... = {} }}", rest),
                     None => write!(f, "}}"),
+                }
+            }
+            Abs::Rec(_, fields, rest) => {
+                f.write_str("{|")?;
+                pretty_labels(f, fields, " =")?;
+                match rest {
+                    Some(rest) => write!(f, "... = {} |}}", rest),
+                    None => f.write_str("|}"),
                 }
             }
         }
     }
 }
 
-fn pretty_labels(f: &mut Formatter, labels: &[LabAbs]) -> MonadFmt {
+fn pretty_labels(f: &mut Formatter, labels: &[LabAbs], sep: &str) -> MonadFmt {
     for label in labels {
-        writeln!(f, "{}: {}; ", label.label.text, label.expr)?;
+        writeln!(f, "{}{} {}; ", label.label.text, sep, label.expr)?;
     }
     Ok(())
 }

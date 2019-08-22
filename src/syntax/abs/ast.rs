@@ -28,6 +28,8 @@ pub enum Abs {
     Snd(SyntaxInfo, Box<Self>),
     /// Row-polymorphic types, corresponds to [RowPoly](crate::syntax::surf::Expr::RowPoly)
     RowPoly(SyntaxInfo, VarRec, Vec<LabAbs>, Option<Box<Self>>),
+    /// Record literals
+    Rec(SyntaxInfo, Vec<LabAbs>, Option<Box<Self>>),
     /// Row-polymorphic kinds, corresponds to [RowKind](crate::syntax::surf::Expr::RowKind)
     RowKind(SyntaxInfo, VarRec, Vec<Ident>),
 }
@@ -42,6 +44,7 @@ impl ToSyntaxInfo for Abs {
             | Abs::Fst(info, ..)
             | Abs::Snd(info, ..)
             | Abs::RowPoly(info, ..)
+            | Abs::Rec(info, ..)
             | Abs::RowKind(info, ..)
             | Abs::Lift(info, ..)
             | Abs::Lam(info, ..) => *info,
