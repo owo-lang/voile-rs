@@ -62,6 +62,10 @@ fn declarations(the_rule: Tok) -> Vec<Decl> {
     the_rule.into_inner().into_iter().map(declaration).collect()
 }
 
+fn rec_field(rules: Tok) -> LabExpr {
+    labelled(rules)
+}
+
 fn labelled(rules: Tok) -> LabExpr {
     let mut inner: Tik = rules.into_inner();
     let label = next_ident(&mut inner);
@@ -78,6 +82,7 @@ fn row_rest(rules: Tok) -> Expr {
 }
 
 many_prefix_parser!(row_polymorphic, LabExpr, labelled, row_rest);
+many_prefix_parser!(record_literal_impl, LabExpr, rec_field, row_rest);
 
 fn variant_record(rules: Tok, kind: VarRec) -> Expr {
     let info = SyntaxInfo::from(rules.as_span());
