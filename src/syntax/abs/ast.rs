@@ -69,6 +69,10 @@ impl Abs {
         Abs::RowPoly(info, kind, labels, rest.map(Box::new))
     }
 
+    pub fn record(info: SyntaxInfo, fields: Vec<LabAbs>, rest: Option<Self>) -> Self {
+        Abs::Rec(info, fields, rest.map(Box::new))
+    }
+
     pub fn app(info: SyntaxInfo, function: Self, argument: Self) -> Self {
         Abs::App(info, Box::new(function), Box::new(argument))
     }

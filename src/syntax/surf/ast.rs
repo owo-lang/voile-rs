@@ -43,6 +43,8 @@ pub enum Expr {
     Tup(Box<Vec1<Self>>),
     /// Row-polymorphic types, either record types or variant types.
     RowPoly(SyntaxInfo, VarRec, Vec<LabExpr>, Option<Box<Self>>),
+    /// Record literals.
+    Rec(SyntaxInfo, Vec<LabExpr>, Option<Box<Self>>),
     /// Row-polymorphic kinds, either record types or variant kinds.
     RowKind(SyntaxInfo, VarRec, Vec<Ident>),
     /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`
@@ -85,6 +87,10 @@ impl Expr {
         rest: Option<Self>,
     ) -> Self {
         Expr::RowPoly(info, kind, labels, rest.map(Box::new))
+    }
+
+    pub fn record(info: SyntaxInfo, fields: Vec<LabExpr>, rest: Option<Self>) -> Self {
+        Expr::Rec(info, fields, rest.map(Box::new))
     }
 
     pub fn sum(info: SyntaxInfo, labels: Vec<LabExpr>, rest: Option<Self>) -> Self {

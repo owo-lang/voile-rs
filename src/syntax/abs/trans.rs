@@ -91,6 +91,8 @@ fn trans_expr_inner(
 ) -> TCM<Abs> {
     let mut recursion =
         |e: Expr| trans_expr_inner(e, meta_count, env, global_map, local_env, local_map);
+    let map_labels =
+        |Labelled { expr, label }| recursion(expr).map(|expr| Labelled { label, expr });
     match expr {
         Expr::Type(syntax, level) => Ok(Abs::Type(syntax, level)),
         Expr::Var(ident) => {
@@ -122,14 +124,14 @@ fn trans_expr_inner(
         // TODO: check uniqueness?
         Expr::RowKind(info, kind, labels) => Ok(Abs::RowKind(info, kind, labels)),
         Expr::RowPoly(info, kind, labels, rest) => {
-            let labels = labels
-                .into_iter()
-                .map(|Labelled { expr, label }| {
-                    recursion(expr).map(|expr| Labelled { label, expr })
-                })
-                .collect::<Result<_, _>>()?;
+            let labels: Result<_, _> = labels.into_iter().map(map_labels).collect();
             let rest = rest.map(|e| recursion(*e)).transpose()?;
-            Ok(Abs::row_polymorphic_type(info, kind, labels, rest))
+            Ok(Abs::row_polymorphic_type(info, kind, labels?, rest))
+        }
+        Expr::Rec(info, fields, rest) => {
+            let labels: Result<_, _> = fields.into_iter().map(map_labels).collect();
+            let rest = rest.map(|e| recursion(*e)).transpose()?;
+            Ok(Abs::record(info, labels?, rest))
         }
         Expr::Tup(tup_vec) => Ok(tup_vec
             .try_map(recursion)?

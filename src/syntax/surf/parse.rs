@@ -82,7 +82,14 @@ fn row_rest(rules: Tok) -> Expr {
 }
 
 many_prefix_parser!(row_polymorphic, LabExpr, labelled, row_rest);
-many_prefix_parser!(record_literal_impl, LabExpr, rec_field, row_rest);
+many_prefix_parser!(record_literal, LabExpr, rec_field, row_rest);
+
+fn record(rules: Tok) -> Expr {
+    let info = SyntaxInfo::from(rules.as_span());
+    let mut inner: Tik = rules.into_inner();
+    let (fields, rest) = next_rule!(inner, record_literal);
+    Expr::record(info, fields, rest)
+}
 
 fn variant_record(rules: Tok, kind: VarRec) -> Expr {
     let info = SyntaxInfo::from(rules.as_span());
@@ -160,6 +167,7 @@ fn primary_expr(rules: Tok) -> Expr {
         Rule::variant => variant_record(the_rule, VarRec::Variant),
         Rule::record_kind => variant_record_kind(the_rule, VarRec::Record),
         Rule::variant_kind => variant_record_kind(the_rule, VarRec::Variant),
+        Rule::record_literal => record(the_rule),
         Rule::type_keyword => type_keyword(the_rule),
         Rule::expr => expr(the_rule),
         e => panic!("Unexpected rule: {:?} with token {}", e, the_rule.as_str()),
@@ -171,9 +179,9 @@ fn primary_expr(rules: Tok) -> Expr {
 fn one_param(rules: Tok) -> Param {
     let mut inner: Tik = rules.into_inner();
     let (names, expr) = next_rule!(inner, multi_param);
-    let expr = expr.unwrap();
+    let ty = expr.unwrap();
     end_of_rule(&mut inner);
-    Param { names, ty: expr }
+    Param { names, ty }
 }
 
 fn param(rules: Tok) -> Param {
@@ -231,7 +239,7 @@ fn type_keyword(rules: Tok) -> Expr {
     let mut inner: Tik = rules.into_inner();
     let level_ast_node: Tok = inner.next().unwrap();
     debug_assert_eq!(level_ast_node.as_rule(), Rule::type_level);
-    let level: Level = Level::Num(level_ast_node.as_str().parse().unwrap_or(0));
+    let level = Level::Num(level_ast_node.as_str().parse().unwrap_or(0));
     end_of_rule(&mut inner);
     Expr::Type(syntax_info, level)
 }
