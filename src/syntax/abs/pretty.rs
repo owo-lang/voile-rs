@@ -25,6 +25,7 @@ impl Display for Abs {
             Abs::Pair(_, a, b) => write!(f, "({}, {})", a, b),
             Abs::Fst(_, p) => write!(f, "({}.1)", p),
             Abs::Snd(_, p) => write!(f, "({}.2)", p),
+            Abs::Proj(_, rec, field) => write!(f, "({}.{})", rec, field.text),
             Abs::RowKind(_, kind, labels) => {
                 let prefix = match kind {
                     Variant => "Sum",

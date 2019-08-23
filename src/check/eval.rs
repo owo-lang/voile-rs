@@ -147,6 +147,11 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let (p, tcs) = tcs.expand_global(p.ast);
             (p.second().into_info(info), tcs)
         }
+        Proj(info, rec, field) => {
+            let (rec, tcs) = evaluate(tcs, *rec);
+            let (rec, tcs) = tcs.expand_global(rec.ast);
+            (rec.project(field.text).into_info(info), tcs)
+        }
         // This branch is not likely to be reached.
         Lam(info, _, _, body) => {
             let (body, tcs) = evaluate(tcs, *body);

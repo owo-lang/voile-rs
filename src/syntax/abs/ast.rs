@@ -16,6 +16,8 @@ pub enum Abs {
     Lift(SyntaxInfo, u32, Box<Self>),
     /// Constructor call
     Cons(Ident),
+    /// Record projection
+    Proj(SyntaxInfo, Box<Self>, Ident),
     /// Apply or Pipeline in surface
     App(SyntaxInfo, Box<Self>, Box<Self>),
     /// Dependent Type, `(a -> b -> c)` as `Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))`
@@ -45,6 +47,7 @@ impl ToSyntaxInfo for Abs {
             | Abs::Snd(info, ..)
             | Abs::RowPoly(info, ..)
             | Abs::Rec(info, ..)
+            | Abs::Proj(info, ..)
             | Abs::RowKind(info, ..)
             | Abs::Lift(info, ..)
             | Abs::Lam(info, ..) => *info,
@@ -75,6 +78,10 @@ impl Abs {
 
     pub fn app(info: SyntaxInfo, function: Self, argument: Self) -> Self {
         Abs::App(info, Box::new(function), Box::new(argument))
+    }
+
+    pub fn proj(info: SyntaxInfo, record: Self, field: Ident) -> Self {
+        Abs::Proj(info, Box::new(record), field)
     }
 
     pub fn fst(info: SyntaxInfo, of: Self) -> Self {
