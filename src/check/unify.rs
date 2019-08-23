@@ -107,6 +107,15 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
         {
             tcs.unify_variants(*a_kind, a_variants, b_variants)
         }
+        (RowKind(a_level, a_kind, a_labels), RowKind(b_level, b_kind, b_labels))
+            if a_level == b_level && a_kind == b_kind && a_labels.len() == b_labels.len() =>
+        {
+            if a_labels.iter().all(|n| b_labels.contains(n)) {
+                Ok(tcs)
+            } else {
+                Err(TCE::CannotUnify(a.clone(), b.clone()))
+            }
+        }
         (Rec(a_fields), Rec(b_fields)) if a_fields.len() == b_fields.len() => {
             tcs.unify_variants(VarRec::Record, a_fields, b_fields)
         }
