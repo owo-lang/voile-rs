@@ -146,7 +146,11 @@ impl Val {
                 RowPoly(kind, variants).extend(Neut(*more))
             }
             (RowPoly(kind, variants), Neut(otherwise)) => {
-                Self::neutral_row_type(kind, variants, otherwise)
+                if variants.is_empty() {
+                    Neut(otherwise)
+                } else {
+                    Self::neutral_row_type(kind, variants, otherwise)
+                }
             }
             (a, b) => panic!("Cannot extend `{}` by `{}`.", a, b),
         }

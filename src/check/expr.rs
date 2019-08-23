@@ -154,7 +154,11 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let (nice_fields, rest_field_types, tcs) = check_fields(tcs, fields, field_types)?;
             match more {
                 Some(more) => {
-                    let more_type = Val::neutral_record_type(rest_field_types, *more_types.clone());
+                    let more_type = if rest_field_types.is_empty() {
+                        Val::Neut(*more_types.clone())
+                    } else {
+                        Val::neutral_record_type(rest_field_types, *more_types.clone())
+                    };
                     let (more, tcs) = tcs.check(&**more, &more_type)?;
                     let record = Val::Rec(nice_fields).rec_extend(more.ast);
                     Ok((record.into_info(*info), tcs))

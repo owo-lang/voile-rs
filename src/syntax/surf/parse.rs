@@ -99,6 +99,7 @@ fn variant_record(rules: Tok, kind: VarRec) -> Expr {
 
 fn variant_record_kind(rules: Tok, kind: VarRec) -> Expr {
     let info = SyntaxInfo::from(rules.as_span());
+    let rules = rules.into_inner().next().unwrap();
     let labels = rules.into_inner().into_iter().map(ident).collect();
     Expr::RowKind(info, kind, labels)
 }

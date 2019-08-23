@@ -1,0 +1,16 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-08-22
+// record-ext
+// Author: ice10
+//
+
+let Unit = Rec {};
+
+val unit : Unit;
+let unit = {| |};
+
+val ThreeUnit : Rec [a b] -> Type1;
+let ThreeUnit = \r. Rec { a: Unit; b: Unit; ... = r };
+
+val threeUnit : (r : Rec [a b]) -> r -> ThreeUnit r;
+let threeUnit = \R r. {| a = unit; b = unit; ... = r |};
