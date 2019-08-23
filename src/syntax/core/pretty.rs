@@ -24,6 +24,7 @@ impl Display for Neutral {
             }
             Fst(p) => write!(f, "({}.1)", p),
             Snd(p) => write!(f, "({}.2)", p),
+            Proj(rec, field) => write!(f, "({}.{})", rec, field),
             Lift(levels, p) => write!(f, "(^[{:?}] {})", levels, p),
             Row(kind, variants, ext) => {
                 match kind {

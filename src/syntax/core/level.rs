@@ -83,6 +83,7 @@ impl LiftEx for Neutral {
             Ref(..) => None,
             Fst(expr) => expr.calc_level(),
             Snd(expr) => expr.calc_level(),
+            Proj(expr, ..) => expr.calc_level(),
             App(f, args) => {
                 let args: Option<Vec<_>> = args.iter().map(LiftEx::calc_level).collect();
                 let args = args?.into_iter().max();

@@ -97,6 +97,32 @@ impl Val {
         }
     }
 
+    pub fn project(self, field: String) -> Val {
+        match self {
+            Val::Rec(mut fields) => fields
+                .remove(&field)
+                .expect(&format!("Missing essential field with name `{}`.", field)),
+            Val::Neut(Neutral::Rec(mut fields, ..)) => fields
+                .remove(&field)
+                .expect(&format!("Missing essential field with name `{}`.", field)),
+            e => panic!("Cannot project on `{}`.", e),
+        }
+    }
+
+    pub fn project_cloned(&self, field: String) -> Val {
+        match self {
+            Val::Rec(fields) => fields
+                .get(&field)
+                .expect(&format!("Missing essential field with name `{}`.", field))
+                .clone(),
+            Val::Neut(Neutral::Rec(fields, ..)) => fields
+                .get(&field)
+                .expect(&format!("Missing essential field with name `{}`.", field))
+                .clone(),
+            e => panic!("Cannot project on `{}`.", e),
+        }
+    }
+
     /// Extension for records.
     pub fn rec_extend(self, ext: Self) -> Self {
         use Val::*;
@@ -239,6 +265,8 @@ pub enum Neutral {
     Fst(Box<Self>),
     /// Projecting the second element of a pair.
     Snd(Box<Self>),
+    /// Projecting a named element of a record.
+    Proj(Box<Self>, String),
     /// Row-polymorphic types.
     Row(VarRec, Variants, Box<Self>),
     /// Record literal, with extension.
@@ -282,6 +310,7 @@ impl Neutral {
             ),
             Fst(p) => Fst(Box::new(p.map_axiom(f))),
             Snd(p) => Snd(Box::new(p.map_axiom(f))),
+            Proj(p, s) => Proj(Box::new(p.map_axiom(f)), s),
             Var(n) => Var(n),
             Ref(n) => Ref(n),
             Meta(n) => Meta(n),
@@ -315,6 +344,7 @@ impl RedEx for Neutral {
                 }),
             Fst(pair) => pair.reduce_with_dbi(arg, dbi).first(),
             Snd(pair) => pair.reduce_with_dbi(arg, dbi).second(),
+            Proj(rec, field) => rec.reduce_with_dbi(arg, dbi).project(field),
             Lift(levels, neut) => neut.reduce_with_dbi(arg, dbi).lift(levels),
             Row(kind, variants, ext) => {
                 let variants = reduce_variants_with_dbi(variants, dbi, &arg);
@@ -345,6 +375,7 @@ impl RedEx for Neutral {
                 }),
             Fst(pair) => pair.reduce_with_dbi_borrow(arg, dbi).first(),
             Snd(pair) => pair.reduce_with_dbi_borrow(arg, dbi).second(),
+            Proj(pair, field) => pair.reduce_with_dbi_borrow(arg, dbi).project(field),
             Lift(levels, neut) => neut.reduce_with_dbi_borrow(arg, dbi).lift(levels),
             Row(kind, variants, ext) => {
                 let variants = reduce_variants_with_dbi(variants, dbi, arg);
