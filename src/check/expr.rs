@@ -5,7 +5,7 @@ use VarRec::*;
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo, VarRec};
-use crate::syntax::core::{Closure, LiftEx, Neutral, Val, Variants};
+use crate::syntax::core::{Closure, Fields, LiftEx, Neutral, Val, Variants};
 use crate::syntax::level::Level;
 
 use super::eval::compile_cons;
@@ -109,6 +109,35 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
         }
         (RowPoly(info, kind, variants, ext), Val::Type(l)) => {
             check_row_polymorphic_type(tcs, *info, *l, *kind, variants, ext, &[])
+        }
+        (Rec(info, fields, more), Val::RowPoly(Record, field_types)) => {
+            let mut nice_fields = Fields::new();
+            let mut tcs = tcs;
+            for field in fields {
+                if let Some(ty) = field_types.get(&field.label.text) {
+                    let key = field.label.text.clone();
+                    let (field, new_tcs) = tcs.check(&field.expr, ty)?;
+                    tcs = new_tcs;
+                    nice_fields.insert(key, field.ast);
+                }
+            }
+            let rest_field_types: Variants = field_types
+                .iter()
+                .filter(|(label, _)| !nice_fields.contains_key(&**label))
+                .map(|(label, expr)| (label.clone(), expr.clone()))
+                .collect();
+            match more {
+                Some(more) => {
+                    let more_type = Val::record_type(rest_field_types);
+                    let (more, tcs) = tcs.check(&**more, &more_type)?;
+                    let record = Val::Rec(nice_fields).rec_extend(more.ast);
+                    Ok((record.into_info(*info), tcs))
+                }
+                None => match rest_field_types.keys().next() {
+                    Some(missing_field) => Err(TCE::MissingVariant(Record, missing_field.clone())),
+                    None => Ok((Val::Rec(nice_fields).into_info(*info), tcs)),
+                },
+            }
         }
         (Lift(info, levels, expr), anything) => {
             let (expr, tcs) = tcs
@@ -269,7 +298,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 None => Val::record_type(ext_fields),
                 Some(more) => Val::neutral_record_type(ext_fields, more),
             };
-            (ty.into_info(info), tcs)
+            Ok((ty.into_info(info), tcs))
         }
         Var(_, _, dbi) => {
             let local = tcs.local_type(*dbi).ast.clone().attach_dbi(*dbi);
@@ -336,7 +365,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 }
             }
         },
-        e => panic!("Unimplemented inference: `{}`.", e),
+        e => Err(TCE::CannotInfer(info, e.clone())),
     }
 }
 

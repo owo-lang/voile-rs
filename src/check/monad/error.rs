@@ -11,7 +11,7 @@ pub enum TCE {
     Textual(String),
 
     // == "Cannot"s ==
-    CannotInfer(SyntaxInfo),
+    CannotInfer(SyntaxInfo, Abs),
     CannotUnify(Val, Val),
 
     // == "Not"s ==
@@ -64,7 +64,7 @@ impl Display for TCE {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         match self {
             TCE::Textual(text) => f.write_str(text),
-            TCE::CannotInfer(val) => write!(f, "Could not infer type of: {}.", val),
+            TCE::CannotInfer(id, val) => write!(f, "Could not infer type of: `{}` at {}.", val, id),
             TCE::TypeNotInGamma(id) => write!(f, "Type info not in Gamma for: {}.", id),
             TCE::NotSigma(id, val) => write!(
                 f,
