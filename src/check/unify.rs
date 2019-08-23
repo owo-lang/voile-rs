@@ -84,7 +84,8 @@ $$
 */
 fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
     // use Axiom::Generated as Gen;
-    use {Neutral::*, Val::*};
+    use Neutral::{Axi, Meta, Ref};
+    use Val::*;
     match (a, b) {
         (Type(sub_level), Type(super_level)) if sub_level == super_level => Ok(tcs),
         (Neut(Axi(sub)), Neut(Axi(sup))) if sub.unique_id() == sup.unique_id() => Ok(tcs),
@@ -105,6 +106,9 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
             if a_kind == b_kind && a_variants.len() == b_variants.len() =>
         {
             tcs.unify_variants(*a_kind, a_variants, b_variants)
+        }
+        (Rec(a_fields), Rec(b_fields)) if a_fields.len() == b_fields.len() => {
+            tcs.unify_variants(VarRec::Record, a_fields, b_fields)
         }
         (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => match &tcs.meta_solutions()[mi.0] {
             MetaSolution::Unsolved => solve_with(tcs, *mi, term.clone()),
@@ -145,6 +149,15 @@ fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
         (Lift(x, a), Lift(y, b)) if x == y => tcs.unify_neutral(&**a, &**b),
         (App(f, a), App(g, b)) if a.len() == b.len() => (a.iter().zip(b.iter()))
             .try_fold(tcs.unify_neutral(&*f, &*g)?, |tcs, (x, y)| tcs.unify(x, y)),
+        (Rec(a_fields, a_more), Rec(b_fields, b_more)) if a_fields.len() == b_fields.len() => tcs
+            .unify_variants(VarRec::Record, a_fields, b_fields)?
+            .unify_neutral(&**a_more, &**b_more),
+        (Row(a_kind, a_fields, a_more), Row(b_kind, b_fields, b_more))
+            if a_kind == b_kind && a_fields.len() == b_fields.len() =>
+        {
+            tcs.unify_variants(*a_kind, a_fields, b_fields)?
+                .unify_neutral(&**a_more, &**b_more)
+        }
         (Snd(a), Snd(b)) | (Fst(a), Fst(b)) => tcs.unify_neutral(&**a, &**b),
         (e, t) => Err(TCE::CannotUnify(Val::Neut(e.clone()), Val::Neut(t.clone()))),
     }
