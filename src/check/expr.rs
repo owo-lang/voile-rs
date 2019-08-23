@@ -110,7 +110,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
         }
         (Rec(info, fields, more), Val::RowPoly(Record, field_types)) => {
             // Warn about unneeded fields?
-            let (nice_fields, _, rest_field_types, tcs) = check_fields(tcs, fields, field_types)?;
+            let (nice_fields, rest_field_types, tcs) = check_fields(tcs, fields, field_types)?;
             match more {
                 Some(more) => {
                     let more_type = Val::record_type(rest_field_types);
@@ -122,7 +122,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             }
         }
         (Rec(info, fields, more), Val::Neut(Neutral::Row(Record, field_types, more_types))) => {
-            let (nice_fields, _, rest_field_types, tcs) = check_fields(tcs, fields, field_types)?;
+            let (nice_fields, rest_field_types, tcs) = check_fields(tcs, fields, field_types)?;
             match more {
                 Some(more) => {
                     let more_type = Val::neutral_record_type(rest_field_types, *more_types.clone());
@@ -165,17 +165,14 @@ fn check_fields<'a>(
     mut tcs: TCS,
     fields: &'a [LabAbs],
     field_types: &Fields,
-) -> TCM<(Fields, Vec<&'a LabAbs>, Variants, TCS)> {
+) -> TCM<(Fields, Variants, TCS)> {
     let mut nice_fields = Fields::new();
-    let mut poor_fields = Vec::new();
     for field in fields {
         if let Some(ty) = field_types.get(&field.label.text) {
             let key = field.label.text.clone();
             let (field, new_tcs) = tcs.check(&field.expr, ty)?;
             tcs = new_tcs;
             nice_fields.insert(key, field.ast);
-        } else {
-            poor_fields.push(field);
         }
     }
     let rest_field_types = field_types
@@ -183,7 +180,7 @@ fn check_fields<'a>(
         .filter(|(label, _)| !nice_fields.contains_key(&**label))
         .map(|(label, expr)| (label.clone(), expr.clone()))
         .collect();
-    Ok((nice_fields, poor_fields, rest_field_types, tcs))
+    Ok((nice_fields, rest_field_types, tcs))
 }
 
 /**
