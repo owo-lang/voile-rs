@@ -3,6 +3,11 @@
 # 0.1.1
 
 + Update typing rule for `cons`
++ Support record construction parsing, type-checking, conversion checking,
+  reduction and inference (#146, #147)
++ Support empty record and variants (#154)
++ `Closure` is now a variant (#149)
++ More unification rules
 
 # 0.1.0
 
