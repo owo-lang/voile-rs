@@ -111,21 +111,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             check_row_polymorphic_type(tcs, *info, *l, *kind, variants, ext, &[])
         }
         (Rec(info, fields, more), Val::RowPoly(Record, field_types)) => {
-            let mut nice_fields = Fields::new();
-            let mut tcs = tcs;
-            for field in fields {
-                if let Some(ty) = field_types.get(&field.label.text) {
-                    let key = field.label.text.clone();
-                    let (field, new_tcs) = tcs.check(&field.expr, ty)?;
-                    tcs = new_tcs;
-                    nice_fields.insert(key, field.ast);
-                }
-            }
-            let rest_field_types: Variants = field_types
-                .iter()
-                .filter(|(label, _)| !nice_fields.contains_key(&**label))
-                .map(|(label, expr)| (label.clone(), expr.clone()))
-                .collect();
+            let (nice_fields, rest_field_types, tcs) = check_fields(tcs, fields, field_types);
             match more {
                 Some(more) => {
                     let more_type = Val::record_type(rest_field_types);
@@ -153,6 +139,25 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             Ok(tcs.evaluate(expr.clone()))
         }
     }
+}
+
+fn check_fields(mut tcs: TCS, fields: &[LabAbs], field_types: &Fields) -> (Fields, Variants, TCS) {
+    let mut nice_fields = Fields::new();
+    let mut tcs = tcs;
+    for field in fields {
+        if let Some(ty) = field_types.get(&field.label.text) {
+            let key = field.label.text.clone();
+            let (field, new_tcs) = tcs.check(&field.expr, ty)?;
+            tcs = new_tcs;
+            nice_fields.insert(key, field.ast);
+        }
+    }
+    let rest_field_types = field_types
+        .iter()
+        .filter(|(label, _)| !nice_fields.contains_key(&**label))
+        .map(|(label, expr)| (label.clone(), expr.clone()))
+        .collect();
+    (nice_fields, rest_field_types, tcs)
 }
 
 /**
@@ -203,7 +208,9 @@ fn check_row_polymorphic_type(
 ) -> ValTCM {
     let mut out_variants = Variants::new();
     for labelled in variants {
-        let (val, new_tcs) = tcs.check(&labelled.expr, &Val::Type(level))?;
+        let (val, new_tcs) = tcs
+            .check(&labelled.expr, &Val::Type(level))
+            .map_err(|e| e.wrap(info))?;
         tcs = new_tcs;
         let label = &labelled.label.text;
         if out_variants.contains_key(label) {
@@ -218,7 +225,9 @@ fn check_row_polymorphic_type(
         Some(ext) => {
             let known_labels = out_variants.keys().chain(labels.iter()).cloned().collect();
             let expected_kind = Val::RowKind(Default::default(), kind, known_labels);
-            let (ext, new_tcs) = tcs.check(&**ext, &expected_kind)?;
+            let (ext, new_tcs) = tcs
+                .check(&**ext, &expected_kind)
+                .map_err(|e| e.wrap(info))?;
             let row_poly = Val::RowPoly(kind, out_variants)
                 .extend(ext.ast)
                 .into_info(info);
@@ -274,7 +283,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
         Rec(_, fields, ext) => {
             let (ext, tcs) = ext
                 .as_ref()
-                .map(|abs| tcs.infer(&**abs))
+                .map(|abs| tcs.infer(&**abs).map_err(|e| e.wrap(info)))
                 .transpose()?
                 .unwrap_or_default();
             let (mut ext_fields, more) = match ext.ast {
@@ -285,12 +294,9 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             let mut tcs = tcs;
             for field in fields {
                 if ext_fields.contains_key(&field.label.text) {
-                    return Err(TCE::DuplicateField(
-                        field.label.info,
-                        field.label.text.clone(),
-                    ));
+                    return Err(TCE::duplicate_field(field.label.clone()));
                 }
-                let (inferred, new_tcs) = tcs.infer(&field.expr)?;
+                let (inferred, new_tcs) = tcs.infer(&field.expr).map_err(|e| e.wrap(info))?;
                 tcs = new_tcs;
                 ext_fields.insert(field.label.text.clone(), inferred.ast);
             }
@@ -349,7 +355,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
         App(_, f, a) => match &**f {
             Cons(variant_info) => {
                 let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap(info))?;
-                let mut variant = BTreeMap::default();
+                let mut variant = Variants::default();
                 variant.insert(variant_info.text[1..].to_owned(), a.ast);
                 Ok((Val::variant_type(variant).into_info(info), tcs))
             }

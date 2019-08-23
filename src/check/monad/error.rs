@@ -58,6 +58,10 @@ impl TCE {
     pub fn wrap(self, info: SyntaxInfo) -> Self {
         TCE::Wrapped(Box::new(self), info)
     }
+
+    pub fn duplicate_field(ident: Ident) -> Self {
+        TCE::DuplicateField(ident.info, ident.text)
+    }
 }
 
 impl Display for TCE {
