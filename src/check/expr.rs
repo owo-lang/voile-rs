@@ -22,6 +22,11 @@ $$
 \newcommand{\ty}[0]{\tau}
 \newcommand{\piTy}[1]{\Pi \langle #1 \rangle}
 \newcommand{\sigTy}[1]{\Sigma \langle #1 \rangle}
+\newcommand{\recordext}[2]{\record{#1 \mid #2}}
+\newcommand{\recExt}[1]{\mid #1}
+\newcommand{\variant}[1]{\textbf{Sum}\ \{ #1 \}}
+\newcommand{\record}[1]{\textbf{Rec}\ \{ #1 \}}
+\newcommand{\ctyLab}[0]{\gamma}
 \newcommand{\cA}[0]{\mathcal A}
 \newcommand{\cB}[0]{\mathcal B}
 \cfrac{
@@ -37,6 +42,30 @@ $$
     \lambda \xx. \alpha}{\piTy{\xx : \cB . \cA}
   }{
     \lambda \langle \xx . \alpha \rangle
+  }
+}
+\\\\ \space \\\\
+\cfrac{
+  \Gtyck{B}{\ty}{\cB} \quad
+  \Gcheval{b}{\cB}
+}{
+  \cfrac{
+    \Gcheval{a}{\record{\ctyLab}}
+  }{
+    \Gcheval{
+      \\{ n = b\recExt{a} \\}
+    }{
+      \record{n : \cB, \ctyLab}
+    }
+  } \quad
+  \cfrac{
+    \Gcheval{a}{[k]}
+  }{
+    \Gcheval{
+      \\{ n = b\recExt{a} \\}
+    }{
+      [\recordext{n : \cB}{k}]
+    }
   }
 }
 $$
@@ -161,9 +190,9 @@ fn check_fields_no_more(
     }
 }
 
-fn check_fields<'a>(
+fn check_fields(
     mut tcs: TCS,
-    fields: &'a [LabAbs],
+    fields: &[LabAbs],
     field_types: &Fields,
 ) -> TCM<(Fields, Variants, TCS)> {
     let mut nice_fields = Fields::new();
@@ -272,6 +301,10 @@ $$
 \newcommand{\ty}[0]{\tau}
 \newcommand{\piTy}[1]{\Pi \langle #1 \rangle}
 \newcommand{\sigTy}[1]{\Sigma \langle #1 \rangle}
+\newcommand{\tyLab}[0]{\bar \gamma}
+\newcommand{\ctyLab}[0]{\gamma}
+\newcommand{\labVal}[0]{\bar \delta}
+\newcommand{\record}[1]{\textbf{Rec}\ \{ #1 \}}
 \newcommand{\cA}[0]{\mathcal A}
 \newcommand{\cB}[0]{\mathcal B}
 \cfrac{
@@ -294,6 +327,22 @@ $$
   \Gtyck{b}{\cB}{\beta}
 }{
   \Ginfer{a\ b}{\cA [\xx := \eval{b}]}
+}
+\\\\ \space \\\\
+\cfrac{
+  \Ginfer{a}{\cA} \quad
+  \Ginfer{
+    \\{\labVal\\}
+  }{
+    \record{\ctyLab}
+  } \quad
+  (n : \cA) \notin \ctyLab
+}{
+  \Ginfer{
+    \\{n = a, \labVal\\}
+  }{
+    \record{n : \cA, \ctyLab}
+  }
 }
 $$
 */
