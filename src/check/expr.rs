@@ -3,7 +3,7 @@ use VarRec::*;
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo, VarRec};
-use crate::syntax::core::{Closure, Fields, LiftEx, Neutral, Val, Variants};
+use crate::syntax::core::{Closure, Fields, LiftEx, Neutral, Val, Variants, TYPE_OMEGA};
 use crate::syntax::level::Level;
 
 use super::eval::compile_cons;
@@ -352,6 +352,27 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
     match value {
         Type(_, level) => Ok((Val::Type(*level + 1).into_info(info), tcs)),
         RowKind(..) => Ok((Val::Type(From::from(1u32)).into_info(info), tcs)),
+        RowPoly(_, kind, variants, more) => {
+            let mut labels = Vec::with_capacity(variants.len());
+            let mut tcs = tcs;
+            let mut max_level = Level::default();
+            for variant in variants {
+                let (val, new_tcs) = tcs.check(&variant.expr, &TYPE_OMEGA)?;
+                tcs = new_tcs;
+                labels.push(variant.label.text.clone());
+                // Not sure :(
+                max_level = max_level.max(val.ast.level());
+            }
+            let kind_level = max_level + 1;
+            match more {
+                None => Ok((Val::Type(kind_level).into_info(info), tcs)),
+                Some(more) => {
+                    let expected = Val::RowKind(kind_level, *kind, labels);
+                    let (_, tcs) = tcs.check(&**more, &expected)?;
+                    Ok((Val::Type(kind_level).into_info(info), tcs))
+                }
+            }
+        }
         Rec(_, fields, ext) => {
             let (ext, tcs) = ext
                 .as_ref()

@@ -1,0 +1,10 @@
+Parse successful.
+sign: set1
+body: Rec {}
+sign: Rec {}
+body: {||}
+sign: set1
+body: Rec {a: Rec {}, b: Rec {}, c: Rec {}}
+sign: Rec {a: Rec {}, b: Rec {}, c: Rec {}}
+body: {|a = {||}, b = {||}, c = {||}|}
+Checkmate, dram!
