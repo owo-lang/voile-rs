@@ -24,6 +24,13 @@ $$
 \newcommand{\ctyLab}[0]{\gamma}
 \newcommand{\clabVal}[0]{\delta}
 \newcommand{\caseTr}[0]{\text{ct}}
+\newcommand{\caseS}[1]{\langle #1 \rangle}
+\newcommand{\case}[4]{\textbf{case}\\ #1\\ #2: #3\\ \textbf{or}\\ #4}
+\newcommand{\casevS}[2]{\textbf{split}\\ #1\\ (#2)}
+\newcommand{\oneCase}[2]{#1\\ #2}
+\newcommand{\oneCaseL}[2]{\oneCase{#1}{\langle #2 \rangle}}
+\newcommand{\caseextS}[2]{\textbf{split}\\ (#1)\\ \textbf{or}\\ #2}
+\newcommand{\nocases}[0]{\textbf{whatever}}
 \newcommand{\recordext}[2]{\record{#1 \mid #2}}
 \newcommand{\recExt}[1]{\mid #1}
 \newcommand{\variantextS}[2]{\variant{#1, \ldots = #2}}
@@ -32,6 +39,8 @@ $$
 \begin{alignedat}{2}
 & \labels{\emptyset} &&= \emptyset \\\\
 & \labels{n : a, \tyLab} &&= n : \eval{a}, \labels{\tyLab} \\\\
+& \fields{\emptyset} &&= \emptyset \\\\
+& \fields{n = a, \labVal} &&= n = \eval{a}, \fields{\labVal} \\\\
 & && \\\\
 & \eval{a, b} &&= \eval{a}, \eval{b} \\\\
 & \eval{a.1} &&= \left\\{\begin{matrix}
@@ -47,6 +56,12 @@ $$
 & \eval{a\ b} &&= \left\\{\begin{matrix}
   [k\\ \eval{b}] & \text{if} & \eval{a} = [k] \\\\
   \alpha [\xx := \eval{b}] & \text{if} & \eval{a} = \lambda \langle \xx . \alpha \rangle
+  \\\\
+  \left\\{\begin{matrix}
+    \alpha [\xx := \beta] & \text{if} & \eval{b} = n\\ \beta \\\\
+    [\casevS{k}{\oneCaseL{n}{\xx. \alpha}, \caseTr}] & \text{if} & \eval{b} = [k] \\\\
+  \end{matrix}\right\\} &
+  \text{if} & \eval{a} = \lambda \langle \oneCaseL{n}{\xx. \alpha}, \caseTr \rangle
 \end{matrix}\right\\} \\\\
 & \eval{\piTy{\xx : a.b}} &&= \Pi\\ \eval{a}\\ \langle \xx . \eval{b} \rangle \\\\
 & \eval{\sigTy{\xx : a.b}} &&= \Sigma\\ \eval{a}\\ \langle \xx . \eval{b} \rangle \\\\
@@ -65,6 +80,15 @@ $$
   [\recordext{\labels{\tyLab_0}}{k}] & \text{if} & \eval{a} = [k] \\\\
   \record{\labels{\tyLab\_0} \cup \ctyLab\_1} & \text{if} & \eval{a} = \record{\ctyLab_1} \\\\
   [\recordext{\labels{\tyLab\_0} \cup \ctyLab\_1}{k}] & \text{if} & \eval{a} = [\recordext{\ctyLab_1}{k}] \\\\
+\end{matrix}\right\\} \\\\
+& \eval{n\\ a} &&= n\\ \eval{a} \\\\
+& \eval{\\{ \labVal \\}} &&= \\{ \fields{\labVal} \\} \\\\
+& \eval{\\{ \labVal_0\recExt{a} \\}} &&=
+\left\\{\begin{matrix}
+  \\{ \fields{\labVal\_0} \cup \clabVal\_1 \\} & \text{if} & \eval{a} = \\{ \clabVal_1 \\} \\\\
+  [\\{ \fields{\labVal\_0} \cup \clabVal\_1\recExt{k} \\}] & \text{if}
+     & \eval{a} = [\\{ n = \alpha, \ctyLab_1\recExt{k} \\}] \\\\
+  [\\{ \fields{\labVal_0}\recExt{k} \\}] & \text{if} & \eval{a} = [k] \\\\
 \end{matrix}\right\\} \\\\
 & \eval{\ty} &&= \ty
 \end{alignedat}
