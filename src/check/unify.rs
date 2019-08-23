@@ -167,7 +167,9 @@ fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
             tcs.unify_variants(*a_kind, a_fields, b_fields)?
                 .unify_neutral(&**a_more, &**b_more)
         }
-        (Snd(a), Snd(b)) | (Fst(a), Fst(b)) => tcs.unify_neutral(&**a, &**b),
+        (Snd(a), Snd(b)) | (Fst(a), Fst(b)) | (Proj(a, ..), Proj(b, ..)) => {
+            tcs.unify_neutral(&**a, &**b)
+        }
         (e, t) => Err(TCE::CannotUnify(Val::Neut(e.clone()), Val::Neut(t.clone()))),
     }
 }

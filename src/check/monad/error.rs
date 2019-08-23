@@ -22,6 +22,7 @@ pub enum TCE {
     NotSubtype(TVal, TVal),
     NotTypeAbs(SyntaxInfo, Abs),
     NotTypeVal(SyntaxInfo, Val),
+    NotRecType(SyntaxInfo, Val),
     NotRecVal(SyntaxInfo, Val),
     NotUniverseVal(SyntaxInfo, Val),
 
@@ -93,6 +94,11 @@ impl Display for TCE {
             TCE::NotRecVal(id, val) => {
                 write!(f, "Expected a record expression, got: `{}` at {}.", val, id)
             }
+            TCE::NotRecType(id, val) => write!(
+                f,
+                "Expected a record type expression, got: `{}` at {}.",
+                val, id
+            ),
             TCE::MissingVariant(VarRec::Variant, variant) => {
                 write!(f, "Missing variant `{}`.", variant)
             }

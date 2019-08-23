@@ -437,6 +437,16 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
+        Proj(_, record, field) => {
+            let (record_ty, tcs) = tcs.infer(&**record).map_err(|e| e.wrap(info))?;
+            match record_ty.ast {
+                Val::Neut(Neutral::Rec(mut fields, ..)) | Val::Rec(mut fields) => fields
+                    .remove(&field.text)
+                    .map(|ty| (ty.into_info(info), tcs))
+                    .ok_or_else(|| TCE::MissingVariant(Record, field.text.clone())),
+                ast => Err(TCE::NotSigma(record_ty.info, ast)),
+            }
+        }
         Snd(_, pair) => {
             let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
