@@ -1,0 +1,15 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-08-22
+// record-cons
+// Author: ice10
+//
+
+let Unit = Rec {};
+
+val unit : Unit;
+let unit = {| |};
+
+let ThreeUnit = Rec { a: Unit; b: Unit; c: Unit; };
+
+val threeUnit : ThreeUnit;
+let threeUnit = {| a = unit; b = unit; c = unit; |};

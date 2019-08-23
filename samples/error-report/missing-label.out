@@ -1,4 +1,4 @@
 Parse successful.
-Expect variant `Label`, but missing.
+Missing variant `Label`.
 When checking the expression at: line 8 (187:198).
 Change my mind!

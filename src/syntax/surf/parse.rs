@@ -39,7 +39,7 @@ macro_rules! expr_parser {
 macro_rules! many_prefix_parser {
     ($name:ident, $prefix_ty:ident, $prefix:ident, $end:ident) => {
         fn $name(rules: Tok) -> (Vec<$prefix_ty>, Option<Expr>) {
-            let mut prefixes = vec![];
+            let mut prefixes = Vec::new();
             let mut end = None;
             for the_rule in rules.into_inner() {
                 match the_rule.as_rule() {
@@ -86,8 +86,7 @@ many_prefix_parser!(record_literal, LabExpr, rec_field, row_rest);
 
 fn record(rules: Tok) -> Expr {
     let info = SyntaxInfo::from(rules.as_span());
-    let mut inner: Tik = rules.into_inner();
-    let (fields, rest) = next_rule!(inner, record_literal);
+    let (fields, rest) = record_literal(rules);
     Expr::record(info, fields, rest)
 }
 
