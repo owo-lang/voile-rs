@@ -117,6 +117,10 @@ impl ToSyntaxInfo for Ident {
     }
 }
 
+pub fn merge_info(a: &impl ToSyntaxInfo, b: &impl ToSyntaxInfo) -> SyntaxInfo {
+    a.syntax_info() + b.syntax_info()
+}
+
 /// Something that holds a `SyntaxInfo`.
 pub trait ToSyntaxInfo {
     /// Borrow the syntax info.

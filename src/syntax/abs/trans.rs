@@ -106,15 +106,13 @@ fn trans_expr_inner(
                 Err(TCE::LookUpFailed(ident.clone()))
             }
         }
-        Expr::App(app_vec) => Ok(app_vec.try_map(recursion)?.fold1(|result: Abs, abs: Abs| {
-            let info = result.syntax_info() + abs.syntax_info();
-            Abs::app(info, result, abs)
-        })),
+        Expr::App(app_vec) => Ok(app_vec
+            .try_map(recursion)?
+            .fold1(|result: Abs, abs: Abs| Abs::app(merge_info(result, abs), result, abs))),
         // I really hope I can reuse the code with `App` here :(
-        Expr::Pipe(pipe_vec) => Ok(pipe_vec.try_map(recursion)?.rev_fold1(|result, abs| {
-            let info = result.syntax_info() + abs.syntax_info();
-            Abs::app(info, result, abs)
-        })),
+        Expr::Pipe(pipe_vec) => Ok(pipe_vec
+            .try_map(recursion)?
+            .rev_fold1(|result, abs| Abs::app(merge_info(result, abs), result, abs))),
         Expr::Meta(ident) => {
             let ret = Ok(Abs::Meta(ident.clone(), *meta_count));
             *meta_count += 1;
@@ -122,11 +120,10 @@ fn trans_expr_inner(
         }
         Expr::Cons(ident) => Ok(Abs::Cons(ident.clone())),
         // TODO: check uniqueness?
-        Expr::Proj(info, expr, projections) => Ok(projections
-            .fold(recursion(*expr)?, |abs, label| {
-                Abs::proj(abs.syntax_info() + label.syntax_info(), abs, label)
-            })),
         Expr::RowKind(info, kind, labels) => Ok(Abs::RowKind(info, kind, labels)),
+        Expr::Proj(expr, projections) => Ok(projections.fold(recursion(*expr)?, |abs, label| {
+            Abs::proj(merge_info(abs, label), abs, label)
+        })),
         Expr::RowPoly(info, kind, labels, rest) => {
             let labels: Result<_, _> = labels.into_iter().map(map_labels).collect();
             let rest = rest.map(|e| recursion(*e)).transpose()?;

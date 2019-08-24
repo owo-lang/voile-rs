@@ -28,7 +28,7 @@ pub enum Expr {
     /// Lift an expression many times
     Lift(SyntaxInfo, u32, Box<Self>),
     /// Record projections
-    Proj(SyntaxInfo, Box<Self>, Vec1<Ident>),
+    Proj(Box<Self>, Vec1<Ident>),
     /// `Type` literal, with levels
     Type(SyntaxInfo, Level),
     /// Function application.<br/>
@@ -111,8 +111,8 @@ impl Expr {
         Expr::Sig(params, Box::new(expr))
     }
 
-    pub fn proj(info: SyntaxInfo, expr: Self, projections: Vec1<Ident>) -> Self {
-        Expr::Proj(info, Box::new(expr), projections)
+    pub fn proj(expr: Self, projections: Vec1<Ident>) -> Self {
+        Expr::Proj(Box::new(expr), projections)
     }
 }
 
