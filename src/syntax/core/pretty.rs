@@ -60,6 +60,7 @@ impl Display for Closure {
         use Closure::*;
         match self {
             Plain(body) => body.fmt(f),
+            Tree(_) => unimplemented!(),
         }
     }
 }

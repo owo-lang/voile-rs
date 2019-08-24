@@ -11,6 +11,9 @@ pub type Variants = BTreeMap<String, TVal>;
 /// Record fields -- for record values.
 pub type Fields = BTreeMap<String, Val>;
 
+/// Case-split expression.
+pub type CaseSplit = BTreeMap<String, Closure>;
+
 /// Reducible expressions.
 pub trait RedEx<T: Sized = Val>: Sized {
     /// This is primarily a private implementation-related API.
@@ -640,6 +643,7 @@ impl Default for Val {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Closure {
     Plain(Box<Val>),
+    Tree(CaseSplit),
 }
 
 impl Closure {
@@ -650,24 +654,56 @@ impl Closure {
     pub fn instantiate(self, arg: Val) -> Val {
         match self {
             Closure::Plain(body) => body.reduce_with_dbi(arg, Default::default()),
+            Closure::Tree(mut split) => match arg {
+                Val::Cons(label, arg) => match split.remove(&label) {
+                    Some(body) => body.instantiate(*arg),
+                    None => panic!("Cannot find clause for label `{}`.", label),
+                },
+                Val::Neut(neutral) => unimplemented!(),
+                a => panic!("Cannot split on `{}`.", a),
+            },
         }
     }
 
     pub fn instantiate_cloned(&self, arg: Val) -> Val {
         match self {
             Closure::Plain(body) => body.clone().reduce_with_dbi(arg, Default::default()),
+            Closure::Tree(split) => match arg {
+                Val::Cons(label, arg) => match split.get(&label) {
+                    Some(body) => body.instantiate_cloned(*arg),
+                    None => panic!("Cannot find clause for label `{}`.", label),
+                },
+                Val::Neut(neutral) => unimplemented!(),
+                a => panic!("Cannot split on `{}`.", a),
+            },
         }
     }
 
     pub fn instantiate_borrow(self, arg: &Val) -> Val {
         match self {
             Closure::Plain(body) => body.reduce_with_dbi_borrow(arg, Default::default()),
+            Closure::Tree(mut split) => match arg {
+                Val::Cons(label, arg) => match split.remove(label) {
+                    Some(body) => body.instantiate_borrow(arg),
+                    None => panic!("Cannot find clause for label `{}`.", label),
+                },
+                Val::Neut(neutral) => unimplemented!(),
+                a => panic!("Cannot split on `{}`.", a),
+            },
         }
     }
 
     pub fn instantiate_cloned_borrow(&self, arg: &Val) -> Val {
         match self {
             Closure::Plain(body) => body.clone().reduce_with_dbi_borrow(arg, Default::default()),
+            Closure::Tree(split) => match arg {
+                Val::Cons(label, arg) => match split.get(label) {
+                    Some(body) => body.instantiate_cloned_borrow(arg),
+                    None => panic!("Cannot find clause for label `{}`.", label),
+                },
+                Val::Neut(neutral) => unimplemented!(),
+                a => panic!("Cannot split on `{}`.", a),
+            },
         }
     }
 
@@ -680,6 +716,9 @@ impl Closure {
         use Closure::*;
         match self {
             Plain(body) => body.try_fold_neutral(init, f),
+            Tree(split) => split
+                .into_iter()
+                .try_fold(init, |init, (_, v)| v.try_fold_neutral(init, f)),
         }
     }
 
@@ -691,6 +730,11 @@ impl Closure {
         use Closure::*;
         match self {
             Plain(body) => body.try_map_neutral(f).map(Self::plain),
+            Tree(split) => split
+                .into_iter()
+                .map(|(k, v)| v.try_map_neutral(f).map(|v| (k, v)))
+                .collect::<Result<_, _>>()
+                .map(Closure::Tree),
         }
     }
 }
@@ -700,6 +744,7 @@ impl RedEx<Closure> for Closure {
         use Closure::*;
         match self {
             Plain(body) => Self::plain(body.reduce_with_dbi(arg, dbi)),
+            Tree(split) => Tree(reduce_case_tree_with_dbi(split, dbi, &arg)),
         }
     }
 
@@ -707,12 +752,20 @@ impl RedEx<Closure> for Closure {
         use Closure::*;
         match self {
             Plain(body) => Self::plain(body.reduce_with_dbi_borrow(arg, dbi)),
+            Tree(split) => Tree(reduce_case_tree_with_dbi(split, dbi, arg)),
         }
     }
 }
 
 fn reduce_variants_with_dbi(variants: Variants, dbi: DBI, arg: &Val) -> Variants {
     variants
+        .into_iter()
+        .map(|(name, ty)| (name, ty.reduce_with_dbi_borrow(&arg, dbi)))
+        .collect()
+}
+
+fn reduce_case_tree_with_dbi(cases: CaseSplit, dbi: DBI, arg: &Val) -> CaseSplit {
+    cases
         .into_iter()
         .map(|(name, ty)| (name, ty.reduce_with_dbi_borrow(&arg, dbi)))
         .collect()

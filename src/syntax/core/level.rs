@@ -1,5 +1,6 @@
-use crate::syntax::core::{Closure, Neutral, Val, Variants};
+use crate::syntax::core::{Closure, Neutral, Val};
 use crate::syntax::level::Level;
+use std::collections::BTreeMap;
 
 /// Internal API, public only because it's used in public traits' internal APIs.
 /// Produced during level calculation.<br/>
@@ -37,8 +38,8 @@ impl LiftEx for Val {
                 Box::new(param_type.lift(levels)),
                 closure.lift(levels),
             ),
-            Val::RowPoly(kind, variants) => Val::RowPoly(kind, lift_variants(levels, variants)),
-            Val::Rec(fields) => Val::Rec(lift_variants(levels, fields)),
+            Val::RowPoly(kind, variants) => Val::RowPoly(kind, lift_map(levels, variants)),
+            Val::Rec(fields) => Val::Rec(lift_map(levels, fields)),
             Val::Cons(name, e) => Val::cons(name, e.lift(levels)),
             Val::Pair(l, r) => Val::pair(l.lift(levels), r.lift(levels)),
             Val::Neut(neut) => Val::Neut(neut.lift(levels)),
@@ -48,8 +49,8 @@ impl LiftEx for Val {
     fn calc_level(&self) -> LevelCalcState {
         match self {
             Val::Type(level) | Val::RowKind(level, ..) => Some(*level + 1),
-            Val::RowPoly(_, variants) => calc_variants_level(variants),
-            Val::Rec(fields) => calc_variants_level(fields),
+            Val::RowPoly(_, variants) => calc_map_level(variants),
+            Val::Rec(fields) => calc_map_level(fields),
             Val::Dt(_, param_ty, closure) => {
                 Some(param_ty.calc_level()?.max(closure.calc_level()?))
             }
@@ -90,7 +91,7 @@ impl LiftEx for Neutral {
                 Some(f.calc_level()?.max(args.unwrap_or_default()))
             }
             Rec(vs, ext) | Row(_, vs, ext) => {
-                let vs = calc_variants_level(vs);
+                let vs = calc_map_level(vs);
                 Some(ext.calc_level()?.max(vs.unwrap_or_default()))
             }
         }
@@ -102,6 +103,7 @@ impl LiftEx for Closure {
         use Closure::*;
         match self {
             Plain(body) => Self::plain(body.lift(levels)),
+            Tree(split) => Tree(lift_map(levels, split)),
         }
     }
 
@@ -109,18 +111,19 @@ impl LiftEx for Closure {
         use Closure::*;
         match self {
             Plain(body) => body.calc_level(),
+            Tree(split) => calc_map_level(&split),
         }
     }
 }
 
-fn lift_variants(levels: u32, fields: Variants) -> Variants {
+fn lift_map<T: LiftEx>(levels: u32, fields: BTreeMap<String, T>) -> BTreeMap<String, T> {
     fields
         .into_iter()
         .map(|(name, e)| (name, e.lift(levels)))
         .collect()
 }
 
-fn calc_variants_level(variants: &Variants) -> Option<Level> {
+fn calc_map_level(variants: &BTreeMap<String, impl LiftEx>) -> LevelCalcState {
     let levels: Option<Vec<_>> = variants.values().map(LiftEx::calc_level).collect();
     Some(levels?.into_iter().max().unwrap_or_default())
 }
