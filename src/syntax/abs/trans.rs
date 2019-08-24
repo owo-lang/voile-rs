@@ -140,6 +140,7 @@ fn trans_expr_inner(
         Expr::Sig(initial, last) => trans_dependent_type(
             meta_count, env, global_map, local_env, local_map, initial, *last, Sigma,
         ),
+        Expr::Cases(..) => unimplemented!(),
         Expr::Lam(info, params, body) => {
             let mut local_env = local_env.to_vec();
             local_env.reserve_exact(local_env.len() + params.len() + 1);

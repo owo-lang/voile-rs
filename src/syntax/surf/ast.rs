@@ -19,17 +19,17 @@ pub struct Param {
 /// Surface syntax tree node: Expression.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Expr {
-    /// Variable reference
+    /// Variable reference.
     Var(Ident),
-    /// Constructor call
+    /// Constructor call.
     Cons(Ident),
-    /// Explicit meta variable
+    /// Explicit meta variable.
     Meta(Ident),
-    /// Lift an expression many times
+    /// Lift an expression many times.
     Lift(SyntaxInfo, u32, Box<Self>),
-    /// Record projections
+    /// Record projections.
     Proj(Box<Self>, Vec1<Ident>),
-    /// `Type` literal, with levels
+    /// `Type` literal, with levels.
     Type(SyntaxInfo, Level),
     /// Function application.<br/>
     /// Application operator, where `f a b c` is represented as `App(f, vec![a, b, c])`
@@ -57,8 +57,28 @@ pub enum Expr {
     /// instead of `Sig(a, Sig(b, c))`.
     /// `a` and `b` here can introduce telescopes.
     Sig(Vec<Param>, Box<Self>),
+    /// Case-chains.
+    Cases(Vec1<Case>, Box<Self>),
     /// Anonymous function, aka lambda expression.
     Lam(SyntaxInfo, Vec<Ident>, Box<Self>),
+}
+
+/// One case in a case-split chain.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Case {
+    pub label: Ident,
+    pub abstraction: Ident,
+    pub body: Box<Expr>,
+}
+
+impl Case {
+    pub fn new(label: Ident, abstraction: Ident, body: Expr) -> Self {
+        Self {
+            label,
+            abstraction,
+            body: Box::new(body),
+        }
+    }
 }
 
 impl Expr {
@@ -113,6 +133,10 @@ impl Expr {
 
     pub fn proj(expr: Self, projections: Vec1<Ident>) -> Self {
         Expr::Proj(Box::new(expr), projections)
+    }
+
+    pub fn cases(cases: Vec1<Case>, or: Self) -> Self {
+        Expr::Cases(cases, Box::new(or))
     }
 }
 
