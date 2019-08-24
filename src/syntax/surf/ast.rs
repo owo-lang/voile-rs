@@ -58,27 +58,12 @@ pub enum Expr {
     /// `a` and `b` here can introduce telescopes.
     Sig(Vec<Param>, Box<Self>),
     /// Case-chains.
-    Cases(Vec1<Case>, Box<Self>),
+    /// Label, binding, body, rest of the clauses
+    Cases(Ident, Ident, Box<Self>, Box<Self>),
+    /// Termination of a case-chain.
+    Whatever(SyntaxInfo),
     /// Anonymous function, aka lambda expression.
     Lam(SyntaxInfo, Vec<Ident>, Box<Self>),
-}
-
-/// One case in a case-split chain.
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Case {
-    pub label: Ident,
-    pub abstraction: Ident,
-    pub body: Box<Expr>,
-}
-
-impl Case {
-    pub fn new(label: Ident, abstraction: Ident, body: Expr) -> Self {
-        Self {
-            label,
-            abstraction,
-            body: Box::new(body),
-        }
-    }
 }
 
 impl Expr {
@@ -135,8 +120,8 @@ impl Expr {
         Expr::Proj(Box::new(expr), projections)
     }
 
-    pub fn cases(cases: Vec1<Case>, or: Self) -> Self {
-        Expr::Cases(cases, Box::new(or))
+    pub fn cases(label: Ident, binding: Ident, body: Self, or: Self) -> Self {
+        Expr::Cases(label, binding, Box::new(body), Box::new(or))
     }
 }
 

@@ -185,8 +185,8 @@ fn primary_expr(rules: Tok) -> Expr {
         Rule::ident => Expr::Var(ident(the_rule)),
         Rule::cons => Expr::Cons(ident(the_rule)),
         Rule::meta => Expr::Meta(ident(the_rule)),
-        Rule::no_cases => unimplemented!(),
-        Rule::case_expr => unimplemented!(),
+        Rule::no_cases => Expr::Whatever(From::from(the_rule.as_span())),
+        Rule::case_expr => case_expr(the_rule),
         Rule::lambda => lambda(the_rule),
         Rule::record => variant_record(the_rule, VarRec::Record),
         Rule::variant => variant_record(the_rule, VarRec::Variant),
@@ -250,6 +250,16 @@ fn sig_expr(rules: Tok) -> Expr {
     } else {
         Expr::sig(params, ret)
     }
+}
+
+fn case_expr(rules: Tok) -> Expr {
+    let mut inner: Tik = rules.into_inner();
+    let label = next_ident(&mut inner);
+    let binding = next_ident(&mut inner);
+    let body = next_rule!(inner, expr);
+    let rest = next_rule!(inner, expr);
+    end_of_rule(&mut inner);
+    Expr::cases(label, binding, body, rest)
 }
 
 fn lambda(rules: Tok) -> Expr {
