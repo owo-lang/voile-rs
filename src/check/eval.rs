@@ -90,6 +90,11 @@ $$
      & \eval{a} = [\\{ n = \alpha, \ctyLab_1\recExt{k} \\}] \\\\
   [\\{ \fields{\labVal_0}\recExt{k} \\}] & \text{if} & \eval{a} = [k] \\\\
 \end{matrix}\right\\} \\\\
+& \eval{a.n} &&=
+\left\\{\begin{matrix}
+  [k.n] & \text{if} & \eval{a} = [k] \\\\
+  \alpha & \text{if} & \eval{a} = \\{ n = \alpha, \ctyLab \\} \\\\
+\end{matrix}\right\\} \\\\
 & \eval{\ty} &&= \ty
 \end{alignedat}
 $$

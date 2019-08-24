@@ -308,7 +308,7 @@ $$
 \newcommand{\tyLab}[0]{\bar \gamma}
 \newcommand{\ctyLab}[0]{\gamma}
 \newcommand{\labVal}[0]{\bar \delta}
-\newcommand{\record}[1]{\textbf{Rec}\ \{ #1 \}}
+\newcommand{\record}[1]{\textbf{Rec}\\ \\{ #1 \\}}
 \newcommand{\cA}[0]{\mathcal A}
 \newcommand{\cB}[0]{\mathcal B}
 \cfrac{
@@ -347,6 +347,11 @@ $$
   }{
     \record{n : \cA, \ctyLab}
   }
+} \quad
+\cfrac{
+  \Ginfer{a}{\record{n : \cA, \ctyLab}}
+}{
+  \Ginfer{a .n}{\cA}
 }
 $$
 */
