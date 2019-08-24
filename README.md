@@ -56,6 +56,6 @@ voilec -i
 + [X] Universe level support
 + [X] Row-types and kinds
 + [X] Record constructor
-+ [ ] Record projection
++ [X] Record projection
 + [X] Variant constructor
 + [ ] Variant eliminator (case-split)

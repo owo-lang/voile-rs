@@ -2,6 +2,9 @@
 
 # 0.1.2
 
++ Implement record projection (#151, #152, #158)
++ Update `vec1` utility
+
 # 0.1.1
 
 + Update typing rule for `cons`

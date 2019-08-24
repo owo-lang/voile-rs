@@ -62,6 +62,11 @@ impl<T> Vec1<T> {
     pub fn rev_fold1(self, f: impl FnMut(T, T) -> T) -> T {
         self.tail.into_iter().rev().fold(self.head, f)
     }
+
+    pub fn rev_fold<R>(self, init: R, mut f: impl FnMut(R, T) -> R) -> R {
+        let init = f(init, self.head);
+        self.tail.into_iter().rev().fold(init, f)
+    }
 }
 
 impl<T: Default> Default for Vec1<T> {
