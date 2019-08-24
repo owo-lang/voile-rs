@@ -24,6 +24,8 @@ ident_raw =
 ident = @{ ident_raw }
 ///Pink
 cons = @{ "@" ~ ident_raw }
+///Pink
+proj_op = @{ "." ~ ident_raw }
 ///Red
 meta = @{ "_" }
 ///#E0957B
@@ -42,7 +44,7 @@ type_level = @{ ASCII_DIGIT* }
 type_keyword = ${ "Type" ~ type_level }
 semicolon = _{ ";" }
 arrow = _{ "->" }
-lift_op = { "^" }
+lift_op = @{ "^" }
 dot = _{ "." }
 sig_op = _{ "*" }
 pipe_op = _{ "|>" }
@@ -109,7 +111,8 @@ pi_expr = { (param ~ arrow)* ~ dollar_expr }
 dollar_expr = { comma_expr ~ (dollar_op ~ comma_expr)* }
 comma_expr = { pipe_expr ~ (comma_op ~ pipe_expr)* }
 pipe_expr = { lift_expr ~ (pipe_op ~ lift_expr)* }
-lift_expr = { lift_op* ~ app_expr }
+lift_expr = { lift_op* ~ proj_expr }
+proj_expr = { app_expr ~ proj_op* }
 app_expr = { primary_expr+ }
 primary_expr =
  { type_keyword

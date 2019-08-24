@@ -10,4 +10,4 @@ let id = \A a. a;
 val flip : (A B C : Type)
          -> (A -> B -> C)
          -> (B -> A -> C);
-let flip = \A B C f a b. id C (f b a);
+let flip = \A B C f a b. id C $ f b a;

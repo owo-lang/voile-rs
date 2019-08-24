@@ -122,6 +122,10 @@ fn trans_expr_inner(
         }
         Expr::Cons(ident) => Ok(Abs::Cons(ident.clone())),
         // TODO: check uniqueness?
+        Expr::Proj(info, expr, projections) => Ok(projections
+            .fold(recursion(*expr)?, |abs, label| {
+                Abs::proj(abs.syntax_info() + label.syntax_info(), abs, label)
+            })),
         Expr::RowKind(info, kind, labels) => Ok(Abs::RowKind(info, kind, labels)),
         Expr::RowPoly(info, kind, labels, rest) => {
             let labels: Result<_, _> = labels.into_iter().map(map_labels).collect();

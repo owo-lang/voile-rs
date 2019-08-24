@@ -8,6 +8,7 @@ use crate::syntax::pest_util::end_of_rule;
 use super::ast::Param;
 use super::{Decl, DeclKind, Expr};
 use crate::syntax::surf::LabExpr;
+use crate::util::vec1::Vec1;
 
 #[derive(Parser)]
 #[grammar = "syntax/surf/grammar.pest"]
@@ -132,8 +133,8 @@ fn lift_expr(rules: Tok) -> Expr {
             Rule::lift_op => {
                 lift_count += 1;
             }
-            Rule::app_expr => {
-                let expr = app_expr(smaller);
+            Rule::proj_expr => {
+                let expr = proj_expr(smaller);
                 return if lift_count == 0 {
                     expr
                 } else {
@@ -144,6 +145,31 @@ fn lift_expr(rules: Tok) -> Expr {
         }
     }
     unreachable!()
+}
+
+fn proj_expr(rules: Tok) -> Expr {
+    let mut projections = None;
+    let syntax_info = From::from(rules.as_span());
+    let mut inner = rules.into_inner();
+    let projected = next_rule!(inner, app_expr);
+    for projection in inner {
+        assert_eq!(projection.as_rule(), Rule::proj_op);
+        let ident = Ident {
+            info: SyntaxInfo::from(projection.as_span()),
+            text: projection.as_str()[1..].to_owned(),
+        };
+        match projections {
+            None => projections = Some(Vec1::from(ident)),
+            Some(mut some_projections) => {
+                some_projections.push(ident);
+                projections = Some(some_projections);
+            }
+        };
+    }
+    match projections {
+        Some(projections) => Expr::proj(syntax_info, projected, projections),
+        None => projected,
+    }
 }
 
 fn expr(rules: Tok) -> Expr {
