@@ -42,7 +42,7 @@ impl Val {
                 a.push(arg);
                 Val::app(*f, a)
             }
-            Val::Neut(n) => Val::app(n, vec![arg]),
+            Val::Neut(otherwise) => Val::app(otherwise, vec![arg]),
             e => panic!("Cannot apply on `{}`.", e),
         }
     }
@@ -54,7 +54,7 @@ impl Val {
                 a.push(arg.clone());
                 Val::app(*f, a)
             }
-            Val::Neut(n) => Val::app(n, vec![arg.clone()]),
+            Val::Neut(otherwise) => Val::app(otherwise, vec![arg.clone()]),
             e => panic!("Cannot apply on `{}`.", e),
         }
     }
@@ -73,7 +73,7 @@ impl Val {
     pub fn first(self) -> Self {
         match self {
             Val::Pair(a, _) => *a,
-            Val::Neut(n) => Val::fst(n),
+            Val::Neut(otherwise) => Val::fst(otherwise),
             e => panic!("Cannot project on `{}`.", e),
         }
     }
@@ -92,7 +92,7 @@ impl Val {
     pub fn second(self) -> Val {
         match self {
             Val::Pair(_, b) => *b,
-            Val::Neut(n) => Val::snd(n),
+            Val::Neut(otherwise) => Val::snd(otherwise),
             e => panic!("Cannot project on `{}`.", e),
         }
     }
@@ -105,6 +105,7 @@ impl Val {
             Val::Neut(Neutral::Rec(mut fields, ..)) => fields
                 .remove(&field)
                 .expect(&format!("Missing essential field with name `{}`.", field)),
+            Val::Neut(otherwise) => Val::proj(otherwise, field),
             e => panic!("Cannot project on `{}`.", e),
         }
     }
@@ -488,6 +489,10 @@ impl Val {
 
     pub fn snd(pair: Neutral) -> Self {
         Val::Neut(Neutral::Snd(Box::new(pair)))
+    }
+
+    pub fn proj(record: Neutral, field: String) -> Self {
+        Val::Neut(Neutral::Proj(Box::new(record), field))
     }
 
     pub fn closure_dependent_type(kind: PiSig, param_type: TVal, body: TVal) -> TVal {

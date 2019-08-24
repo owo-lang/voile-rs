@@ -1,0 +1,4 @@
+Parse successful.
+sign: (set0 -> (rec0 {x} -> (Rec {x: [1] | [0]} -> [2])))
+body: (\ (\ (\ ([0].x))))
+Checkmate, dram!
