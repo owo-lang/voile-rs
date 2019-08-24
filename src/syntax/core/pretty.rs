@@ -60,7 +60,12 @@ impl Display for Closure {
         use Closure::*;
         match self {
             Plain(body) => body.fmt(f),
-            Tree(_) => unimplemented!(),
+            Tree(split) => {
+                for (label, closure) in split {
+                    write!(f, "{} => {}; ", label, closure)?;
+                }
+                Ok(())
+            }
         }
     }
 }

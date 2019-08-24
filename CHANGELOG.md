@@ -2,6 +2,8 @@
 
 # 0.1.3
 
++ Case-split parser (#82)
+
 # 0.1.2
 
 + Implement record projection (#151, #152, #158)
