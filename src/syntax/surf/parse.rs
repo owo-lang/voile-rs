@@ -149,7 +149,6 @@ fn lift_expr(rules: Tok) -> Expr {
 
 fn proj_expr(rules: Tok) -> Expr {
     let mut projections = None;
-    let syntax_info = From::from(rules.as_span());
     let mut inner = rules.into_inner();
     let projected = next_rule!(inner, app_expr);
     for projection in inner {
@@ -167,7 +166,7 @@ fn proj_expr(rules: Tok) -> Expr {
         };
     }
     match projections {
-        Some(projections) => Expr::proj(syntax_info, projected, projections),
+        Some(projections) => Expr::proj(projected, projections),
         None => projected,
     }
 }
