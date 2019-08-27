@@ -14,6 +14,17 @@ pub type Fields = BTreeMap<String, Val>;
 /// Case-split expression.
 pub type CaseSplit = BTreeMap<String, Closure>;
 
+pub trait NeutralMappable: Sized {
+    /// Map all neutrals in this expression.
+    fn try_map_neutral<R>(self, f: &mut impl FnMut(Neutral) -> Result<Val, R>) -> Result<Self, R>;
+
+    /// Traverse through the AST and change all [`Neutral`](self::Neutral) values.
+    fn map_neutral(self, f: &mut impl FnMut(Neutral) -> Val) -> Self {
+        let result: Result<_, ()> = self.try_map_neutral(&mut |neut| Ok(f(neut)));
+        result.unwrap()
+    }
+}
+
 /// Reduction functions.
 impl Val {
     /**
@@ -234,17 +245,14 @@ impl Val {
         }
     }
 
-    /// Traverse through the AST and change all [`Neutral`](self::Neutral) values.
-    pub fn map_neutral(self, f: &mut impl FnMut(Neutral) -> Self) -> Self {
-        let result: Result<_, ()> = self.try_map_neutral(&mut |neut| Ok(f(neut)));
-        result.unwrap()
+    pub fn map_axiom(self, f: &mut impl FnMut(Axiom) -> Neutral) -> Self {
+        self.map_neutral(&mut |neut| Val::Neut(neut.map_axiom(f)))
     }
+}
 
+impl NeutralMappable for Val {
     /// Traverse through the AST and change all [`Neutral`](self::Neutral) values.
-    pub fn try_map_neutral<R>(
-        self,
-        f: &mut impl FnMut(Neutral) -> Result<Val, R>,
-    ) -> Result<Self, R> {
+    fn try_map_neutral<R>(self, f: &mut impl FnMut(Neutral) -> Result<Val, R>) -> Result<Self, R> {
         match self {
             Val::Neut(n) => f(n),
             Val::Pair(a, b) => Ok(Self::pair(a.try_map_neutral(f)?, b.try_map_neutral(f)?)),
@@ -267,10 +275,6 @@ impl Val {
             Val::Cons(name, a) => Ok(Self::cons(name, a.try_map_neutral(f)?)),
             e => Ok(e),
         }
-    }
-
-    pub fn map_axiom(self, f: &mut impl FnMut(Axiom) -> Neutral) -> Self {
-        self.map_neutral(&mut |neut| Val::Neut(neut.map_axiom(f)))
     }
 }
 
@@ -481,17 +485,10 @@ impl Closure {
                 .try_fold(init, |init, (_, v)| v.try_fold_neutral(init, f)),
         }
     }
+}
 
-    pub fn map_neutral(self, f: &mut impl FnMut(Neutral) -> Val) -> Self {
-        let result: Result<_, ()> = self.try_map_neutral(&mut |neut| Ok(f(neut)));
-        result.unwrap()
-    }
-
-    /// Map all neutrals in this closure.
-    pub fn try_map_neutral<R>(
-        self,
-        f: &mut impl FnMut(Neutral) -> Result<Val, R>,
-    ) -> Result<Self, R> {
+impl NeutralMappable for Closure {
+    fn try_map_neutral<R>(self, f: &mut impl FnMut(Neutral) -> Result<Val, R>) -> Result<Self, R> {
         use Closure::*;
         match self {
             Plain(body) => body.try_map_neutral(f).map(Self::plain),

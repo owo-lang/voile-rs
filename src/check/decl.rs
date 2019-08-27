@@ -2,7 +2,7 @@ use std::mem::swap;
 
 use crate::syntax::abs::AbsDecl;
 use crate::syntax::common::ToSyntaxInfo;
-use crate::syntax::core::{Neutral, Val, ValInfo, TYPE_OMEGA};
+use crate::syntax::core::{Neutral, NeutralMappable, Val, ValInfo, TYPE_OMEGA};
 
 use super::monad::{ValTCM, TCE, TCM, TCS};
 
