@@ -3,7 +3,6 @@ use std::fmt::{Display, Error, Formatter};
 use crate::syntax::common::PiSig::*;
 
 use super::{Axiom, Closure, Neutral, Val, ValInfo};
-use crate::syntax::common::VarRec;
 use crate::syntax::core::Variants;
 
 impl Display for Neutral {
@@ -34,11 +33,7 @@ impl Display for Neutral {
             Proj(rec, field) => write!(f, "({}.{})", rec, field),
             Lift(levels, p) => write!(f, "(^[{:?}] {})", levels, p),
             Row(kind, variants, ext) => {
-                match kind {
-                    VarRec::Variant => f.write_str("Sum"),
-                    VarRec::Record => f.write_str("Rec"),
-                }?;
-                f.write_str(" {")?;
+                write!(f, "{} {{", kind)?;
                 write_variants(f, variants, ":")?;
                 write!(f, " | {}}}", ext)
             }
@@ -88,11 +83,7 @@ impl Display for Val {
         match self {
             Val::Type(l) => write!(f, "set{}", l),
             Val::RowKind(l, kind, labels) => {
-                match kind {
-                    VarRec::Variant => f.write_str("sum"),
-                    VarRec::Record => f.write_str("rec"),
-                }?;
-                write!(f, "{} {{", l)?;
+                write!(f, "{}{} {{", kind, l)?;
                 let mut started = false;
                 for label in labels {
                     if started {
@@ -106,11 +97,7 @@ impl Display for Val {
             }
             Val::Lam(clos) => write!(f, "(\\ {})", clos),
             Val::RowPoly(kind, variants) => {
-                match kind {
-                    VarRec::Variant => f.write_str("Sum"),
-                    VarRec::Record => f.write_str("Rec"),
-                }?;
-                f.write_str(" {")?;
+                write!(f, "{} {{", kind)?;
                 write_variants(f, variants, ":")?;
                 f.write_str("}")
             }

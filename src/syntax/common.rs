@@ -10,6 +10,15 @@ pub enum VarRec {
     Record,
 }
 
+impl Display for VarRec {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        match self {
+            VarRec::Variant => f.write_str("Sum"),
+            VarRec::Record => f.write_str("Rec"),
+        }
+    }
+}
+
 /// Various kinds of dependent types
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum PiSig {

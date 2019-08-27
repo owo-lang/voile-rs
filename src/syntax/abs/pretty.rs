@@ -1,9 +1,8 @@
 use std::fmt::{Display, Error, Formatter};
 
 use PiSig::*;
-use VarRec::*;
 
-use crate::syntax::common::{PiSig, VarRec};
+use crate::syntax::common::PiSig;
 
 use super::{Abs, AbsDecl, LabAbs};
 
@@ -27,22 +26,14 @@ impl Display for Abs {
             Abs::Snd(_, p) => write!(f, "({}.2)", p),
             Abs::Proj(_, rec, field) => write!(f, "({}.{})", rec, field.text),
             Abs::RowKind(_, kind, labels) => {
-                let prefix = match kind {
-                    Variant => "Sum",
-                    Record => "Rec",
-                };
-                write!(f, "{} [ ", prefix)?;
+                write!(f, "{} [ ", kind)?;
                 for ident in labels {
                     write!(f, "{} ", ident.text)?;
                 }
                 write!(f, "]")
             }
             Abs::RowPoly(_, kind, labels, rest) => {
-                let prefix = match kind {
-                    Variant => "Sum",
-                    Record => "Rec",
-                };
-                write!(f, "{} {{ ", prefix)?;
+                write!(f, "{} {{ ", kind)?;
                 pretty_labels(f, labels, ":")?;
                 match rest {
                     Some(rest) => write!(f, "... = {} }}", rest),
