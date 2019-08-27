@@ -4,11 +4,17 @@ pub use self::ast::*;
 pub use self::ast_cons::*;
 pub use self::level::*;
 pub use self::pretty::*;
+pub use self::redex::*;
 
+/// Core language syntax definitions.
 mod ast;
+/// Constructor functions.
 mod ast_cons;
+/// Implementations for `Level`.
 mod level;
 mod pretty;
+/// Reduction function (red-ex stands for **red**ducible **ex**pression).
+mod redex;
 
 impl Val {
     pub fn into_info(self, syntax_info: SyntaxInfo) -> ValInfo {

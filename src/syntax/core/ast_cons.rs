@@ -215,3 +215,9 @@ impl Val {
         }
     }
 }
+
+impl Closure {
+    pub fn plain(body: Val) -> Self {
+        Closure::Plain(Box::new(body))
+    }
+}
