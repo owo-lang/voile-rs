@@ -80,6 +80,7 @@ impl RedEx for Neutral {
                 .apply(obj.reduce_with_dbi_borrow(&arg, dbi))
                 // further reduce because the `split` is not yet reduced
                 .reduce_with_dbi(arg, dbi),
+            OrSplit(split, or) => unimplemented!(),
             Fst(pair) => pair.reduce_with_dbi(arg, dbi).first(),
             Snd(pair) => pair.reduce_with_dbi(arg, dbi).second(),
             Proj(rec, field) => rec.reduce_with_dbi(arg, dbi).project(field),
@@ -115,6 +116,7 @@ impl RedEx for Neutral {
                 .apply(obj.reduce_with_dbi_borrow(&arg, dbi))
                 // further reduce because the `split` is not yet reduced
                 .reduce_with_dbi_borrow(&arg, dbi),
+            OrSplit(split, or) => unimplemented!(),
             Fst(pair) => pair.reduce_with_dbi_borrow(arg, dbi).first(),
             Snd(pair) => pair.reduce_with_dbi_borrow(arg, dbi).second(),
             Proj(pair, field) => pair.reduce_with_dbi_borrow(arg, dbi).project(field),

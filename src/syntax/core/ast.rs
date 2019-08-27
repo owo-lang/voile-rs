@@ -238,6 +238,8 @@ pub enum Neutral {
     Rec(Fields, Box<Self>),
     /// Splitting on a neutral term.
     SplitOn(CaseSplit, Box<Self>),
+    /// Splitting with unknown branches.
+    OrSplit(CaseSplit, Box<Self>),
 }
 
 /// Postulated value (or temporarily irreducible expressions), aka axioms.
@@ -290,14 +292,22 @@ impl Neutral {
                 let fields = fields.into_iter().map(map_val).collect();
                 Rec(fields, Box::new(ext.map_axiom(f)))
             }
-            SplitOn(split, obj) => {
-                let split = split
-                    .into_iter()
-                    .map(|(k, v)| (k, v.map_neutral(mapper)))
-                    .collect();
-                SplitOn(split, Box::new(obj.map_axiom(f)))
-            }
+            SplitOn(split, obj) => SplitOn(
+                Self::map_axiom_split(mapper, split),
+                Box::new(obj.map_axiom(f)),
+            ),
+            OrSplit(split, obj) => OrSplit(
+                Self::map_axiom_split(mapper, split),
+                Box::new(obj.map_axiom(f)),
+            ),
         }
+    }
+
+    fn map_axiom_split(mapper: &mut impl FnMut(Neutral) -> Val, split: CaseSplit) -> CaseSplit {
+        split
+            .into_iter()
+            .map(|(k, v)| (k, v.map_neutral(mapper)))
+            .collect()
     }
 }
 

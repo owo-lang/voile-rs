@@ -71,7 +71,7 @@ impl LiftEx for Neutral {
                 let vs = calc_map_level(vs);
                 Some(ext.calc_level()?.max(vs.unwrap_or_default()))
             }
-            SplitOn(split, on) => {
+            SplitOn(split, on) | OrSplit(split, on) => {
                 let split = calc_map_level(split);
                 Some(on.calc_level()?.max(split.unwrap_or_default()))
             }

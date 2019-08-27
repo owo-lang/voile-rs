@@ -28,6 +28,7 @@ impl Display for Neutral {
                 }
                 f.write_str("}})")
             }
+            OrSplit(split, or) => unimplemented!(),
             Fst(p) => write!(f, "({}.1)", p),
             Snd(p) => write!(f, "({}.2)", p),
             Proj(rec, field) => write!(f, "({}.{})", rec, field),
