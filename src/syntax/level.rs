@@ -31,6 +31,29 @@ impl Level {
     }
 }
 
+/// Internal API, public only because it's used in public traits' internal APIs.
+/// Produced during level calculation.<br/>
+/// `Some(Level)` -- level of non-recursive definitions.<br/>
+/// `None` -- level of self-reference.<br/>
+/// Trying to lift this will result in omega, otherwise it should be computed as 0 level.
+pub type LevelCalcState = Option<Level>;
+
+/// Expression with universe level (which means they can be lifted).
+pub trait LiftEx: Sized {
+    /// Lift the level of `self`.
+    fn lift(self, levels: u32) -> Self;
+
+    /// Internal API, for code sharing only.
+    fn calc_level(&self) -> LevelCalcState;
+
+    /// Calculate the level of `self`,
+    /// like a normal value will have level 0,
+    /// a type expression will have level 1 (or higher).
+    fn level(&self) -> Level {
+        self.calc_level().unwrap_or_default()
+    }
+}
+
 impl From<u32> for Level {
     fn from(n: u32) -> Self {
         Level::Num(n)

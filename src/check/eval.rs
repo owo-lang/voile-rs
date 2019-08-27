@@ -1,7 +1,8 @@
 use crate::check::monad::{MetaSolution, TCS};
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::{Ident, DBI};
-use crate::syntax::core::{LiftEx, Neutral, Val, ValInfo, Variants};
+use crate::syntax::core::{Neutral, Val, ValInfo, Variants};
+use crate::syntax::level::LiftEx;
 
 /**
 Evaluation rules.

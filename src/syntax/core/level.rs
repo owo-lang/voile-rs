@@ -1,31 +1,8 @@
-use crate::syntax::core::{Closure, Neutral, Val};
-use crate::syntax::level::Level;
+use super::{Closure, Neutral, Val};
+use crate::syntax::level::{Level, LevelCalcState, LiftEx};
 use std::collections::BTreeMap;
 
-/// Internal API, public only because it's used in public traits' internal APIs.
-/// Produced during level calculation.<br/>
-/// `Some(Level)` -- level of non-recursive definitions.<br/>
-/// `None` -- level of self-reference.<br/>
-/// Trying to lift this will result in omega, otherwise it should be computed as 0 level.
-type LevelCalcState = Option<Level>;
-
 pub const TYPE_OMEGA: Val = Val::Type(Level::Omega);
-
-/// Expression with universe level (which means they can be lifted).
-pub trait LiftEx: Sized {
-    /// Lift the level of `self`.
-    fn lift(self, levels: u32) -> Self;
-
-    /// Internal API, for code sharing only.
-    fn calc_level(&self) -> LevelCalcState;
-
-    /// Calculate the level of `self`,
-    /// like a normal value will have level 0,
-    /// a type expression will have level 1 (or higher).
-    fn level(&self) -> Level {
-        self.calc_level().unwrap_or_default()
-    }
-}
 
 impl LiftEx for Val {
     fn lift(self, levels: u32) -> Val {
@@ -64,7 +41,7 @@ impl LiftEx for Val {
 
 impl LiftEx for Neutral {
     fn lift(self, levels: u32) -> Self {
-        use self::Neutral::*;
+        use super::Neutral::*;
         match self {
             Lift(n, expr) => Lift(n + levels, expr),
             e => Lift(levels, Box::new(e)),
@@ -72,7 +49,7 @@ impl LiftEx for Neutral {
     }
 
     fn calc_level(&self) -> LevelCalcState {
-        use self::Neutral::*;
+        use super::Neutral::*;
         match self {
             Lift(n, expr) => match expr.calc_level() {
                 Some(m) => Some(m + *n),
@@ -104,7 +81,7 @@ impl LiftEx for Neutral {
 
 impl LiftEx for Closure {
     fn lift(self, levels: u32) -> Self {
-        use Closure::*;
+        use super::Closure::*;
         match self {
             Plain(body) => Self::plain(body.lift(levels)),
             Tree(split) => Tree(lift_map(levels, split)),
@@ -112,7 +89,7 @@ impl LiftEx for Closure {
     }
 
     fn calc_level(&self) -> LevelCalcState {
-        use Closure::*;
+        use super::Closure::*;
         match self {
             Plain(body) => body.calc_level(),
             Tree(split) => calc_map_level(&split),

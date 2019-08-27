@@ -11,7 +11,7 @@ use voile::check::check_decls;
 use voile::check::monad::{MetaSolution, TCM, TCS as TCMS};
 use voile::syntax::abs::{trans_decls_contextual, trans_expr, Abs, TransState};
 use voile::syntax::common::MI;
-use voile::syntax::core::LiftEx;
+use voile::syntax::level::LiftEx;
 use voile::syntax::surf::{parse_expr_err_printed, parse_str_err_printed, Decl};
 
 use crate::util::parse_file;

@@ -3,8 +3,8 @@ use VarRec::*;
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo, VarRec};
-use crate::syntax::core::{Closure, Fields, LiftEx, Neutral, Val, Variants, TYPE_OMEGA};
-use crate::syntax::level::Level;
+use crate::syntax::core::{Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
+use crate::syntax::level::{Level, LiftEx};
 
 use super::eval::compile_cons;
 use super::monad::{ValTCM, TCE, TCM, TCS};
