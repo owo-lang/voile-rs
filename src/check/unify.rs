@@ -1,5 +1,5 @@
 use crate::syntax::common::{VarRec, MI};
-use crate::syntax::core::{Closure, Neutral, Val, Variants};
+use crate::syntax::core::{Closure, Neutral, TraverseNeutral, Val, Variants};
 
 use super::monad::{MetaSolution, TCE, TCM, TCS};
 

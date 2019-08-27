@@ -3,6 +3,7 @@ use super::common::{SyntaxInfo, ToSyntaxInfo};
 pub use self::ast::*;
 pub use self::ast_cons::*;
 pub use self::level::*;
+pub use self::neut_iter::*;
 pub use self::pretty::*;
 pub use self::redex::*;
 
@@ -12,6 +13,8 @@ mod ast;
 mod ast_cons;
 /// Implementations for `Level`.
 mod level;
+/// Definition and implementations for `TraverseNeutral`.
+mod neut_iter;
 mod pretty;
 /// Reduction function (red-ex stands for **red**ducible **ex**pression).
 mod redex;

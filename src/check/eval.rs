@@ -1,7 +1,7 @@
 use crate::check::monad::{MetaSolution, TCS};
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::{Ident, DBI};
-use crate::syntax::core::{Neutral, NeutralMappable, Val, ValInfo, Variants};
+use crate::syntax::core::{Neutral, TraverseNeutral, Val, ValInfo, Variants};
 use crate::syntax::level::LiftEx;
 
 /**
