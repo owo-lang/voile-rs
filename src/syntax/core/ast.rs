@@ -275,6 +275,8 @@ pub enum Neutral {
     Row(VarRec, Variants, Box<Self>),
     /// Record literal, with extension.
     Rec(Fields, Box<Self>),
+    /// Splitting on a neutral term.
+    SplitOn(CaseSplit, Box<Self>),
 }
 
 /// Postulated value (or temporarily irreducible expressions), aka axioms.
@@ -327,6 +329,13 @@ impl Neutral {
                 let fields = fields.into_iter().map(map_val).collect();
                 Rec(fields, Box::new(ext.map_axiom(f)))
             }
+            SplitOn(split, obj) => {
+                let split = split
+                    .into_iter()
+                    .map(|(k, v)| (k, v.map_neutral(mapper)))
+                    .collect();
+                SplitOn(split, Box::new(obj.map_axiom(f)))
+            }
         }
     }
 }
@@ -346,6 +355,10 @@ impl RedEx for Neutral {
                     // Do we need to `reduce` after `apply` again?
                     f.apply(a.reduce_with_dbi_borrow(&arg, dbi))
                 }),
+            SplitOn(split, obj) => Val::Lam(Closure::Tree(split))
+                .apply(obj.reduce_with_dbi_borrow(&arg, dbi))
+                // further reduce because the `split` is not yet reduced
+                .reduce_with_dbi(arg, dbi),
             Fst(pair) => pair.reduce_with_dbi(arg, dbi).first(),
             Snd(pair) => pair.reduce_with_dbi(arg, dbi).second(),
             Proj(rec, field) => rec.reduce_with_dbi(arg, dbi).project(field),
@@ -377,6 +390,10 @@ impl RedEx for Neutral {
                     // Do we need to `reduce` after `apply` again?
                     f.apply(a.reduce_with_dbi_borrow(arg, dbi))
                 }),
+            SplitOn(split, obj) => Val::Lam(Closure::Tree(split))
+                .apply(obj.reduce_with_dbi_borrow(&arg, dbi))
+                // further reduce because the `split` is not yet reduced
+                .reduce_with_dbi_borrow(&arg, dbi),
             Fst(pair) => pair.reduce_with_dbi_borrow(arg, dbi).first(),
             Snd(pair) => pair.reduce_with_dbi_borrow(arg, dbi).second(),
             Proj(pair, field) => pair.reduce_with_dbi_borrow(arg, dbi).project(field),
@@ -469,6 +486,10 @@ impl Val {
         Val::Neut(Neutral::Ref(index))
     }
 
+    pub fn split_on(split: CaseSplit, on: Neutral) -> Self {
+        Val::Neut(Neutral::SplitOn(split, Box::new(on)))
+    }
+
     pub fn fresh_axiom() -> Self {
         Self::postulate(unsafe { next_uid() })
     }
@@ -554,7 +575,7 @@ impl Val {
     /// Traverse through the AST and change all [`Neutral`](self::Neutral) values.
     pub fn try_map_neutral<R>(
         self,
-        f: &mut impl FnMut(Neutral) -> Result<Self, R>,
+        f: &mut impl FnMut(Neutral) -> Result<Val, R>,
     ) -> Result<Self, R> {
         match self {
             Val::Neut(n) => f(n),
@@ -657,9 +678,11 @@ impl Closure {
             Closure::Tree(mut split) => match arg {
                 Val::Cons(label, arg) => match split.remove(&label) {
                     Some(body) => body.instantiate(*arg),
+                    // We can actually replace this pattern matching with `.expect`,
+                    // but here we don't want to format the error message when things go correct.
                     None => panic!("Cannot find clause for label `{}`.", label),
                 },
-                Val::Neut(neutral) => unimplemented!(),
+                Val::Neut(neutral) => Val::split_on(split, neutral),
                 a => panic!("Cannot split on `{}`.", a),
             },
         }
@@ -673,7 +696,7 @@ impl Closure {
                     Some(body) => body.instantiate_cloned(*arg),
                     None => panic!("Cannot find clause for label `{}`.", label),
                 },
-                Val::Neut(neutral) => unimplemented!(),
+                Val::Neut(neutral) => Val::split_on(split.clone(), neutral),
                 a => panic!("Cannot split on `{}`.", a),
             },
         }
@@ -687,7 +710,7 @@ impl Closure {
                     Some(body) => body.instantiate_borrow(arg),
                     None => panic!("Cannot find clause for label `{}`.", label),
                 },
-                Val::Neut(neutral) => unimplemented!(),
+                Val::Neut(neutral) => Val::split_on(split, neutral.clone()),
                 a => panic!("Cannot split on `{}`.", a),
             },
         }
@@ -701,7 +724,7 @@ impl Closure {
                     Some(body) => body.instantiate_cloned_borrow(arg),
                     None => panic!("Cannot find clause for label `{}`.", label),
                 },
-                Val::Neut(neutral) => unimplemented!(),
+                Val::Neut(neutral) => Val::split_on(split.clone(), neutral.clone()),
                 a => panic!("Cannot split on `{}`.", a),
             },
         }
@@ -722,11 +745,16 @@ impl Closure {
         }
     }
 
+    pub fn map_neutral(self, f: &mut impl FnMut(Neutral) -> Val) -> Self {
+        let result: Result<_, ()> = self.try_map_neutral(&mut |neut| Ok(f(neut)));
+        result.unwrap()
+    }
+
     /// Map all neutrals in this closure.
     pub fn try_map_neutral<R>(
         self,
         f: &mut impl FnMut(Neutral) -> Result<Val, R>,
-    ) -> Result<Closure, R> {
+    ) -> Result<Self, R> {
         use Closure::*;
         match self {
             Plain(body) => body.try_map_neutral(f).map(Self::plain),

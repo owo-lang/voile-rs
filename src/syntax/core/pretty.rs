@@ -22,6 +22,13 @@ impl Display for Neutral {
                 }
                 f.write_str(")")
             }
+            SplitOn(split, on) => {
+                write!(f, "(case {} of {{ ", on)?;
+                for (name, closure) in split {
+                    write!(f, "{}: \\ {}; ", name, closure)?;
+                }
+                f.write_str("}})")
+            }
             Fst(p) => write!(f, "({}.1)", p),
             Snd(p) => write!(f, "({}.2)", p),
             Proj(rec, field) => write!(f, "({}.{})", rec, field),
