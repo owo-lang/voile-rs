@@ -12,10 +12,10 @@ pub enum VarRec {
 
 impl Display for VarRec {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        match self {
-            VarRec::Variant => f.write_str("Sum"),
-            VarRec::Record => f.write_str("Rec"),
-        }
+        f.write_str(match self {
+            VarRec::Variant => "Sum",
+            VarRec::Record => "Rec",
+        })
     }
 }
 

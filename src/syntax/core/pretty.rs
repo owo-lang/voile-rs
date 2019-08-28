@@ -3,7 +3,7 @@ use std::fmt::{Display, Error, Formatter};
 use crate::syntax::common::PiSig::*;
 
 use super::{Axiom, Closure, Neutral, Val, ValInfo};
-use crate::syntax::core::Variants;
+use crate::syntax::core::{CaseSplit, Variants};
 
 impl Display for Neutral {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
@@ -23,12 +23,14 @@ impl Display for Neutral {
             }
             SplitOn(split, on) => {
                 write!(f, "(case {} of {{ ", on)?;
-                for (name, closure) in split {
-                    write!(f, "{}: \\ {}; ", name, closure)?;
-                }
-                f.write_str("}})")
+                pretty_split(f, &split)?;
+                f.write_str("})")
             }
-            OrSplit(split, or) => unimplemented!(),
+            OrSplit(split, or) => {
+                f.write_str("(cases {{ ")?;
+                pretty_split(f, &split)?;
+                write!(f, "}} or {})", or)
+            }
             Fst(p) => write!(f, "({}.1)", p),
             Snd(p) => write!(f, "({}.2)", p),
             Proj(rec, field) => write!(f, "({}.{})", rec, field),
@@ -125,6 +127,13 @@ fn write_variants(f: &mut Formatter, variants: &Variants, sep: &str) -> Result<(
             started = true;
         }
         write!(f, "{}{} {}", name, sep, param)?;
+    }
+    Ok(())
+}
+
+fn pretty_split(f: &mut Formatter, split: &CaseSplit) -> Result<(), Error> {
+    for (name, closure) in split {
+        write!(f, "{}: \\ {}; ", name, closure)?;
     }
     Ok(())
 }

@@ -2,7 +2,7 @@
 
 # 0.1.3
 
-+ Case-split parser (#82)
++ Case-split parser (#82), core language elements (#2)
 
 # 0.1.2
 
