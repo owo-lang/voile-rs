@@ -40,8 +40,9 @@ impl TraverseNeutral for Val {
                 .collect::<Result<_, _>>()
                 .map(Val::Rec),
             Val::Lam(closure) => closure.try_map_neutral(f).map(Self::Lam),
-            Val::Dt(kind, param_type, closure) => Ok(Self::dependent_type(
+            Val::Dt(kind, param_plicit, param_type, closure) => Ok(Self::dependent_type(
                 kind,
+                param_plicit,
                 param_type.try_map_neutral(f)?,
                 closure.try_map_neutral(f)?,
             )),
@@ -67,7 +68,7 @@ impl TraverseNeutral for Val {
                 .into_iter()
                 .try_fold(init, |a, (_, v)| v.try_fold_neutral(a, f)),
             Val::Lam(closure) => closure.try_fold_neutral(init, f),
-            Val::Dt(_, param_ty, closure) => closure
+            Val::Dt(_, _, param_ty, closure) => closure
                 .try_fold_neutral(init, f)
                 .and_then(|r| param_ty.try_fold_neutral(r, f)),
             Val::Cons(_, a) => a.try_fold_neutral(init, f),

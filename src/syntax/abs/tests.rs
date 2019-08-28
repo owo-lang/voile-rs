@@ -48,7 +48,7 @@ fn must_be_app(abs: Abs) -> Abs {
 
 fn must_be_pi(abs: Abs) -> (Abs, Abs) {
     match abs {
-        Abs::Dt(_, PiSig::Pi, _, param, abs) => (*param, *abs),
+        Abs::Dt(_, PiSig::Pi, _, _, param, abs) => (*param, *abs),
         e => panic!("`{:?}` is not an `Abs::Dt(_, Pi, _, _)`.", e),
     }
 }

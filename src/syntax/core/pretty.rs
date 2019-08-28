@@ -109,8 +109,8 @@ impl Display for Val {
                 write_variants(f, fields, " =")?;
                 f.write_str("|}")
             }
-            Val::Dt(Pi, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
-            Val::Dt(Sigma, param_ty, clos) => write!(f, "({} * {})", param_ty, clos),
+            Val::Dt(Pi, _, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
+            Val::Dt(Sigma, _, param_ty, clos) => write!(f, "({} * {})", param_ty, clos),
             Val::Pair(fst, snd) => write!(f, "({}, {})", fst, snd),
             Val::Neut(neut) => neut.fmt(f),
             Val::Cons(name, a) => write!(f, "(@{} {})", name, a),

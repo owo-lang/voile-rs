@@ -18,8 +18,10 @@ impl Display for Abs {
             Abs::Cons(name) => write!(f, "@{}", name.text),
             Abs::Lift(_, levels, expr) => write!(f, "(^[{:?}] {})", levels, expr),
             Abs::App(_, a, b) => write!(f, "({} {})", a, b),
-            Abs::Dt(_, Pi, name, param, ret) => write!(f, "(<{:?}> : {}) -> {}", name, param, ret),
-            Abs::Dt(_, Sigma, name, fst, snd) => write!(f, "(<{:?}> : {}) * {}", name, fst, snd),
+            Abs::Dt(_, Pi, name, _, param, ret) => {
+                write!(f, "(<{:?}> : {}) -> {}", name, param, ret)
+            }
+            Abs::Dt(_, Sigma, name, _, fst, snd) => write!(f, "(<{:?}> : {}) * {}", name, fst, snd),
             Abs::Lam(_, param, name, body) => write!(f, "(\\{}[{:?}]. {})", param.text, name, body),
             Abs::Pair(_, a, b) => write!(f, "({}, {})", a, b),
             Abs::Fst(_, p) => write!(f, "({}.1)", p),

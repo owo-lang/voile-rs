@@ -20,8 +20,8 @@ pub enum Abs {
     Proj(SyntaxInfo, Box<Self>, Ident),
     /// Apply or Pipeline in surface
     App(SyntaxInfo, Box<Self>, Box<Self>),
-    /// Dependent Type, `(a -> b -> c)` as `Dt(DtKind::Pi, a, Dt(DtKind::Pi, b, c))`
-    Dt(SyntaxInfo, PiSig, UID, Box<Self>, Box<Self>),
+    /// Dependent Type, `(a -> b -> c)` as `Dt(_, DtKind::Pi, _, _, a, Dt(_, DtKind::Pi, _, _, b, c))`
+    Dt(SyntaxInfo, PiSig, UID, Plicit, Box<Self>, Box<Self>),
     /// The first `SyntaxInfo` is the syntax info of this whole lambda,
     /// while the second is about its parameter
     Lam(SyntaxInfo, Ident, UID, Box<Self>),
@@ -65,8 +65,15 @@ impl ToSyntaxInfo for Abs {
 }
 
 impl Abs {
-    pub fn dependent_type(info: SyntaxInfo, kind: PiSig, name: UID, a: Self, b: Self) -> Self {
-        Abs::Dt(info, kind, name, Box::new(a), Box::new(b))
+    pub fn dependent_type(
+        info: SyntaxInfo,
+        kind: PiSig,
+        name: UID,
+        plicit: Plicit,
+        a: Self,
+        b: Self,
+    ) -> Self {
+        Abs::Dt(info, kind, name, plicit, Box::new(a), Box::new(b))
     }
 
     pub fn row_polymorphic_type(
@@ -114,12 +121,12 @@ impl Abs {
         Abs::Lift(info, lift_count, Box::new(expr))
     }
 
-    pub fn pi(info: SyntaxInfo, name: UID, input: Self, output: Self) -> Self {
-        Self::dependent_type(info, PiSig::Pi, name, input, output)
+    pub fn pi(info: SyntaxInfo, name: UID, plicit: Plicit, input: Self, output: Self) -> Self {
+        Self::dependent_type(info, PiSig::Pi, name, plicit, input, output)
     }
 
-    pub fn sig(info: SyntaxInfo, name: UID, first: Self, second: Self) -> Self {
-        Self::dependent_type(info, PiSig::Sigma, name, first, second)
+    pub fn sig(info: SyntaxInfo, name: UID, plicit: Plicit, first: Self, second: Self) -> Self {
+        Self::dependent_type(info, PiSig::Sigma, name, plicit, first, second)
     }
 }
 

@@ -10,8 +10,9 @@ impl LiftEx for Val {
             Val::Type(l) => Val::Type(l + levels),
             Val::RowKind(l, k, ls) => Val::RowKind(l + levels, k, ls),
             Val::Lam(closure) => Val::Lam(closure.lift(levels)),
-            Val::Dt(kind, param_type, closure) => Val::Dt(
+            Val::Dt(kind, plicit, param_type, closure) => Val::Dt(
                 kind,
+                plicit,
                 Box::new(param_type.lift(levels)),
                 closure.lift(levels),
             ),
@@ -28,7 +29,7 @@ impl LiftEx for Val {
             Val::Type(level) | Val::RowKind(level, ..) => Some(*level + 1),
             Val::RowPoly(_, variants) => calc_map_level(variants),
             Val::Rec(fields) => calc_map_level(fields),
-            Val::Dt(_, param_ty, closure) => {
+            Val::Dt(_, _, param_ty, closure) => {
                 Some(param_ty.calc_level()?.max(closure.calc_level()?))
             }
             Val::Lam(closure) => closure.calc_level(),

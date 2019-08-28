@@ -26,6 +26,12 @@ pub enum PiSig {
     Sigma,
 }
 
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
+pub enum Plicit {
+    Ex,
+    Im,
+}
+
 macro_rules! impl_usize {
     ($name:ident) => {
         impl Add<usize> for $name {

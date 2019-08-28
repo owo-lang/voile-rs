@@ -3,7 +3,9 @@ use VarRec::*;
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{merge_info, SyntaxInfo, ToSyntaxInfo, VarRec};
+use crate::syntax::common::{Plicit, SyntaxInfo, ToSyntaxInfo, VarRec};
 use crate::syntax::core::{CaseSplit, Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
+use crate::syntax::core::{Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
 use crate::syntax::level::{Level, LiftEx};
 
 use super::eval::compile_cons;
@@ -86,7 +88,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             Ok((expr.into_info(*info), tcs))
         }
         (Meta(ident, mi), _) => Ok((Val::meta(*mi).into_info(ident.info), tcs)),
-        (Pair(info, fst, snd), Val::Dt(Sigma, param_ty, closure)) => {
+        (Pair(info, fst, snd), Val::Dt(Sigma, Plicit::Ex, param_ty, closure)) => {
             let (fst_term, mut tcs) = tcs.check(&**fst, &**param_ty).map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();
             let snd_ty = closure.instantiate_borrow(&fst_term_ast);
@@ -99,7 +101,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let pair = Val::pair(fst_term_ast, snd_term.ast).into_info(*info);
             Ok((pair, tcs))
         }
-        (Lam(full_info, param_info, uid, body), Val::Dt(Pi, param_ty, ret_ty)) => {
+        (Lam(full_info, param_info, uid, body), Val::Dt(Pi, Plicit::Ex, param_ty, ret_ty)) => {
             let param_type = param_ty.clone().into_info(param_info.info);
             tcs.local_gamma.push(param_type);
             let mocked = Val::postulate(*uid);
@@ -114,7 +116,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             Ok((lam.into_info(*full_info), tcs))
         }
         (Cons(info), Val::Dt(Pi, ..)) => Ok((compile_cons(info.clone()), tcs)),
-        (Dt(info, kind, uid, param, ret), Val::Type(..)) => {
+        (Dt(info, kind, uid, param_plicit, param, ret), Val::Type(..)) => {
             let (param, mut tcs) = tcs
                 .check(&**param, expected_type)
                 .map_err(|e| e.wrap(*info))?;
@@ -125,7 +127,8 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 .check(&**ret, expected_type)
                 .map_err(|e| e.wrap(*info))?;
             tcs.pop_local();
-            let dt = Val::closure_dependent_type(*kind, param.ast, ret.ast).into_info(*info);
+            let dt = Val::closure_dependent_type(*kind, *param_plicit, param.ast, ret.ast)
+                .into_info(*info);
             Ok((dt, tcs))
         }
         (RowPoly(info, Record, variants, ext), Val::RowKind(l, Record, labels)) => {
@@ -452,7 +455,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             // let mocked = Val::postulate(*uid);
             // tcs.local_gamma.push(param_meta.clone().into_info(info));
             // tcs.local_env.push(mocked.clone().into_info(info));
-            let pi = Val::pi(param_meta, Closure::plain(ret_meta));
+            let pi = Val::pi(Plicit::Ex, param_meta, Closure::plain(ret_meta));
             let (_, tcs) = tcs.check(value, &pi)?;
             // tcs.pop_local();
             Ok((pi.into_info(info), tcs))
@@ -471,7 +474,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
         Fst(_, pair) => {
             let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
-                Val::Dt(Sigma, param_type, ..) => Ok((param_type.into_info(info), tcs)),
+                Val::Dt(Sigma, Plicit::Ex, param_type, ..) => Ok((param_type.into_info(info), tcs)),
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
@@ -489,7 +492,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
         Snd(_, pair) => {
             let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
-                Val::Dt(Sigma, _, closure) => {
+                Val::Dt(Sigma, Plicit::Ex, _, closure) => {
                     // Since we can infer the type of `pair`, it has to be well-typed
                     let (pair_compiled, tcs) = tcs.evaluate(*pair.clone());
                     let fst = pair_compiled.ast.first();
@@ -513,7 +516,8 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             f => {
                 let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap(info))?;
                 match f_ty.ast {
-                    Val::Dt(Pi, param_type, closure) => {
+                    // todo: Implicit
+                    Val::Dt(Pi, _plicit, param_type, closure) => {
                         let (new_a, tcs) =
                             tcs.check(&**a, &*param_type).map_err(|e| e.wrap(info))?;
                         Ok((closure.instantiate(new_a.ast).into_info(info), tcs))
@@ -606,7 +610,9 @@ fn subtype(tcs: TCS, sub: &Val, sup: &Val) -> TCM {
         (RowPoly(Variant, sub_vs), RowPoly(Variant, sup_vs)) => {
             tcs.unify_variants(Variant, sub_vs, sup_vs)
         }
-        (Dt(k0, input_a, clos_a), Dt(k1, input_b, clos_b)) if k0 == k1 => {
+        (Dt(k0, plicit_a, input_a, clos_a), Dt(k1, plicit_b, input_b, clos_b))
+            if k0 == k1 && plicit_a == plicit_b =>
+        {
             // Parameter invariance
             let tcs = tcs.unify(input_a, input_b)?;
             let p = Val::fresh_axiom();

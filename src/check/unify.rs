@@ -96,7 +96,9 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
         }
         */
         (Neut(Ref(x)), Neut(Ref(y))) if x == y => Ok(tcs),
-        (Dt(k0, input_a, clos_a), Dt(k1, input_b, clos_b)) if k0 == k1 => {
+        (Dt(k0, a_plicit, input_a, clos_a), Dt(k1, b_plicit, input_b, clos_b))
+            if k0 == k1 && a_plicit == b_plicit =>
+        {
             tcs.unify(input_a, input_b)?.unify_closure(clos_a, clos_b)
         }
         (Lam(a), Lam(b)) => unify_closure(tcs, a, b),

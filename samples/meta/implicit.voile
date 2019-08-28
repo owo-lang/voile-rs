@@ -1,0 +1,2 @@
+val id: {{A : Type}} -> A -> A;
+let id = \a. a;

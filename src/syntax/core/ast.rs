@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::syntax::common::{PiSig, VarRec, DBI, GI, MI, UID};
+use crate::syntax::common::{PiSig, Plicit, VarRec, DBI, GI, MI, UID};
 use crate::syntax::level::Level;
 
 use super::{RedEx, TraverseNeutral};
@@ -281,7 +281,7 @@ pub enum Val {
     /// For untyped closures, it can be represented as `Neut` directly.
     Lam(Closure),
     /// Pi-like types (dependent types), with parameter explicitly typed.
-    Dt(PiSig, Box<Self>, Closure),
+    Dt(PiSig, Plicit, Box<Self>, Closure),
     /// Row-polymorphic type literal.
     RowPoly(VarRec, Variants),
     /// Row kind literals -- subtype of `Type`.
