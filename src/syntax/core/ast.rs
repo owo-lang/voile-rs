@@ -149,6 +149,7 @@ impl Val {
         self.map_axiom(&mut |a| match a {
             Postulated(..) | Unimplemented(..) => Axi(a),
             Generated(_, dbi) => Var(dbi),
+            Implicit(_, mi) => Meta(mi),
         })
     }
 
@@ -157,6 +158,7 @@ impl Val {
         self.map_axiom(&mut |a| match a {
             Postulated(..) | Generated(..) => Axi(a),
             Unimplemented(_, dbi) => Ref(dbi),
+            Implicit(_, mi) => Meta(mi),
         })
     }
 
@@ -211,13 +213,17 @@ pub enum Axiom {
     /// Usages of definitions when they're not yet implemented.
     /// (usually will be replaced with `Val::glob` after implemented).
     Unimplemented(UID, GI),
+    /// Implicit parameters during type-checking
+    Implicit(UID, MI),
 }
 
 impl Axiom {
     pub fn unique_id(&self) -> UID {
         use Axiom::*;
         match self {
-            Postulated(uid) | Generated(uid, ..) | Unimplemented(uid, ..) => *uid,
+            Postulated(uid) | Generated(uid, ..) | Unimplemented(uid, ..) | Implicit(uid, ..) => {
+                *uid
+            }
         }
     }
 }

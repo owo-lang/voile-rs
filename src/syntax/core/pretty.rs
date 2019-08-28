@@ -56,6 +56,7 @@ impl Display for Axiom {
             Postulated(uid) => write!(f, "<{}>", uid),
             Generated(uid, dbi) => write!(f, "<{} {}>", uid, dbi),
             Unimplemented(uid, dbi) => write!(f, "[|{} {}|]", uid, dbi),
+            Implicit(uid, mi) => write!(f, "{{{} {}}}", uid, mi),
         }
     }
 }

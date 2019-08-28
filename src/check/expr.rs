@@ -2,10 +2,8 @@ use VarRec::*;
 
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
-use crate::syntax::common::{merge_info, SyntaxInfo, ToSyntaxInfo, VarRec};
-use crate::syntax::common::{Plicit, SyntaxInfo, ToSyntaxInfo, VarRec};
+use crate::syntax::common::{merge_info, Plicit, SyntaxInfo, ToSyntaxInfo, VarRec};
 use crate::syntax::core::{CaseSplit, Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
-use crate::syntax::core::{Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
 use crate::syntax::level::{Level, LiftEx};
 
 use super::eval::compile_cons;
@@ -175,37 +173,38 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 .map_err(|e| e.wrap(*info))?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
-        (Whatever(info), Val::Dt(Pi, param_ty, ..)) => match &**param_ty {
+        (Whatever(info), Val::Dt(Pi, _, param_ty, ..)) => match &**param_ty {
             Val::RowPoly(Variant, variants) if variants.is_empty() => {
                 Ok((Val::Lam(Closure::default()).into_info(*info), tcs))
             }
             ty => Err(TCE::NotRowType(Variant, *info, ty.clone())),
         },
-        (CaseOr(label, binding, uid, body, or), Val::Dt(Pi, param_ty, ret_ty)) => match &**param_ty
-        {
-            Val::RowPoly(Variant, variants) => {
-                let lam_info = merge_info(binding, &**body);
-                let lam = Lam(lam_info, binding.clone(), *uid, body.clone());
-                let mut variants = variants.clone();
-                let param_ty = match variants.remove(&label.text) {
-                    Some(param_ty) => param_ty,
-                    None => unimplemented!(),
-                };
-                let stripped_param = Val::variant_type(variants);
-                let stripped_function = Val::pi(stripped_param, ret_ty.clone());
-                let dt = Val::pi(param_ty, ret_ty.clone());
-                let (body, tcs) = tcs.check(&lam, &dt)?;
-                let mut split = CaseSplit::default();
-                split.insert(label.text.clone(), Closure::plain(body.ast));
-                let ext = Val::Lam(Closure::Tree(split));
-                let (or, tcs) = tcs.check(&**or, &stripped_function)?;
-                Ok((or.ast.split_extend(ext).into_info(or.info), tcs))
+        (CaseOr(label, binding, uid, body, or), Val::Dt(Pi, Plicit::Ex, param_ty, ret_ty)) => {
+            match &**param_ty {
+                Val::RowPoly(Variant, variants) => {
+                    let lam_info = merge_info(binding, &**body);
+                    let lam = Lam(lam_info, binding.clone(), *uid, body.clone());
+                    let mut variants = variants.clone();
+                    let param_ty = match variants.remove(&label.text) {
+                        Some(param_ty) => param_ty,
+                        None => unimplemented!(),
+                    };
+                    let stripped_param = Val::variant_type(variants);
+                    let stripped_function = Val::pi(Plicit::Ex, stripped_param, ret_ty.clone());
+                    let dt = Val::pi(Plicit::Ex, param_ty, ret_ty.clone());
+                    let (body, tcs) = tcs.check(&lam, &dt)?;
+                    let mut split = CaseSplit::default();
+                    split.insert(label.text.clone(), Closure::plain(body.ast));
+                    let ext = Val::Lam(Closure::Tree(split));
+                    let (or, tcs) = tcs.check(&**or, &stripped_function)?;
+                    Ok((or.ast.split_extend(ext).into_info(or.info), tcs))
+                }
+                ty => {
+                    let info = merge_info(label, &**or);
+                    Err(TCE::NotRowType(Variant, info, ty.clone()))
+                }
             }
-            ty => {
-                let info = merge_info(label, &**or);
-                Err(TCE::NotRowType(Variant, info, ty.clone()))
-            }
-        },
+        }
         (expr, anything) => check_fallback(tcs, expr, anything),
     }
 }
