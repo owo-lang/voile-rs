@@ -90,12 +90,12 @@ impl RedEx for Neutral {
             Row(kind, variants, ext) => {
                 let variants = reduce_variants_with_dbi(variants, dbi, &arg);
                 let ext = ext.reduce_with_dbi(arg, dbi);
-                Val::RowPoly(kind, variants).extend(ext)
+                Val::RowPoly(kind, variants).row_extend(ext)
             }
             Rec(fields, ext) => {
                 let fields = reduce_variants_with_dbi(fields, dbi, &arg);
                 let ext = ext.reduce_with_dbi(arg, dbi);
-                Val::Rec(fields).extend(ext)
+                Val::Rec(fields).row_extend(ext)
             }
         }
     }
@@ -128,12 +128,12 @@ impl RedEx for Neutral {
             Row(kind, variants, ext) => {
                 let variants = reduce_variants_with_dbi(variants, dbi, arg);
                 let ext = ext.reduce_with_dbi_borrow(&arg, dbi);
-                Val::RowPoly(kind, variants).extend(ext)
+                Val::RowPoly(kind, variants).row_extend(ext)
             }
             Rec(fields, ext) => {
                 let fields = reduce_variants_with_dbi(fields, dbi, arg);
                 let ext = ext.reduce_with_dbi_borrow(&arg, dbi);
-                Val::Rec(fields).extend(ext)
+                Val::Rec(fields).row_extend(ext)
             }
         }
     }

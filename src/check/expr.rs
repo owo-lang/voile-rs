@@ -89,7 +89,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
         (Pair(info, fst, snd), Val::Dt(Sigma, param_ty, closure)) => {
             let (fst_term, mut tcs) = tcs.check(&**fst, &**param_ty).map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();
-            let snd_ty = closure.instantiate_cloned(fst_term_ast.clone());
+            let snd_ty = closure.instantiate_borrow(&fst_term_ast);
             // This `fst_term.syntax_info()` is probably wrong, but I'm not sure how to fix
             let param_type = param_ty.clone().into_info(fst_term.syntax_info());
             tcs.local_gamma.push(param_type);
@@ -285,7 +285,7 @@ fn check_row_polymorphic_type(
                 .check(&**ext, &expected_kind)
                 .map_err(|e| e.wrap(info))?;
             let row_poly = Val::RowPoly(kind, out_variants)
-                .extend(ext.ast)
+                .row_extend(ext.ast)
                 .into_info(info);
             Ok((row_poly, new_tcs))
         }
@@ -572,7 +572,7 @@ fn subtype(tcs: TCS, sub: &Val, sup: &Val) -> TCM {
             // Parameter invariance
             let tcs = tcs.unify(input_a, input_b)?;
             let p = Val::fresh_axiom();
-            let a = clos_a.instantiate_cloned_borrow(&p);
+            let a = clos_a.instantiate_borrow(&p);
             let b = clos_b.instantiate_cloned(p);
             // Return value covariance
             tcs.subtype(&a, &b)

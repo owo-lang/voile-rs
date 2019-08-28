@@ -146,7 +146,7 @@ $$
 */
 fn unify_closure(tcs: TCS, a: &Closure, b: &Closure) -> TCM {
     let p = Val::fresh_axiom();
-    let a = a.instantiate_cloned_borrow(&p);
+    let a = a.instantiate_borrow(&p);
     let b = b.instantiate_cloned(p);
     tcs.unify(&a, &b)
 }

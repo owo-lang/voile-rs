@@ -29,19 +29,6 @@ impl Val {
         }
     }
 
-    pub fn apply_borrow(self, arg: &Val) -> Self {
-        match self {
-            Val::Lam(closure) => closure.instantiate_borrow(arg),
-            Val::Neut(Neutral::OrSplit(split, ..)) => Closure::Tree(split).instantiate_borrow(arg),
-            Val::Neut(Neutral::App(f, mut a)) => {
-                a.push(arg.clone());
-                Val::app(*f, a)
-            }
-            Val::Neut(otherwise) => Val::app(otherwise, vec![arg.clone()]),
-            e => panic!("Cannot apply on `{}`.", e),
-        }
-    }
-
     pub fn first(self) -> Self {
         match self {
             Val::Pair(a, _) => *a,
@@ -67,20 +54,6 @@ impl Val {
                 .remove(&field)
                 .expect(&format!("Missing essential field with name `{}`.", field)),
             Val::Neut(otherwise) => Val::proj(otherwise, field),
-            e => panic!("Cannot project on `{}`.", e),
-        }
-    }
-
-    pub fn project_cloned(&self, field: String) -> Val {
-        match self {
-            Val::Rec(fields) => fields
-                .get(&field)
-                .expect(&format!("Missing essential field with name `{}`.", field))
-                .clone(),
-            Val::Neut(Neutral::Rec(fields, ..)) => fields
-                .get(&field)
-                .expect(&format!("Missing essential field with name `{}`.", field))
-                .clone(),
             e => panic!("Cannot project on `{}`.", e),
         }
     }
@@ -120,35 +93,34 @@ impl Val {
     }
 
     /// Extension for row-polymorphic types.
-    pub fn extend(self, ext: Self) -> Self {
-        use Val::*;
-        use VarRec::*;
+    pub fn row_extend(self, ext: Self) -> Self {
+        use {Neutral::Row, Val::*, VarRec::*};
         match (self, ext) {
             (RowPoly(Record, mut fields), RowPoly(Record, mut ext)) => {
                 fields.append(&mut ext);
                 Self::record_type(fields)
             }
-            (RowPoly(Record, mut fields), Neut(Neutral::Row(Record, mut ext, more))) => {
+            (RowPoly(Record, mut fields), Neut(Row(Record, mut ext, more))) => {
                 fields.append(&mut ext);
-                Self::record_type(fields).extend(Neut(*more))
+                Self::record_type(fields).row_extend(Neut(*more))
             }
             (RowPoly(Variant, mut variants), RowPoly(Variant, mut ext)) => {
                 variants.append(&mut ext);
                 Self::variant_type(variants)
             }
-            (RowPoly(Variant, mut variants), Neut(Neutral::Row(Variant, mut ext, more))) => {
+            (RowPoly(Variant, mut variants), Neut(Row(Variant, mut ext, more))) => {
                 variants.append(&mut ext);
-                Self::variant_type(variants).extend(Neut(*more))
+                Self::variant_type(variants).row_extend(Neut(*more))
             }
             (RowPoly(kind, mut variants), RowPoly(_, mut ext)) => {
                 eprintln!("Warning: incorrect row extension!");
                 variants.append(&mut ext);
                 RowPoly(kind, variants)
             }
-            (RowPoly(kind, mut variants), Neut(Neutral::Row(_, mut ext, more))) => {
+            (RowPoly(kind, mut variants), Neut(Row(_, mut ext, more))) => {
                 eprintln!("Warning: incorrect row extension!");
                 variants.append(&mut ext);
-                RowPoly(kind, variants).extend(Neut(*more))
+                RowPoly(kind, variants).row_extend(Neut(*more))
             }
             (RowPoly(kind, variants), Neut(otherwise)) => {
                 if variants.is_empty() {
@@ -368,26 +340,12 @@ impl Closure {
         }
     }
 
-    pub fn instantiate_borrow(self, arg: &Val) -> Val {
-        match self {
-            Closure::Plain(body) => body.reduce_with_dbi_borrow(arg, Default::default()),
-            Closure::Tree(mut split) => match arg {
-                Val::Cons(label, arg) => match split.remove(label) {
-                    Some(body) => body.instantiate_borrow(arg),
-                    None => panic!("Cannot find clause for label `{}`.", label),
-                },
-                Val::Neut(neutral) => Val::split_on(split, neutral.clone()),
-                a => panic!("Cannot split on `{}`.", a),
-            },
-        }
-    }
-
-    pub fn instantiate_cloned_borrow(&self, arg: &Val) -> Val {
+    pub fn instantiate_borrow(&self, arg: &Val) -> Val {
         match self {
             Closure::Plain(body) => body.clone().reduce_with_dbi_borrow(arg, Default::default()),
             Closure::Tree(split) => match arg {
                 Val::Cons(label, arg) => match split.get(label) {
-                    Some(body) => body.instantiate_cloned_borrow(arg),
+                    Some(body) => body.instantiate_borrow(arg),
                     None => panic!("Cannot find clause for label `{}`.", label),
                 },
                 Val::Neut(neutral) => Val::split_on(split.clone(), neutral.clone()),

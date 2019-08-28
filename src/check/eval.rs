@@ -176,7 +176,7 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
                 None => (row_poly.into_info(info), tcs),
                 Some(ext) => {
                     let (ext, tcs) = tcs.evaluate(*ext);
-                    (row_poly.extend(ext.ast).into_info(info), tcs)
+                    (row_poly.row_extend(ext.ast).into_info(info), tcs)
                 }
             }
         }
