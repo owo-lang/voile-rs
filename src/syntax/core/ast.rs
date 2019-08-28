@@ -16,20 +16,10 @@ pub type CaseSplit = BTreeMap<String, Closure>;
 
 /// Reduction functions.
 impl Val {
-    /**
-    $$
-    \\newcommand{\\inst}[0]{\\texttt{inst}}
-    \\newcommand{\\app}[0]{\\texttt{app}}
-    \\begin{alignedat}{1}
-    \\app(\\lambda C, o) &= \\inst(C, o) \\\\
-    \\app([k], o) &= [k\ o]
-    \\end{alignedat}
-    $$
-    For evaluation during beta-reduction.
-    */
     pub fn apply(self, arg: Val) -> Self {
         match self {
             Val::Lam(closure) => closure.instantiate(arg),
+            Val::Neut(Neutral::OrSplit(split, ..)) => Closure::Tree(split).instantiate(arg),
             Val::Neut(Neutral::App(f, mut a)) => {
                 a.push(arg);
                 Val::app(*f, a)
@@ -42,6 +32,7 @@ impl Val {
     pub fn apply_borrow(self, arg: &Val) -> Self {
         match self {
             Val::Lam(closure) => closure.instantiate_borrow(arg),
+            Val::Neut(Neutral::OrSplit(split, ..)) => Closure::Tree(split).instantiate_borrow(arg),
             Val::Neut(Neutral::App(f, mut a)) => {
                 a.push(arg.clone());
                 Val::app(*f, a)
@@ -51,17 +42,6 @@ impl Val {
         }
     }
 
-    /**
-    $$
-    \\newcommand{\\first}[0]{\\texttt{first}}
-    \\newcommand{\\second}[0]{\\texttt{second}}
-    \\begin{alignedat}{1}
-    \\first(n, m) &= n \\\\
-    \\first([k]) &= [k\ .1] \\\\
-    \\end{alignedat}
-    $$
-    For evaluation during beta-reduction.
-    */
     pub fn first(self) -> Self {
         match self {
             Val::Pair(a, _) => *a,
@@ -70,17 +50,6 @@ impl Val {
         }
     }
 
-    /**
-    $$
-    \\newcommand{\\first}[0]{\\texttt{first}}
-    \\newcommand{\\second}[0]{\\texttt{second}}
-    \\begin{alignedat}{1}
-    \\second(n, m) &= m \\\\
-    \\second([k]) &= [k\ .2]
-    \\end{alignedat}
-    $$
-    For evaluation during beta-reduction.
-    */
     pub fn second(self) -> Val {
         match self {
             Val::Pair(_, b) => *b,
@@ -126,9 +95,26 @@ impl Val {
             }
             (Rec(mut fields), Neut(Neutral::Rec(mut more, ext))) => {
                 fields.append(&mut more);
-                Rec(fields).extend(Neut(*ext))
+                Rec(fields).rec_extend(Neut(*ext))
             }
             (Rec(fields), Neut(otherwise)) => Self::neutral_record(fields, otherwise),
+            (a, b) => panic!("Cannot extend `{}` by `{}`.", a, b),
+        }
+    }
+
+    /// Extension for case-splits.
+    pub fn split_extend(self, ext: Self) -> Self {
+        use {Closure::Tree, Val::*};
+        match (self, ext) {
+            (Lam(Tree(mut split)), Lam(Tree(mut ext))) => {
+                split.append(&mut ext);
+                Lam(Tree(split))
+            }
+            (Lam(Tree(mut split)), Neut(Neutral::OrSplit(mut more, ext))) => {
+                split.append(&mut more);
+                Lam(Tree(split)).split_extend(Neut(*ext))
+            }
+            (Lam(Tree(split)), Neut(otherwise)) => Val::or_split(split, otherwise),
             (a, b) => panic!("Cannot extend `{}` by `{}`.", a, b),
         }
     }

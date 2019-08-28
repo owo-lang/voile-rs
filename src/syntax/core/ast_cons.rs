@@ -52,6 +52,10 @@ impl Val {
         Val::Neut(Neutral::SplitOn(split, Box::new(on)))
     }
 
+    pub fn or_split(split: CaseSplit, or: Neutral) -> Self {
+        Val::Neut(Neutral::OrSplit(split, Box::new(or)))
+    }
+
     pub fn fresh_axiom() -> Self {
         Self::postulate(unsafe { next_uid() })
     }
