@@ -26,7 +26,7 @@ impl Display for Abs {
             Abs::Snd(_, p) => write!(f, "({}.2)", p),
             Abs::Proj(_, rec, field) => write!(f, "({}.{})", rec, field.text),
             Abs::Whatever(..) => f.write_str("whatever"),
-            Abs::CaseOr(label, binding, body, or) => write!(
+            Abs::CaseOr(label, binding, _, body, or) => write!(
                 f,
                 "(case {} {}: {} or {})",
                 label.text, binding.text, body, or

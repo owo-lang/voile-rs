@@ -148,7 +148,7 @@ fn trans_expr_inner(
             let mut names = Vec::with_capacity(1);
             introduce_abstractions(&[binding.clone()], &mut local, &mut local_map, &mut names);
             let body = trans_expr_inner(*body, meta_count, env, global_map, &local, &local_map)?;
-            Ok(Abs::case_or(label, binding, body, or))
+            Ok(Abs::case_or(label, binding, names[0], body, or))
         }
         Expr::Whatever(info) => Ok(Abs::Whatever(info)),
         Expr::Lam(info, params, body) => {

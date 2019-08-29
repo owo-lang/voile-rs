@@ -185,7 +185,7 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let expr = Val::RowKind(Default::default(), kind, labels);
             (expr.into_info(info), tcs)
         }
-        CaseOr(label, _, body, or) => {
+        CaseOr(label, _, _, body, or) => {
             let (or, tcs) = tcs.evaluate(*or);
             let (body, tcs) = tcs.evaluate(*body);
             let info = merge_info(&label, &or);
