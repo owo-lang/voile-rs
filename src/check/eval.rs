@@ -1,7 +1,7 @@
 use crate::check::monad::{MetaSolution, TCS};
 use crate::syntax::abs::{Abs, LabAbs};
-use crate::syntax::common::{Ident, DBI};
-use crate::syntax::core::{Closure, Neutral, TraverseNeutral, Val, ValInfo, Variants};
+use crate::syntax::common::{merge_info, Ident, DBI};
+use crate::syntax::core::{CaseSplit, Closure, Neutral, TraverseNeutral, Val, ValInfo, Variants};
 use crate::syntax::level::LiftEx;
 
 /**
@@ -184,6 +184,15 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let labels = labels.into_iter().map(|l| l.text).collect();
             let expr = Val::RowKind(Default::default(), kind, labels);
             (expr.into_info(info), tcs)
+        }
+        CaseOr(label, _, body, or) => {
+            let (or, tcs) = tcs.evaluate(*or);
+            let (body, tcs) = tcs.evaluate(*body);
+            let info = merge_info(&label, &or);
+            let mut split = CaseSplit::default();
+            split.insert(label.text, Closure::plain(body.ast));
+            let lam = Val::Lam(Closure::Tree(split));
+            (or.ast.split_extend(lam).into_info(info), tcs)
         }
         Whatever(info) => (Val::Lam(Closure::default()).into_info(info), tcs),
     }

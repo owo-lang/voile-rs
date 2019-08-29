@@ -140,16 +140,24 @@ fn trans_expr_inner(
         Expr::Sig(initial, last) => trans_dependent_type(
             meta_count, env, global_map, local_env, local_map, initial, *last, Sigma,
         ),
-        Expr::Cases(..) => unimplemented!(),
+        Expr::Cases(label, binding, body, or) => {
+            let or = trans_expr_inner(*or, meta_count, env, global_map, local_env, local_map)?;
+            let mut local = local_env.to_vec();
+            local.reserve_exact(local.len() + 1);
+            let mut local_map = local_map.clone();
+            let mut names = Vec::with_capacity(1);
+            introduce_abstractions(&[binding.clone()], &mut local, &mut local_map, &mut names);
+            let body = trans_expr_inner(*body, meta_count, env, global_map, &local, &local_map)?;
+            Ok(Abs::case_or(label, binding, body, or))
+        }
         Expr::Whatever(info) => Ok(Abs::Whatever(info)),
         Expr::Lam(info, params, body) => {
-            let mut local_env = local_env.to_vec();
-            local_env.reserve_exact(local_env.len() + params.len() + 1);
+            let mut local = local_env.to_vec();
+            local.reserve_exact(local.len() + params.len() + 1);
             let mut local_map = local_map.clone();
             let mut names = Vec::with_capacity(params.len());
-            introduce_abstractions(&params, &mut local_env, &mut local_map, &mut names);
-            let body =
-                trans_expr_inner(*body, meta_count, env, global_map, &local_env, &local_map)?;
+            introduce_abstractions(&params, &mut local, &mut local_map, &mut names);
+            let body = trans_expr_inner(*body, meta_count, env, global_map, &local, &local_map)?;
             Ok(params.into_iter().rev().fold(body, |lam_abs, param| {
                 let pop_empty = "The stack `names` is empty. Please report this as a bug.";
                 let name = names.pop().expect(pop_empty);

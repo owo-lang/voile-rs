@@ -34,6 +34,8 @@ pub enum Abs {
     Rec(SyntaxInfo, Vec<LabAbs>, Option<Box<Self>>),
     /// Empty type eliminator,
     Whatever(SyntaxInfo),
+    /// Case-split expressions.
+    CaseOr(Ident, Ident, Box<Self>, Box<Self>),
     /// Row-polymorphic kinds, corresponds to [RowKind](crate::syntax::surf::Expr::RowKind)
     RowKind(SyntaxInfo, VarRec, Vec<Ident>),
 }
@@ -54,6 +56,7 @@ impl ToSyntaxInfo for Abs {
             | Abs::Lift(info, ..)
             | Abs::Whatever(info)
             | Abs::Lam(info, ..) => *info,
+            Abs::CaseOr(ident, _, _, last) => merge_info(ident, &**last),
             Abs::Var(ident, ..) | Abs::Ref(ident, ..) | Abs::Meta(ident, ..) | Abs::Cons(ident) => {
                 ident.info
             }
@@ -101,6 +104,10 @@ impl Abs {
 
     pub fn pair(info: SyntaxInfo, first: Self, second: Self) -> Self {
         Abs::Pair(info, Box::new(first), Box::new(second))
+    }
+
+    pub fn case_or(label: Ident, binding: Ident, clause: Self, or: Self) -> Self {
+        Abs::CaseOr(label, binding, Box::new(clause), Box::new(or))
     }
 
     pub fn lift(info: SyntaxInfo, lift_count: u32, expr: Self) -> Self {
