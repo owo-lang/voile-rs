@@ -309,6 +309,12 @@ pub enum Closure {
     Tree(CaseSplit),
 }
 
+impl Default for Closure {
+    fn default() -> Self {
+        Closure::Tree(Default::default())
+    }
+}
+
 impl Closure {
     pub fn instantiate(self, arg: Val) -> Val {
         match self {

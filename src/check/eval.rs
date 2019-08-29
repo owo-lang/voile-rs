@@ -1,7 +1,7 @@
 use crate::check::monad::{MetaSolution, TCS};
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::{Ident, DBI};
-use crate::syntax::core::{Neutral, TraverseNeutral, Val, ValInfo, Variants};
+use crate::syntax::core::{Closure, Neutral, TraverseNeutral, Val, ValInfo, Variants};
 use crate::syntax::level::LiftEx;
 
 /**
@@ -185,6 +185,7 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let expr = Val::RowKind(Default::default(), kind, labels);
             (expr.into_info(info), tcs)
         }
+        Whatever(info) => (Val::Lam(Closure::default()).into_info(info), tcs),
     }
 }
 

@@ -25,6 +25,7 @@ impl Display for Abs {
             Abs::Fst(_, p) => write!(f, "({}.1)", p),
             Abs::Snd(_, p) => write!(f, "({}.2)", p),
             Abs::Proj(_, rec, field) => write!(f, "({}.{})", rec, field.text),
+            Abs::Whatever(..) => f.write_str("whatever"),
             Abs::RowKind(_, kind, labels) => {
                 write!(f, "{} [ ", kind)?;
                 for ident in labels {

@@ -32,6 +32,8 @@ pub enum Abs {
     RowPoly(SyntaxInfo, VarRec, Vec<LabAbs>, Option<Box<Self>>),
     /// Record literals
     Rec(SyntaxInfo, Vec<LabAbs>, Option<Box<Self>>),
+    /// Empty type eliminator,
+    Whatever(SyntaxInfo),
     /// Row-polymorphic kinds, corresponds to [RowKind](crate::syntax::surf::Expr::RowKind)
     RowKind(SyntaxInfo, VarRec, Vec<Ident>),
 }
@@ -50,6 +52,7 @@ impl ToSyntaxInfo for Abs {
             | Abs::Proj(info, ..)
             | Abs::RowKind(info, ..)
             | Abs::Lift(info, ..)
+            | Abs::Whatever(info)
             | Abs::Lam(info, ..) => *info,
             Abs::Var(ident, ..) | Abs::Ref(ident, ..) | Abs::Meta(ident, ..) | Abs::Cons(ident) => {
                 ident.info
