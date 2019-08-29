@@ -31,6 +31,8 @@ fn primary_expr_parsing() {
     success!("let a = Type233;");
     success!("let van = (Type233);");
     parse_str_err_printed("let darkholm = (Type233;").unwrap_err();
+    // Keyword are not allowed
+    parse_str_err_printed("let darkholm = case;").unwrap_err();
 }
 
 #[test]

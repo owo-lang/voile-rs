@@ -11,17 +11,25 @@ ident_char =
  _{ ASCII_ALPHA
   | "_"
   }
-ident_raw =
+ident_raw = _{ ident_char ~ ident_following* }
+ident_following =
  _{ ident_char
-  ~ ( ident_char
-    | ASCII_DIGIT
-    | "'"
-    | "_"
-    | "\\"
-    )*
+  | ASCII_DIGIT
+  | "'"
+  | "_"
+  | "\\"
   }
+
 ///Yellow
-ident = @{ !"case" ~ !"or" ~ ident_raw }
+ident =
+ @{ !"case"
+  ~ !"or"
+  ~ ident_raw
+  | "case"
+  ~ ident_following+
+  | "or"
+  ~ ident_following+
+  }
 ///Pink
 cons = @{ "@" ~ ident_raw }
 ///Pink
