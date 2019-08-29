@@ -21,7 +21,7 @@ ident_raw =
     )*
   }
 ///Yellow
-ident = @{ ident_raw }
+ident = @{ !"case" ~ !"or" ~ ident_raw }
 ///Pink
 cons = @{ "@" ~ ident_raw }
 ///Pink

@@ -1,0 +1,23 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-08-29
+// simple-pattern-match
+// Author: ice10
+//
+
+let Unit = Rec {};
+
+val unit : Unit;
+let unit = {| |};
+
+let Bool = Sum { True: Unit; False: Unit; };
+
+val true : Bool;
+let true = @True unit;
+
+val false : Bool;
+let false = @False unit;
+
+val not : Bool -> Bool;
+let not = case True u: false
+  or case False u: true
+  or whatever;
