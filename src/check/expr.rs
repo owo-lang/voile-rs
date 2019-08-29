@@ -172,14 +172,22 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 .map_err(|e| e.wrap(*info))?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
-        (expr, anything) => {
-            let (inferred, tcs) = tcs.infer(expr)?;
-            let tcs: TCS = tcs
-                .subtype(&inferred.ast, anything)
-                .map_err(|e| e.wrap(inferred.info))?;
-            Ok(tcs.evaluate(expr.clone()))
-        }
+        (Whatever(info), Val::Dt(Pi, param_ty, ..)) => match &**param_ty {
+            Val::RowPoly(Variant, variants) if variants.is_empty() => {
+                Ok((Val::Lam(Closure::default()).into_info(*info), tcs))
+            }
+            ty => Err(TCE::NotRowType(Variant, *info, ty.clone())),
+        },
+        (expr, anything) => check_fallback(tcs, expr, anything),
     }
+}
+
+fn check_fallback(tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
+    let (inferred, tcs) = tcs.infer(expr)?;
+    Ok(tcs
+        .subtype(&inferred.ast, expected_type)
+        .map_err(|e| e.wrap(inferred.info))?
+        .evaluate(expr.clone()))
 }
 
 fn check_fields_no_more(
@@ -450,7 +458,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                     .remove(&field.text)
                     .map(|ty| (ty.into_info(info), tcs))
                     .ok_or_else(|| TCE::MissingVariant(Record, field.text.clone())),
-                ast => Err(TCE::NotRecType(record_ty.info, ast)),
+                ast => Err(TCE::NotRowType(Record, record_ty.info, ast)),
             }
         }
         Snd(_, pair) => {
@@ -471,6 +479,11 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 let mut variant = Variants::default();
                 variant.insert(variant_info.text[1..].to_owned(), a.ast);
                 Ok((Val::variant_type(variant).into_info(info), tcs))
+            }
+            Whatever(whatever_info) => {
+                let empty = Val::Lam(Closure::default());
+                let (_, mut tcs) = tcs.check(a, &empty).map_err(|e| e.wrap(info))?;
+                Ok((tcs.fresh_meta().into_info(*whatever_info), tcs))
             }
             f => {
                 let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap(info))?;
