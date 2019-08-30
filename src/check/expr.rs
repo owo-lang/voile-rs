@@ -2,7 +2,7 @@ use VarRec::*;
 
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
-use crate::syntax::common::{merge_info, Plicit, SyntaxInfo, ToSyntaxInfo, VarRec};
+use crate::syntax::common::{merge_info, Ident, Plicit, SyntaxInfo, ToSyntaxInfo, VarRec};
 use crate::syntax::core::{CaseSplit, Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
 use crate::syntax::level::{Level, LiftEx};
 
@@ -528,10 +528,16 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap(info))?;
                 match f_ty.ast {
                     Val::Dt(Pi, Plicit::Im(None), ..) => unreachable!(),
-                    Val::Dt(Pi, Plicit::Im(Some(mi)), _, closure) if plicit == Plicit::Ex => {
-                        // TODO: An explicit apply but an implicit dt: Insert meta
-                        let meta_inserted_app = unimplemented!();
-                        tcs.infer(meta_inserted_app)
+                    Val::Dt(Pi, Plicit::Im(Some(mi)), ..) if *plicit == Plicit::Ex => {
+                        // An explicit apply but an implicit dt: Insert meta
+                        let meta_inserted_app = Abs::Meta(
+                            Ident {
+                                info: Default::default(),
+                                text: "".to_owned(),
+                            },
+                            mi,
+                        );
+                        tcs.infer(&meta_inserted_app)
                     }
                     Val::Dt(Pi, _, param_type, closure) => {
                         let (new_a, tcs) =
