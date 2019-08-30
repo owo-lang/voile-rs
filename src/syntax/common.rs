@@ -26,6 +26,7 @@ pub enum PiSig {
     Sigma,
 }
 
+/// Visibility of a parameter -- it can be explicit or implicit
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum Plicit {
     Ex,

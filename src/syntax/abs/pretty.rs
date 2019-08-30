@@ -19,10 +19,10 @@ impl Display for Abs {
             Abs::Lift(_, levels, expr) => write!(f, "(^[{:?}] {})", levels, expr),
             Abs::App(_, a, _, b) => write!(f, "({} {})", a, b),
             Abs::Dt(_, Pi, name, Plicit::Ex, param, ret) => {
-                write!(f, "({{{:?}}} : {}) -> {}", name, param, ret)
+                write!(f, "({:?} : {}) -> {}", name, param, ret)
             }
             Abs::Dt(_, Pi, name, Plicit::Im(_), param, ret) => {
-                write!(f, "({{{:?}}} : {}) -> {}", name, param, ret)
+                write!(f, "{{{:?} : {}}} -> {}", name, param, ret)
             }
             Abs::Dt(_, Sigma, name, _, fst, snd) => write!(f, "(<{:?}> : {}) * {}", name, fst, snd),
             Abs::Lam(_, param, name, body) => write!(f, "(\\{}[{:?}]. {})", param.text, name, body),
