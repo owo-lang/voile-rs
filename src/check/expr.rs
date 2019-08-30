@@ -184,12 +184,10 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 let lam_info = merge_info(binding, &**body);
                 let lam = Lam(lam_info, binding.clone(), *uid, body.clone());
                 let mut variants = variants.clone();
-                let param_ty = match variants.remove(&label.text) {
-                    Some(param_ty) => param_ty,
-                    None => unimplemented!(),
-                };
-                let stripped_param = Val::variant_type(variants);
-                let stripped_function = Val::pi(stripped_param, ret_ty.clone());
+                let param_ty = variants
+                    .remove(&label.text)
+                    .ok_or_else(|| TCE::MissingVariant(Variant, label.text.clone()))?;
+                let stripped_function = Val::pi(Val::variant_type(variants), ret_ty.clone());
                 let dt = Val::pi(param_ty, ret_ty.clone());
                 let (body, tcs) = tcs.check(&lam, &dt)?;
                 let mut split = CaseSplit::default();
