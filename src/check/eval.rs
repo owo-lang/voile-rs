@@ -133,7 +133,6 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             (applied.into_info(info), tcs)
         }
         Dt(info, kind, _, param_plicit, param_ty, ret_ty) => {
-            // todo: insert meta
             let (param_ty, tcs) = evaluate(tcs, *param_ty);
             let (ret_ty, tcs) = evaluate(tcs, *ret_ty);
             let term = Val::closure_dependent_type(kind, param_plicit, param_ty.ast, ret_ty.ast);

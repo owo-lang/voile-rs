@@ -2,7 +2,7 @@ use std::fmt::{Display, Error, Formatter};
 
 use PiSig::*;
 
-use crate::syntax::common::PiSig;
+use crate::syntax::common::{PiSig, Plicit};
 
 use super::{Abs, AbsDecl, LabAbs};
 
@@ -18,8 +18,11 @@ impl Display for Abs {
             Abs::Cons(name) => write!(f, "@{}", name.text),
             Abs::Lift(_, levels, expr) => write!(f, "(^[{:?}] {})", levels, expr),
             Abs::App(_, a, b) => write!(f, "({} {})", a, b),
-            Abs::Dt(_, Pi, name, _, param, ret) => {
-                write!(f, "(<{:?}> : {}) -> {}", name, param, ret)
+            Abs::Dt(_, Pi, name, Plicit::Ex, param, ret) => {
+                write!(f, "({{{:?}}} : {}) -> {}", name, param, ret)
+            }
+            Abs::Dt(_, Pi, name, Plicit::Im(_), param, ret) => {
+                write!(f, "({{{:?}}} : {}) -> {}", name, param, ret)
             }
             Abs::Dt(_, Sigma, name, _, fst, snd) => write!(f, "(<{:?}> : {}) * {}", name, fst, snd),
             Abs::Lam(_, param, name, body) => write!(f, "(\\{}[{:?}]. {})", param.text, name, body),

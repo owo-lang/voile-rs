@@ -147,9 +147,8 @@ impl Val {
     pub fn generated_to_var(self) -> Self {
         use {Axiom::*, Neutral::*};
         self.map_axiom(&mut |a| match a {
-            Postulated(..) | Unimplemented(..) => Axi(a),
+            Postulated(..) | Unimplemented(..) | Implicit(..) => Axi(a),
             Generated(_, dbi) => Var(dbi),
-            Implicit(_, mi) => Meta(mi),
         })
     }
 

@@ -113,6 +113,18 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let lam = Val::closure_lam(lam_term.ast);
             Ok((lam.into_info(*full_info), tcs))
         }
+        (Lam(..), Val::Dt(Pi, Plicit::Im(Some(mi)), param_ty, ret_ty)) => {
+            let param_type = param_ty.clone().into_info(Default::default());
+            tcs.local_gamma.push(param_type);
+            let mocked = Val::fresh_implicit(*mi);
+            let mocked_term = mocked.clone().into_info(Default::default());
+            tcs.local_env.push(mocked_term);
+            let ret_ty_body = ret_ty.instantiate_cloned(mocked);
+
+            let (lam, mut tcs) = tcs.check(&expr.clone(), &ret_ty_body)?;
+            tcs.pop_local();
+            Ok((lam, tcs))
+        }
         (Cons(info), Val::Dt(Pi, ..)) => Ok((compile_cons(info.clone()), tcs)),
         (Dt(info, kind, uid, param_plicit, param, ret), Val::Type(..)) => {
             let (param, mut tcs) = tcs
@@ -515,12 +527,17 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             f => {
                 let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap(info))?;
                 match f_ty.ast {
-                    // todo: Implicit
-                    Val::Dt(Pi, _plicit, param_type, closure) => {
+                    Val::Dt(Pi, Plicit::Im(Some(mi)), _, closure) => {
+                        // (currently) `App`s are all explicit,
+                        // todo: so we will insert a meta here
+                        unimplemented!()
+                    }
+                    Val::Dt(Pi, Plicit::Ex, param_type, closure) => {
                         let (new_a, tcs) =
                             tcs.check(&**a, &*param_type).map_err(|e| e.wrap(info))?;
                         Ok((closure.instantiate(new_a.ast).into_info(info), tcs))
                     }
+                    Val::Dt(Pi, Plicit::Im(None), ..) => unreachable!(),
                     other => Err(TCE::NotPi(info, other)),
                 }
             }

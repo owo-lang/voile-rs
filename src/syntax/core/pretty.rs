@@ -3,6 +3,7 @@ use std::fmt::{Display, Error, Formatter};
 use crate::syntax::common::PiSig::*;
 
 use super::{Axiom, Closure, Neutral, Val, ValInfo};
+use crate::syntax::common::Plicit;
 use crate::syntax::core::{CaseSplit, Variants};
 
 impl Display for Neutral {
@@ -110,7 +111,10 @@ impl Display for Val {
                 write_variants(f, fields, " =")?;
                 f.write_str("|}")
             }
-            Val::Dt(Pi, _, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
+            Val::Dt(Pi, Plicit::Ex, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
+            Val::Dt(Pi, Plicit::Im(_), param_ty, clos) => {
+                write!(f, "({{{}}} -> {})", param_ty, clos)
+            }
             Val::Dt(Sigma, _, param_ty, clos) => write!(f, "({} * {})", param_ty, clos),
             Val::Pair(fst, snd) => write!(f, "({}, {})", fst, snd),
             Val::Neut(neut) => neut.fmt(f),
