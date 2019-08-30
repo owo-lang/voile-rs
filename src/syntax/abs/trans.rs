@@ -106,13 +106,13 @@ fn trans_expr_inner(
                 Err(TCE::LookUpFailed(ident.clone()))
             }
         }
-        Expr::App(app_vec) => Ok(app_vec
-            .try_map(recursion)?
-            .fold1(|result: Abs, abs: Abs| Abs::app(merge_info(&result, &abs), result, abs))),
+        Expr::App(app_vec) => Ok(app_vec.try_map(recursion)?.fold1(|result: Abs, abs: Abs| {
+            Abs::app(merge_info(&result, &abs), result, Plicit::Ex, abs)
+        })),
         // I really hope I can reuse the code with `App` here :(
         Expr::Pipe(pipe_vec) => Ok(pipe_vec
             .try_map(recursion)?
-            .rev_fold1(|result, abs| Abs::app(merge_info(&result, &abs), result, abs))),
+            .rev_fold1(|result, abs| Abs::app(merge_info(&result, &abs), result, Plicit::Ex, abs))),
         Expr::Meta(ident) => {
             let ret = Ok(Abs::Meta(ident.clone(), *meta_count));
             *meta_count += 1;

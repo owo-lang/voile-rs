@@ -17,7 +17,7 @@ impl Display for Abs {
             Abs::Meta(_, mi) => write!(f, "?{:?}", mi),
             Abs::Cons(name) => write!(f, "@{}", name.text),
             Abs::Lift(_, levels, expr) => write!(f, "(^[{:?}] {})", levels, expr),
-            Abs::App(_, a, b) => write!(f, "({} {})", a, b),
+            Abs::App(_, a, _, b) => write!(f, "({} {})", a, b),
             Abs::Dt(_, Pi, name, Plicit::Ex, param, ret) => {
                 write!(f, "({{{:?}}} : {}) -> {}", name, param, ret)
             }

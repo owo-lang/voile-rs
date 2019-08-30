@@ -124,7 +124,7 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
         }
         Ref(ident, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(ident.info), tcs),
         Cons(info) => (compile_cons(info), tcs),
-        App(info, f, a) => {
+        App(info, f, _, a) => {
             // The function should always be compiled to DBI-based terms
             let (f, tcs) = evaluate(tcs, *f);
             let (a, tcs) = evaluate(tcs, *a);

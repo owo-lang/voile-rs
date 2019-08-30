@@ -19,7 +19,7 @@ pub enum Abs {
     /// Record projection
     Proj(SyntaxInfo, Box<Self>, Ident),
     /// Apply or Pipeline in surface
-    App(SyntaxInfo, Box<Self>, Box<Self>),
+    App(SyntaxInfo, Box<Self>, Plicit, Box<Self>),
     /// Dependent Type, `(a -> b -> c)` as `Dt(_, DtKind::Pi, _, _, a, Dt(_, DtKind::Pi, _, _, b, c))`
     Dt(SyntaxInfo, PiSig, UID, Plicit, Box<Self>, Box<Self>),
     /// The first `SyntaxInfo` is the syntax info of this whole lambda,
@@ -89,8 +89,8 @@ impl Abs {
         Abs::Rec(info, fields, rest.map(Box::new))
     }
 
-    pub fn app(info: SyntaxInfo, function: Self, argument: Self) -> Self {
-        Abs::App(info, Box::new(function), Box::new(argument))
+    pub fn app(info: SyntaxInfo, function: Self, plicit: Plicit, argument: Self) -> Self {
+        Abs::App(info, Box::new(function), plicit, Box::new(argument))
     }
 
     pub fn proj(info: SyntaxInfo, record: Self, field: Ident) -> Self {

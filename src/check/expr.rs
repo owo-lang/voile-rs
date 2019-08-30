@@ -512,7 +512,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
-        App(_, f, a) => match &**f {
+        App(_, f, plicit, a) => match &**f {
             Cons(variant_info) => {
                 let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap(info))?;
                 let mut variant = Variants::default();
@@ -527,17 +527,17 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             f => {
                 let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap(info))?;
                 match f_ty.ast {
-                    Val::Dt(Pi, Plicit::Im(Some(mi)), _, closure) => {
-                        // (currently) `App`s are all explicit,
-                        // todo: so we will insert a meta here
-                        unimplemented!()
+                    Val::Dt(Pi, Plicit::Im(None), ..) => unreachable!(),
+                    Val::Dt(Pi, Plicit::Im(Some(mi)), _, closure) if plicit == Plicit::Ex => {
+                        // TODO: An explicit apply but an implicit dt: Insert meta
+                        let meta_inserted_app = unimplemented!();
+                        tcs.infer(meta_inserted_app)
                     }
-                    Val::Dt(Pi, Plicit::Ex, param_type, closure) => {
+                    Val::Dt(Pi, _, param_type, closure) => {
                         let (new_a, tcs) =
                             tcs.check(&**a, &*param_type).map_err(|e| e.wrap(info))?;
                         Ok((closure.instantiate(new_a.ast).into_info(info), tcs))
                     }
-                    Val::Dt(Pi, Plicit::Im(None), ..) => unreachable!(),
                     other => Err(TCE::NotPi(info, other)),
                 }
             }
