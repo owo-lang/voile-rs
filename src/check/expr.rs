@@ -178,29 +178,34 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             }
             ty => Err(TCE::NotRowType(Variant, *info, ty.clone())),
         },
-        (CaseOr(label, binding, uid, body, or), Val::Dt(Pi, param_ty, ret_ty)) => match &**param_ty
-        {
-            Val::RowPoly(Variant, variants) => {
-                let lam_info = merge_info(binding, &**body);
-                let lam = Lam(lam_info, binding.clone(), *uid, body.clone());
-                let mut variants = variants.clone();
-                let param_ty = variants
-                    .remove(&label.text)
-                    .ok_or_else(|| TCE::MissingVariant(Variant, label.text.clone()))?;
-                let stripped_function = Val::pi(Val::variant_type(variants), ret_ty.clone());
-                let dt = Val::pi(param_ty, ret_ty.clone());
-                let (body, tcs) = tcs.check(&lam, &dt)?;
-                let mut split = CaseSplit::default();
-                split.insert(label.text.clone(), Closure::plain(body.ast));
-                let ext = Val::Lam(Closure::Tree(split));
-                let (or, tcs) = tcs.check(&**or, &stripped_function)?;
-                Ok((or.ast.split_extend(ext).into_info(or.info), tcs))
-            }
-            ty => {
-                let info = merge_info(label, &**or);
-                Err(TCE::NotRowType(Variant, info, ty.clone()))
-            }
-        },
+        (CaseOr(label, binding, uid, body, or), Val::Dt(Pi, param_ty, ret_ty)) => {
+            let lam_info = merge_info(binding, &**body);
+            let lam = Lam(lam_info, binding.clone(), *uid, body.clone());
+            let (variants, ext) = match &**param_ty {
+                Val::Neut(Neutral::Row(Variant, variants, ext)) => (variants, Some(&**ext)),
+                Val::RowPoly(Variant, variants) => (variants, None),
+                ty => {
+                    let info = merge_info(label, &**or);
+                    return Err(TCE::NotRowType(Variant, info, ty.clone()));
+                }
+            };
+            let mut variants = variants.clone();
+            let param_ty = variants
+                .remove(&label.text)
+                .ok_or_else(|| TCE::MissingVariant(Variant, label.text.clone()))?;
+            let input = match ext {
+                None => Val::variant_type(variants),
+                Some(ext) => Val::neutral_variant_type(variants, ext.clone()),
+            };
+            let stripped_function = Val::pi(input, ret_ty.clone());
+            let dt = Val::pi(param_ty, ret_ty.clone());
+            let (body, tcs) = tcs.check(&lam, &dt)?;
+            let mut split = CaseSplit::default();
+            split.insert(label.text.clone(), Closure::plain(body.ast));
+            let ext = Val::Lam(Closure::Tree(split));
+            let (or, tcs) = tcs.check(&**or, &stripped_function)?;
+            Ok((or.ast.split_extend(ext).into_info(or.info), tcs))
+        }
         (expr, anything) => check_fallback(tcs, expr, anything),
     }
 }
