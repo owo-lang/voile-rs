@@ -64,6 +64,11 @@ impl Val {
         Val::Neut(Neutral::Axi(Axiom::Postulated(uid)))
     }
 
+    pub fn fresh_implicit() -> Self {
+        let axiom = Axiom::Implicit(unsafe { next_uid() });
+        Val::Neut(Neutral::Axi(axiom))
+    }
+
     pub fn fresh_unimplemented(index: GI) -> Self {
         let axiom = Axiom::Unimplemented(unsafe { next_uid() }, index);
         Val::Neut(Neutral::Axi(axiom))
@@ -85,12 +90,22 @@ impl Val {
         Val::Neut(Neutral::Proj(Box::new(record), field))
     }
 
-    pub fn closure_dependent_type(kind: PiSig, param_type: TVal, body: TVal) -> TVal {
-        Self::dependent_type(kind, param_type, Closure::plain(body))
+    pub fn closure_dependent_type(
+        kind: PiSig,
+        param_plicit: Plicit,
+        param_type: TVal,
+        body: TVal,
+    ) -> TVal {
+        Self::dependent_type(kind, param_plicit, param_type, Closure::plain(body))
     }
 
-    pub fn dependent_type(kind: PiSig, param_type: TVal, closure: Closure) -> TVal {
-        Val::Dt(kind, Box::new(param_type), closure)
+    pub fn dependent_type(
+        kind: PiSig,
+        param_plicit: Plicit,
+        param_type: TVal,
+        closure: Closure,
+    ) -> TVal {
+        Val::Dt(kind, param_plicit, Box::new(param_type), closure)
     }
 
     pub fn variant_type(variants: Variants) -> TVal {
@@ -117,12 +132,12 @@ impl Val {
         Self::neutral_row_type(VarRec::Record, fields, ext)
     }
 
-    pub fn pi(param_type: TVal, body: Closure) -> TVal {
-        Self::dependent_type(PiSig::Pi, param_type, body)
+    pub fn pi(param_plicit: Plicit, param_type: TVal, body: Closure) -> TVal {
+        Self::dependent_type(PiSig::Pi, param_plicit, param_type, body)
     }
 
     pub fn sig(param_type: TVal, body: Closure) -> TVal {
-        Self::dependent_type(PiSig::Sigma, param_type, body)
+        Self::dependent_type(PiSig::Sigma, Plicit::Ex, param_type, body)
     }
 
     pub fn into_neutral(self) -> Result<Neutral, Self> {

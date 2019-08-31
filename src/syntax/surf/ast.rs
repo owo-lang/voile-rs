@@ -1,4 +1,4 @@
-use crate::syntax::common::{Ident, Labelled, SyntaxInfo, VarRec};
+use crate::syntax::common::{Ident, Labelled, Plicit, SyntaxInfo, VarRec};
 use crate::syntax::level::Level;
 use crate::util::vec1::Vec1;
 
@@ -9,6 +9,7 @@ pub type LabExpr = Labelled<Expr>;
 /// It's a part of a pi-type or a sigma-type (if we have those syntax element).
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Param {
+    pub plicit: Plicit,
     /// This field can be empty -- which indicates the parameter to be anonymous.
     /// Many `name`s means there are many params with same type.
     pub names: Vec<Ident>,

@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::syntax::common::{PiSig, VarRec, DBI, GI, MI, UID};
+use crate::syntax::common::{PiSig, Plicit, VarRec, DBI, GI, MI, UID};
 use crate::syntax::level::Level;
 
 use super::{RedEx, TraverseNeutral};
@@ -147,7 +147,7 @@ impl Val {
     pub fn generated_to_var(self) -> Self {
         use {Axiom::*, Neutral::*};
         self.map_axiom(&mut |a| match a {
-            Postulated(..) | Unimplemented(..) => Axi(a),
+            Postulated(..) | Unimplemented(..) | Implicit(..) => Axi(a),
             Generated(_, dbi) => Var(dbi),
         })
     }
@@ -155,7 +155,7 @@ impl Val {
     pub fn unimplemented_to_glob(self) -> Self {
         use {Axiom::*, Neutral::*};
         self.map_axiom(&mut |a| match a {
-            Postulated(..) | Generated(..) => Axi(a),
+            Postulated(..) | Generated(..) | Implicit(..) => Axi(a),
             Unimplemented(_, dbi) => Ref(dbi),
         })
     }
@@ -211,13 +211,17 @@ pub enum Axiom {
     /// Usages of definitions when they're not yet implemented.
     /// (usually will be replaced with `Val::glob` after implemented).
     Unimplemented(UID, GI),
+    /// Implicit parameters during type-checking
+    Implicit(UID),
 }
 
 impl Axiom {
     pub fn unique_id(&self) -> UID {
         use Axiom::*;
         match self {
-            Postulated(uid) | Generated(uid, ..) | Unimplemented(uid, ..) => *uid,
+            Postulated(uid) | Generated(uid, ..) | Unimplemented(uid, ..) | Implicit(uid, ..) => {
+                *uid
+            }
         }
     }
 }
@@ -281,7 +285,7 @@ pub enum Val {
     /// For untyped closures, it can be represented as `Neut` directly.
     Lam(Closure),
     /// Pi-like types (dependent types), with parameter explicitly typed.
-    Dt(PiSig, Box<Self>, Closure),
+    Dt(PiSig, Plicit, Box<Self>, Closure),
     /// Row-polymorphic type literal.
     RowPoly(VarRec, Variants),
     /// Row kind literals -- subtype of `Type`.

@@ -22,8 +22,9 @@ impl RedEx for Val {
             ),
             Val::Neut(neutral_value) => neutral_value.reduce_with_dbi(arg, dbi),
             Val::Lam(closure) => Val::Lam(closure.reduce_with_dbi(arg, dbi + 1)),
-            Val::Dt(kind, param_type, closure) => Val::dependent_type(
+            Val::Dt(kind, param_plicit, param_type, closure) => Val::dependent_type(
                 kind,
+                param_plicit,
                 param_type.reduce_with_dbi_borrow(&arg, dbi),
                 closure.reduce_with_dbi(arg, dbi + 1),
             ),
@@ -45,8 +46,9 @@ impl RedEx for Val {
             ),
             Val::Neut(neutral_value) => neutral_value.reduce_with_dbi_borrow(arg, dbi),
             Val::Lam(closure) => Val::Lam(closure.reduce_with_dbi_borrow(arg, dbi + 1)),
-            Val::Dt(kind, param_type, closure) => Val::dependent_type(
+            Val::Dt(kind, param_plicit, param_type, closure) => Val::dependent_type(
                 kind,
+                param_plicit,
                 param_type.reduce_with_dbi_borrow(arg, dbi),
                 closure.reduce_with_dbi_borrow(arg, dbi + 1),
             ),

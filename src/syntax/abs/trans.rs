@@ -10,7 +10,7 @@ use super::ast::*;
 type GlobCtx = BTreeMap<String, GI>;
 
 /// Key: local declaration name; Value: de-bruijn indices.
-type LocalCtx = BTreeMap<String, DBI>;
+type LocalCtx = BTreeMap<String, (DBI, Plicit)>;
 
 pub fn trans_decls(decls: Vec<Decl>) -> TCM<Vec<AbsDecl>> {
     trans_decls_contextual(Default::default(), decls).map(|tcs| tcs.decls)
@@ -60,11 +60,11 @@ fn trans_one_decl(mut tcs: TransState, decl: Decl) -> TCM<TransState> {
         }
         // Re-type-signaturing something, should give error
         (DeclKind::Sign, Some(thing)) => {
-            return Err(TCE::ReDefine(decl.name.info, thing.syntax_info()))
+            return Err(TCE::ReDefine(decl.name.info, thing.syntax_info()));
         }
         // Re-defining something, should give error
         (_, Some(AbsDecl::Impl(thing, ..))) | (_, Some(AbsDecl::Decl(thing))) => {
-            return Err(TCE::ReDefine(decl.name.info, thing.syntax_info()))
+            return Err(TCE::ReDefine(decl.name.info, thing.syntax_info()));
         }
         (DeclKind::Impl, None) => {
             tcs.decl_count += 1;
@@ -98,7 +98,7 @@ fn trans_expr_inner(
         Expr::Var(ident) => {
             let name = &ident.text;
             if local_map.contains_key(name) {
-                let dbi = local_map[name];
+                let (dbi, _) = local_map[name];
                 Ok(Abs::Var(ident.clone(), local_env[dbi.0], dbi))
             } else if global_map.contains_key(name) {
                 Ok(Abs::Ref(ident.clone(), global_map[name]))
@@ -106,13 +106,13 @@ fn trans_expr_inner(
                 Err(TCE::LookUpFailed(ident.clone()))
             }
         }
-        Expr::App(app_vec) => Ok(app_vec
-            .try_map(recursion)?
-            .fold1(|result: Abs, abs: Abs| Abs::app(merge_info(&result, &abs), result, abs))),
+        Expr::App(app_vec) => Ok(app_vec.try_map(recursion)?.fold1(|result: Abs, abs: Abs| {
+            Abs::app(merge_info(&result, &abs), result, Plicit::Ex, abs)
+        })),
         // I really hope I can reuse the code with `App` here :(
         Expr::Pipe(pipe_vec) => Ok(pipe_vec
             .try_map(recursion)?
-            .rev_fold1(|result, abs| Abs::app(merge_info(&result, &abs), result, abs))),
+            .rev_fold1(|result, abs| Abs::app(merge_info(&result, &abs), result, Plicit::Ex, abs))),
         Expr::Meta(ident) => {
             let ret = Ok(Abs::Meta(ident.clone(), *meta_count));
             *meta_count += 1;
@@ -161,7 +161,7 @@ fn trans_expr_inner(
             Ok(params.into_iter().rev().fold(body, |lam_abs, param| {
                 let pop_empty = "The stack `names` is empty. Please report this as a bug.";
                 let name = names.pop().expect(pop_empty);
-                Abs::lam(info, param.clone(), name, lam_abs)
+                Abs::lam(info.clone(), param.clone(), name, lam_abs)
             }))
         }
         Expr::Pi(params, result) => trans_dependent_type(
@@ -178,15 +178,15 @@ fn introduce_abstractions(
     names: &mut Vec<UID>,
 ) {
     for param in params {
-        let shadowing = local_map.get(&param.text).cloned();
-        for (_name, dbi) in local_map.iter_mut() {
+        let shadowing = local_map.get(&param.text).cloned().map(|(dbi, _)| dbi);
+        for (_name, (dbi, _)) in local_map.iter_mut() {
             let dbi_value = *dbi;
             *dbi += 1;
             if shadowing == Some(dbi_value) {
                 local_env.remove(dbi_value.0);
             }
         }
-        local_map.insert(param.text.clone(), Default::default());
+        local_map.insert(param.text.clone(), (Default::default(), Plicit::Ex));
         let new_name = unsafe { next_uid() };
         local_env.insert(0, new_name);
         names.push(new_name);
@@ -207,7 +207,7 @@ fn trans_dependent_type(
     let mut pi_map = local_map.clone();
     let mut names = Vec::with_capacity(params.len());
     let pi_initial = Vec::with_capacity(params.len());
-    let pi_vec: Vec<Abs> = params.into_iter().try_fold(pi_initial, |pi_vec, param| {
+    let pi_vec: Vec<(Abs, Plicit)> = params.into_iter().try_fold(pi_initial, |pi_vec, param| {
         introduce_telescope(
             meta_count,
             env,
@@ -222,10 +222,17 @@ fn trans_dependent_type(
 
     Ok(pi_vec.into_iter().rev().fold(
         trans_expr_inner(result, meta_count, env, global_map, &pi_env, &pi_map)?,
-        |pi_abs, param| {
+        |pi_abs, (param, plicit)| {
             let info = param.syntax_info() + pi_abs.syntax_info();
             let pop_empty = "The stack `names` is empty. Please report this as a bug.";
-            Abs::dependent_type(info, kind, names.pop().expect(pop_empty), param, pi_abs)
+            Abs::dependent_type(
+                info,
+                kind,
+                names.pop().expect(pop_empty),
+                plicit,
+                param,
+                pi_abs,
+            )
         },
     ))
 }
@@ -237,16 +244,16 @@ fn introduce_telescope(
     dt_env: &mut Vec<UID>,
     dt_map: &mut LocalCtx,
     names: &mut Vec<UID>,
-    mut dt_vec: Vec<Abs>,
+    mut dt_vec: Vec<(Abs, Plicit)>,
     param: Param,
-) -> TCM<Vec<Abs>> {
+) -> TCM<Vec<(Abs, Plicit)>> {
     let param_ty = trans_expr_inner(param.ty, meta_count, env, global_map, &dt_env, &dt_map)?;
     for name in &param.names {
         let param_name = name.text.clone();
         // These two are actually our assumption. Hope they're correct.
         assert_eq!(dt_env.len(), dt_map.len());
         // let shadowing = dt_map.get(&param_name).cloned();
-        dt_map.iter_mut().for_each(|(_name, dbi)| *dbi += 1);
+        dt_map.iter_mut().for_each(|(_name, (dbi, _))| *dbi += 1);
         /*
         let dbi_value = *dbi;
         if shadowing == Some(dbi_value) {
@@ -256,18 +263,19 @@ fn introduce_telescope(
             // *dbi = 0;
         }
         */
-        dt_map.insert(param_name, Default::default());
+        dt_map.insert(param_name, (Default::default(), param.plicit));
         let new_name = unsafe { next_uid() };
         dt_env.insert(0, new_name);
         names.push(new_name);
-        dt_vec.push(param_ty.clone());
+        dt_vec.push((param_ty.clone(), param.plicit));
     }
     if param.names.is_empty() {
         let new_name = unsafe { next_uid() };
-        dt_map.iter_mut().for_each(|(_name, dbi)| *dbi += 1);
+        dt_map.iter_mut().for_each(|(_name, (dbi, _))| *dbi += 1);
         dt_env.insert(0, new_name);
         names.push(new_name);
-        dt_vec.push(param_ty);
+        dt_vec.push((param_ty, param.plicit));
     }
+
     Ok(dt_vec)
 }

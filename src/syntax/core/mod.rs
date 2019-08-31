@@ -23,11 +23,14 @@ impl Val {
     pub fn into_info(self, syntax_info: SyntaxInfo) -> ValInfo {
         ValInfo::new(self, syntax_info)
     }
+    pub fn into_info_clone(self, syntax_info: &SyntaxInfo) -> ValInfo {
+        self.into_info(syntax_info.clone())
+    }
 }
 
 /// A value with syntax info.
 /// This is what should be stored inside of the context.
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ValInfo {
     pub ast: Val,
     pub info: SyntaxInfo,
@@ -45,7 +48,7 @@ impl ValInfo {
 
 impl ToSyntaxInfo for ValInfo {
     fn syntax_info(&self) -> SyntaxInfo {
-        self.info
+        self.info.clone()
     }
 }
 

@@ -1,7 +1,7 @@
 use std::mem::swap;
 
 use crate::syntax::abs::AbsDecl;
-use crate::syntax::common::ToSyntaxInfo;
+use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
 use crate::syntax::core::{Neutral, TraverseNeutral, Val, ValInfo, TYPE_OMEGA};
 
 use super::monad::{ValTCM, TCE, TCM, TCS};
@@ -17,7 +17,10 @@ fn require_local_emptiness(tcs: &TCS) {
 }
 
 fn unimplemented_to_glob(v: &mut [ValInfo], i: usize) {
-    let mut placeholder = Default::default();
+    let mut placeholder = ValInfo {
+        ast: Default::default(),
+        info: SyntaxInfo::SourceInfo(Default::default()),
+    };
     swap(&mut v[i], &mut placeholder);
     placeholder = placeholder.map_ast(|ast| ast.unimplemented_to_glob());
     swap(&mut placeholder, &mut v[i]);
@@ -30,7 +33,7 @@ fn inline_metas(mut tcs: TCS, val: ValInfo) -> ValTCM {
         Meta(mi) => tcs.take_meta(mi).ok_or_else(|| TCE::MetaUnsolved(mi)),
         e => Ok(Val::Neut(e)),
     })?;
-    Ok((val.into_info(info), tcs))
+    Ok((val.into_info_clone(&info), tcs))
 }
 
 /**
@@ -110,7 +113,7 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             let (sign_fake, tcs) = tcs.check(&sign_abs, &TYPE_OMEGA)?;
             let (sign_fake, mut tcs) = inline_metas(tcs, sign_fake)?;
             let sign = sign_fake.map_ast(|ast| ast.generated_to_var());
-            let val_info = Val::fresh_unimplemented(self_index).into_info(syntax_info);
+            let val_info = Val::fresh_unimplemented(self_index).into_info_clone(&syntax_info);
             tcs.env.push(val_info);
             tcs.gamma.push(sign);
 

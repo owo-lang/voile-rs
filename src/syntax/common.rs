@@ -26,6 +26,13 @@ pub enum PiSig {
     Sigma,
 }
 
+/// Visibility of a parameter -- it can be explicit or implicit
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
+pub enum Plicit {
+    Ex,
+    Im,
+}
+
 macro_rules! impl_usize {
     ($name:ident) => {
         impl Add<usize> for $name {
@@ -96,20 +103,27 @@ pub(crate) unsafe fn next_uid() -> UID {
 
 impl<'a> From<Span<'a>> for SyntaxInfo {
     fn from(span: Span) -> Self {
-        SyntaxInfo {
+        SyntaxInfo::SourceInfo(SourceInfo {
             line: span.start_pos().line_col().0,
             start: span.start(),
             end: span.end(),
-        }
+        })
     }
 }
 
 /// Trivial information about the surface syntax items.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
-pub struct SyntaxInfo {
+pub struct SourceInfo {
     pub start: usize,
     pub line: usize,
     pub end: usize,
+}
+
+/// Information related to any term, may be inserted during type-checking
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub enum SyntaxInfo {
+    SourceInfo(SourceInfo),
+    ImplicitMetaInfo(Box<Self>),
 }
 
 /// Surface syntax tree element: Identifier.
@@ -122,7 +136,7 @@ pub struct Ident {
 
 impl ToSyntaxInfo for Ident {
     fn syntax_info(&self) -> SyntaxInfo {
-        self.info
+        self.info.clone()
     }
 }
 
@@ -136,7 +150,7 @@ pub trait ToSyntaxInfo {
     fn syntax_info(&self) -> SyntaxInfo;
 }
 
-impl Add for SyntaxInfo {
+impl Add for SourceInfo {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -148,9 +162,31 @@ impl Add for SyntaxInfo {
     }
 }
 
-impl Display for SyntaxInfo {
+impl Add for SyntaxInfo {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match rhs {
+            SyntaxInfo::SourceInfo(rhs_source_info) => match self {
+                SyntaxInfo::SourceInfo(self_source_info) => {
+                    SyntaxInfo::SourceInfo(self_source_info.add(rhs_source_info))
+                }
+                _ => unimplemented!(),
+            },
+            SyntaxInfo::ImplicitMetaInfo(i) => self.add(*i),
+        }
+    }
+}
+
+impl Display for SourceInfo {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         write!(f, "line {:?} ({:?}:{:?})", self.line, self.start, self.end)
+    }
+}
+
+impl Display for SyntaxInfo {
+    fn fmt(&self, _f: &mut Formatter) -> Result<(), Error> {
+        unimplemented!()
     }
 }
 

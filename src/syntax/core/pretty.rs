@@ -3,6 +3,7 @@ use std::fmt::{Display, Error, Formatter};
 use crate::syntax::common::PiSig::*;
 
 use super::{Axiom, Closure, Neutral, Val, ValInfo};
+use crate::syntax::common::Plicit;
 use crate::syntax::core::{CaseSplit, Variants};
 
 impl Display for Neutral {
@@ -56,6 +57,7 @@ impl Display for Axiom {
             Postulated(uid) => write!(f, "<{}>", uid),
             Generated(uid, dbi) => write!(f, "<{} {}>", uid, dbi),
             Unimplemented(uid, dbi) => write!(f, "[|{} {}|]", uid, dbi),
+            Implicit(uid) => write!(f, "{{{}}}", uid),
         }
     }
 }
@@ -109,8 +111,9 @@ impl Display for Val {
                 write_variants(f, fields, " =")?;
                 f.write_str("|}")
             }
-            Val::Dt(Pi, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
-            Val::Dt(Sigma, param_ty, clos) => write!(f, "({} * {})", param_ty, clos),
+            Val::Dt(Pi, Plicit::Ex, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
+            Val::Dt(Pi, Plicit::Im, param_ty, clos) => write!(f, "({{{}}} -> {})", param_ty, clos),
+            Val::Dt(Sigma, _, param_ty, clos) => write!(f, "({} * {})", param_ty, clos),
             Val::Pair(fst, snd) => write!(f, "({}, {})", fst, snd),
             Val::Neut(neut) => neut.fmt(f),
             Val::Cons(name, a) => write!(f, "(@{} {})", name, a),

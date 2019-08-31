@@ -1,0 +1,5 @@
+val implicit_id: {{A : Type}} -> A -> A;
+let implicit_id = \a. a;
+
+val explicit_id: (A: Type) -> A -> A;
+let explicit_id = \A a. implicit_id a;

@@ -1,7 +1,7 @@
 use pest::Parser;
 use pest_derive::Parser;
 
-use crate::syntax::common::{Ident, SyntaxInfo, VarRec};
+use crate::syntax::common::{Ident, Plicit, SyntaxInfo, VarRec};
 use crate::syntax::level::Level;
 use crate::syntax::pest_util::end_of_rule;
 
@@ -201,20 +201,22 @@ fn primary_expr(rules: Tok) -> Expr {
     expr
 }
 
-fn one_param(rules: Tok) -> Param {
+fn one_param(rules: Tok, plicit: Plicit) -> Param {
     let mut inner: Tik = rules.into_inner();
     let (names, expr) = next_rule!(inner, multi_param);
     let ty = expr.unwrap();
     end_of_rule(&mut inner);
-    Param { names, ty }
+    Param { plicit, names, ty }
 }
 
 fn param(rules: Tok) -> Param {
     let mut inner: Tik = rules.into_inner();
     let the_rule: Tok = inner.next().unwrap();
     let param = match the_rule.as_rule() {
-        Rule::explicit => one_param(the_rule),
+        Rule::explicit => one_param(the_rule, Plicit::Ex),
+        Rule::implicit => one_param(the_rule, Plicit::Im),
         rule_type => Param {
+            plicit: Plicit::Ex,
             names: Vec::with_capacity(0),
             ty: match rule_type {
                 Rule::dollar_expr => dollar_expr(the_rule),

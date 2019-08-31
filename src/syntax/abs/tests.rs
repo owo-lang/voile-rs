@@ -1,6 +1,6 @@
 use crate::check::monad::TCE;
 use crate::syntax::abs::{trans_expr, Abs};
-use crate::syntax::common::{Ident, PiSig, DBI, GI, MI};
+use crate::syntax::common::{Ident, PiSig, SyntaxInfo, DBI, GI, MI};
 use crate::syntax::surf::parse_str_err_printed;
 
 use super::{trans_decls, AbsDecl};
@@ -41,14 +41,14 @@ fn many_decls() {
 
 fn must_be_app(abs: Abs) -> Abs {
     match abs {
-        Abs::App(_, _, abs) => *abs,
+        Abs::App(_, _, _, abs) => *abs,
         e => panic!("`{:?}` is not an `Abs::App`.", e),
     }
 }
 
 fn must_be_pi(abs: Abs) -> (Abs, Abs) {
     match abs {
-        Abs::Dt(_, PiSig::Pi, _, param, abs) => (*param, *abs),
+        Abs::Dt(_, PiSig::Pi, _, _, param, abs) => (*param, *abs),
         e => panic!("`{:?}` is not an `Abs::Dt(_, Pi, _, _)`.", e),
     }
 }
@@ -112,7 +112,7 @@ fn trans_lam() {
     let abs_lam_ba = must_be_lam(lam_abs);
     let abs_lam_a = must_be_lam(abs_lam_ba);
     match must_be_lam(abs_lam_a) {
-        Abs::App(_, b, a) => {
+        Abs::App(_, b, _, a) => {
             // lam body should be App(_info, Local(_info, 1), Local(_info, 0))
             assert_eq!(DBI(1), must_be_local(*b));
             assert_eq!(DBI(0), must_be_local(*a));
@@ -130,7 +130,7 @@ fn trans_multi_param_lam() {
     let abs_lam_ba = must_be_lam(lam_abs);
     let abs_lam_a = must_be_lam(abs_lam_ba);
     match must_be_lam(abs_lam_a) {
-        Abs::App(_, b, a) => {
+        Abs::App(_, b, _, a) => {
             // lam body should be App(_info, Local(_info, 1), Local(_info, 0))
             assert_eq!(DBI(1), must_be_local(*b));
             assert_eq!(DBI(0), must_be_local(*a));
@@ -156,7 +156,7 @@ fn trans_lam_global() {
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let ident = Ident {
         text: "".to_owned(),
-        info: Default::default(),
+        info: SyntaxInfo::SourceInfo(Default::default()),
     };
     let lam_abs = trans_expr(
         lam_expr,
