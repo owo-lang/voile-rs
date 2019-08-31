@@ -1,5 +1,7 @@
 # Change Log
 
+# 0.1.4
+
 # 0.1.3
 
 + Case-split parser (#82), core language elements (#2)
