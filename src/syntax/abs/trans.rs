@@ -248,7 +248,6 @@ fn introduce_telescope(
     param: Param,
 ) -> TCM<Vec<(Abs, Plicit)>> {
     let param_ty = trans_expr_inner(param.ty, meta_count, env, global_map, &dt_env, &dt_map)?;
-    let mut to_push: Vec<(Abs, Plicit)> = Default::default();
     for name in &param.names {
         let param_name = name.text.clone();
         // These two are actually our assumption. Hope they're correct.
@@ -268,28 +267,14 @@ fn introduce_telescope(
         let new_name = unsafe { next_uid() };
         dt_env.insert(0, new_name);
         names.push(new_name);
-        to_push.push((param_ty.clone(), param.plicit));
+        dt_vec.push((param_ty.clone(), param.plicit));
     }
     if param.names.is_empty() {
         let new_name = unsafe { next_uid() };
         dt_map.iter_mut().for_each(|(_name, (dbi, _))| *dbi += 1);
         dt_env.insert(0, new_name);
         names.push(new_name);
-        to_push.push((param_ty, param.plicit));
-    }
-
-    // create MI for implicit arguments
-    for (abs, plicit) in to_push {
-        let plicit = match plicit {
-            Plicit::Ex => Plicit::Ex,
-            Plicit::Im(None) => {
-                let p = Plicit::Im(Some(*meta_count));
-                *meta_count += 1;
-                p
-            }
-            Plicit::Im(Some(_)) => unreachable!(),
-        };
-        dt_vec.push((abs, plicit))
+        dt_vec.push((param_ty, param.plicit));
     }
 
     Ok(dt_vec)

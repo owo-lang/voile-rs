@@ -214,7 +214,7 @@ fn param(rules: Tok) -> Param {
     let the_rule: Tok = inner.next().unwrap();
     let param = match the_rule.as_rule() {
         Rule::explicit => one_param(the_rule, Plicit::Ex),
-        Rule::implicit => one_param(the_rule, Plicit::Im(None)),
+        Rule::implicit => one_param(the_rule, Plicit::Im),
         rule_type => Param {
             plicit: Plicit::Ex,
             names: Vec::with_capacity(0),

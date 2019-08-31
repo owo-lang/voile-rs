@@ -64,8 +64,8 @@ impl Val {
         Val::Neut(Neutral::Axi(Axiom::Postulated(uid)))
     }
 
-    pub fn fresh_implicit(mi: MI) -> Self {
-        let axiom = Axiom::Implicit(unsafe { next_uid() }, mi);
+    pub fn fresh_implicit() -> Self {
+        let axiom = Axiom::Implicit(unsafe { next_uid() });
         Val::Neut(Neutral::Axi(axiom))
     }
 

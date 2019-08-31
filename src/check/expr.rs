@@ -2,7 +2,7 @@ use VarRec::*;
 
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
-use crate::syntax::common::{merge_info, Ident, Plicit, SyntaxInfo, ToSyntaxInfo, VarRec};
+use crate::syntax::common::{merge_info, Plicit, SyntaxInfo, ToSyntaxInfo, VarRec};
 use crate::syntax::core::{CaseSplit, Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
 use crate::syntax::level::{Level, LiftEx};
 
@@ -113,10 +113,10 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let lam = Val::closure_lam(lam_term.ast);
             Ok((lam.into_info(*full_info), tcs))
         }
-        (Lam(..), Val::Dt(Pi, Plicit::Im(Some(mi)), param_ty, ret_ty)) => {
+        (Lam(..), Val::Dt(Pi, Plicit::Im, param_ty, ret_ty)) => {
             let param_type = param_ty.clone().into_info(Default::default());
             tcs.local_gamma.push(param_type);
-            let mocked = Val::fresh_implicit(*mi);
+            let mocked = Val::fresh_implicit();
             let mocked_term = mocked.clone().into_info(Default::default());
             tcs.local_env.push(mocked_term);
             let ret_ty_body = ret_ty.instantiate_cloned(mocked);
@@ -512,7 +512,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
-        App(_, f, plicit, a) => match &**f {
+        App(_, f, _, a) => match &**f {
             Cons(variant_info) => {
                 let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap(info))?;
                 let mut variant = Variants::default();
@@ -527,18 +527,6 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             f => {
                 let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap(info))?;
                 match f_ty.ast {
-                    Val::Dt(Pi, Plicit::Im(None), ..) => unreachable!(),
-                    Val::Dt(Pi, Plicit::Im(Some(mi)), ..) if *plicit == Plicit::Ex => {
-                        // An explicit apply but an implicit dt: Insert meta
-                        let meta_inserted_app = Abs::Meta(
-                            Ident {
-                                info: Default::default(),
-                                text: "".to_owned(),
-                            },
-                            mi,
-                        );
-                        tcs.infer(&meta_inserted_app)
-                    }
                     Val::Dt(Pi, _, param_type, closure) => {
                         let (new_a, tcs) =
                             tcs.check(&**a, &*param_type).map_err(|e| e.wrap(info))?;

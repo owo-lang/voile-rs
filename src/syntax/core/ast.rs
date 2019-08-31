@@ -155,9 +155,8 @@ impl Val {
     pub fn unimplemented_to_glob(self) -> Self {
         use {Axiom::*, Neutral::*};
         self.map_axiom(&mut |a| match a {
-            Postulated(..) | Generated(..) => Axi(a),
+            Postulated(..) | Generated(..) | Implicit(..) => Axi(a),
             Unimplemented(_, dbi) => Ref(dbi),
-            Implicit(_, mi) => Meta(mi),
         })
     }
 
@@ -213,7 +212,7 @@ pub enum Axiom {
     /// (usually will be replaced with `Val::glob` after implemented).
     Unimplemented(UID, GI),
     /// Implicit parameters during type-checking
-    Implicit(UID, MI),
+    Implicit(UID),
 }
 
 impl Axiom {

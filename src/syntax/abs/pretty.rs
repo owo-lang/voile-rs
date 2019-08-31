@@ -21,7 +21,7 @@ impl Display for Abs {
             Abs::Dt(_, Pi, name, Plicit::Ex, param, ret) => {
                 write!(f, "({:?} : {}) -> {}", name, param, ret)
             }
-            Abs::Dt(_, Pi, name, Plicit::Im(_), param, ret) => {
+            Abs::Dt(_, Pi, name, Plicit::Im, param, ret) => {
                 write!(f, "{{{:?} : {}}} -> {}", name, param, ret)
             }
             Abs::Dt(_, Sigma, name, _, fst, snd) => write!(f, "(<{:?}> : {}) * {}", name, fst, snd),

@@ -57,7 +57,7 @@ impl Display for Axiom {
             Postulated(uid) => write!(f, "<{}>", uid),
             Generated(uid, dbi) => write!(f, "<{} {}>", uid, dbi),
             Unimplemented(uid, dbi) => write!(f, "[|{} {}|]", uid, dbi),
-            Implicit(uid, mi) => write!(f, "{{{} {}}}", uid, mi),
+            Implicit(uid) => write!(f, "{{{}}}", uid),
         }
     }
 }
@@ -112,9 +112,7 @@ impl Display for Val {
                 f.write_str("|}")
             }
             Val::Dt(Pi, Plicit::Ex, param_ty, clos) => write!(f, "({} -> {})", param_ty, clos),
-            Val::Dt(Pi, Plicit::Im(_), param_ty, clos) => {
-                write!(f, "({{{}}} -> {})", param_ty, clos)
-            }
+            Val::Dt(Pi, Plicit::Im, param_ty, clos) => write!(f, "({{{}}} -> {})", param_ty, clos),
             Val::Dt(Sigma, _, param_ty, clos) => write!(f, "({} * {})", param_ty, clos),
             Val::Pair(fst, snd) => write!(f, "({}, {})", fst, snd),
             Val::Neut(neut) => neut.fmt(f),

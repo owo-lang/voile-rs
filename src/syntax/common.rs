@@ -30,7 +30,7 @@ pub enum PiSig {
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub enum Plicit {
     Ex,
-    Im(Option<MI>),
+    Im,
 }
 
 macro_rules! impl_usize {
