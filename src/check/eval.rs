@@ -106,23 +106,26 @@ otherwise this function may panic or produce ill-typed core term.
 fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
     use Abs::*;
     match abs {
-        Type(info, level) => (Val::Type(level).into_info(info), tcs),
+        Type(info, level) => (Val::Type(level).into_info_clone(&info), tcs),
         Var(ident, _, i) => {
             let resolved = tcs.local_val(i).ast.clone().attach_dbi(i);
-            (resolved.into_info(ident.info), tcs)
+            (resolved.into_info_clone(&ident.info), tcs)
         }
         Rec(info, fields, ext) => {
             let (variants, tcs) = evaluate_variants(tcs, fields);
             let record = Val::Rec(variants);
             match ext {
-                None => (record.into_info(info), tcs),
+                None => (record.into_info_clone(&info), tcs),
                 Some(ext) => {
                     let (ext, tcs) = tcs.evaluate(*ext);
-                    (record.rec_extend(ext.ast).into_info(info), tcs)
+                    (record.rec_extend(ext.ast).into_info_clone(&info), tcs)
                 }
             }
         }
-        Ref(ident, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(ident.info), tcs),
+        Ref(ident, dbi) => (
+            tcs.glob_val(dbi).ast.clone().into_info_clone(&ident.info),
+            tcs,
+        ),
         Cons(info) => (compile_cons(info), tcs),
         App(info, f, _, a) => {
             // The function should always be compiled to DBI-based terms
@@ -130,60 +133,60 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let (a, tcs) = evaluate(tcs, *a);
             let (f, tcs) = tcs.expand_global(f.ast);
             let applied = f.apply(a.ast);
-            (applied.into_info(info), tcs)
+            (applied.into_info_clone(&info), tcs)
         }
         Dt(info, kind, _, param_plicit, param_ty, ret_ty) => {
             let (param_ty, tcs) = evaluate(tcs, *param_ty);
             let (ret_ty, tcs) = evaluate(tcs, *ret_ty);
             let term = Val::closure_dependent_type(kind, param_plicit, param_ty.ast, ret_ty.ast);
-            (term.into_info(info), tcs)
+            (term.into_info_clone(&info), tcs)
         }
         Pair(info, a, b) => {
             let (a, tcs) = evaluate(tcs, *a);
             let (b, tcs) = evaluate(tcs, *b);
-            (Val::pair(a.ast, b.ast).into_info(info), tcs)
+            (Val::pair(a.ast, b.ast).into_info_clone(&info), tcs)
         }
         Fst(info, p) => {
             let (p, tcs) = evaluate(tcs, *p);
             let (p, tcs) = tcs.expand_global(p.ast);
-            (p.first().into_info(info), tcs)
+            (p.first().into_info_clone(&info), tcs)
         }
         Snd(info, p) => {
             let (p, tcs) = evaluate(tcs, *p);
             let (p, tcs) = tcs.expand_global(p.ast);
-            (p.second().into_info(info), tcs)
+            (p.second().into_info_clone(&info), tcs)
         }
         Proj(info, rec, field) => {
             let (rec, tcs) = evaluate(tcs, *rec);
             let (rec, tcs) = tcs.expand_global(rec.ast);
-            (rec.project(field.text).into_info(info), tcs)
+            (rec.project(field.text).into_info_clone(&info), tcs)
         }
         // This branch is not likely to be reached.
         Lam(info, _, _, body) => {
             let (body, tcs) = evaluate(tcs, *body);
-            (body.ast.into_info(info), tcs)
+            (body.ast.into_info_clone(&info), tcs)
         }
         Lift(info, levels, expr) => {
             let (expr, tcs) = evaluate(tcs, *expr);
             let (expr, tcs) = tcs.expand_global(expr.ast);
-            (expr.lift(levels).into_info(info), tcs)
+            (expr.lift(levels).into_info_clone(&info), tcs)
         }
-        Meta(ident, mi) => (Val::meta(mi).into_info(ident.info), tcs),
+        Meta(ident, mi) => (Val::meta(mi).into_info_clone(&ident.info), tcs),
         RowPoly(info, kind, variants, ext) => {
             let (variants, tcs) = evaluate_variants(tcs, variants);
             let row_poly = Val::RowPoly(kind, variants);
             match ext {
-                None => (row_poly.into_info(info), tcs),
+                None => (row_poly.into_info_clone(&info), tcs),
                 Some(ext) => {
                     let (ext, tcs) = tcs.evaluate(*ext);
-                    (row_poly.row_extend(ext.ast).into_info(info), tcs)
+                    (row_poly.row_extend(ext.ast).into_info_clone(&info), tcs)
                 }
             }
         }
         RowKind(info, kind, labels) => {
             let labels = labels.into_iter().map(|l| l.text).collect();
             let expr = Val::RowKind(Default::default(), kind, labels);
-            (expr.into_info(info), tcs)
+            (expr.into_info_clone(&info), tcs)
         }
         CaseOr(label, _, _, body, or) => {
             let (or, tcs) = tcs.evaluate(*or);
@@ -192,9 +195,9 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let mut split = CaseSplit::default();
             split.insert(label.text, Closure::plain(body.ast));
             let lam = Val::Lam(Closure::Tree(split));
-            (or.ast.split_extend(lam).into_info(info), tcs)
+            (or.ast.split_extend(lam).into_info_clone(&info), tcs)
         }
-        Whatever(info) => (Val::Lam(Closure::default()).into_info(info), tcs),
+        Whatever(info) => (Val::Lam(Closure::default()).into_info_clone(&info), tcs),
     }
 }
 
@@ -227,7 +230,7 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
 pub fn compile_cons(info: Ident) -> ValInfo {
     let mut text = info.text;
     text.remove(0);
-    Val::closure_lam(Val::cons(text, Val::var(DBI(0)))).into_info(info.info)
+    Val::closure_lam(Val::cons(text, Val::var(DBI(0)))).into_info_clone(&info.info)
 }
 
 /// So you can do some functional programming based on method call chains.

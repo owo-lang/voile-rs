@@ -161,7 +161,7 @@ fn trans_expr_inner(
             Ok(params.into_iter().rev().fold(body, |lam_abs, param| {
                 let pop_empty = "The stack `names` is empty. Please report this as a bug.";
                 let name = names.pop().expect(pop_empty);
-                Abs::lam(info, param.clone(), name, lam_abs)
+                Abs::lam(info.clone(), param.clone(), name, lam_abs)
             }))
         }
         Expr::Pi(params, result) => trans_dependent_type(

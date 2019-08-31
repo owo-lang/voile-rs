@@ -56,8 +56,8 @@ pub enum TCE {
 }
 
 impl TCE {
-    pub fn wrap(self, info: SyntaxInfo) -> Self {
-        TCE::Wrapped(Box::new(self), info)
+    pub fn wrap_clone(self, info: &SyntaxInfo) -> Self {
+        TCE::Wrapped(Box::new(self), info.clone())
     }
 
     pub fn duplicate_field(ident: Ident) -> Self {

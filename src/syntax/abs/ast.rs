@@ -55,10 +55,10 @@ impl ToSyntaxInfo for Abs {
             | Abs::RowKind(info, ..)
             | Abs::Lift(info, ..)
             | Abs::Whatever(info)
-            | Abs::Lam(info, ..) => *info,
+            | Abs::Lam(info, ..) => (*info).clone(),
             Abs::CaseOr(ident, _, _, _, last) => merge_info(ident, &**last),
             Abs::Var(ident, ..) | Abs::Ref(ident, ..) | Abs::Meta(ident, ..) | Abs::Cons(ident) => {
-                ident.info
+                ident.info.clone()
             }
         }
     }

@@ -1,6 +1,6 @@
 use crate::check::monad::TCE;
 use crate::syntax::abs::{trans_expr, Abs};
-use crate::syntax::common::{Ident, PiSig, DBI, GI, MI};
+use crate::syntax::common::{Ident, PiSig, SyntaxInfo, DBI, GI, MI};
 use crate::syntax::surf::parse_str_err_printed;
 
 use super::{trans_decls, AbsDecl};
@@ -156,7 +156,7 @@ fn trans_lam_global() {
     let lam_expr = parse_str_err_printed(code).unwrap().remove(0).body;
     let ident = Ident {
         text: "".to_owned(),
-        info: Default::default(),
+        info: SyntaxInfo::SourceInfo(Default::default()),
     };
     let lam_abs = trans_expr(
         lam_expr,
