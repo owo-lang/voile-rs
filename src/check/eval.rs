@@ -96,6 +96,13 @@ $$
   [k.n] & \text{if} & \eval{a} = [k] \\\\
   \alpha & \text{if} & \eval{a} = \\{ n = \alpha, \ctyLab \\} \\\\
 \end{matrix}\right\\} \\\\
+& \eval{\nocases} &&= \lambda \langle \rangle \\\\
+& \eval{\case{n}{\xx}{a}{b}} &&=
+\left\\{\begin{matrix}
+  \lambda \langle \oneCaseL{n}{\xx. \eval{a}}, \caseTr \rangle
+  & \text{if} & \eval{b} = \lambda \langle \caseTr \rangle \\\\
+  \caseextS{\oneCaseL{n}{\xx. \eval{a}}}{k} & \text{if} & \eval{b} = [k] \\\\
+\end{matrix}\right\\} \\\\
 & \eval{\ty} &&= \ty
 \end{alignedat}
 $$

@@ -58,4 +58,4 @@ voilec -i
 + [X] Record constructor
 + [X] Record projection
 + [X] Variant constructor
-+ [ ] Variant eliminator (case-split)
++ [X] Variant eliminator (case-split)

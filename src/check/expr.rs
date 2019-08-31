@@ -26,6 +26,9 @@ $$
 \newcommand{\recExt}[1]{\mid #1}
 \newcommand{\variant}[1]{\textbf{Sum}\ \{ #1 \}}
 \newcommand{\record}[1]{\textbf{Rec}\ \{ #1 \}}
+\newcommand{\nocases}[0]{\textbf{whatever}}
+\newcommand{\case}[4]{\textbf{case}\\ #1\\ #2: #3\\ \textbf{or}\\ #4}
+\newcommand{\variantext}[2]{\variant{#1 \mid #2}}
 \newcommand{\ctyLab}[0]{\gamma}
 \newcommand{\cA}[0]{\mathcal A}
 \newcommand{\cB}[0]{\mathcal B}
@@ -65,6 +68,43 @@ $$
       \\{ n = b\recExt{a} \\}
     }{
       [\recordext{n : \cB}{k}]
+    }
+  }
+}
+\\\\ \space \\\\
+\cfrac{
+  \Gtyck{A}{\ty}{\cA}
+}{
+  \Gcheval{\nocases}{
+    \piTy{\xx : \variant{} . \cA}
+  } \quad
+  \cfrac{
+    \Gtyck{a}{\variant{}}{\alpha}
+  }{
+    \Gtyck{\nocases\\ a}{\cA}{\alpha}
+  }
+}
+\\\\ \space \\\\
+\cfrac{
+  \cheval{\Gamma,\xx : \cA\_1}{b}{\cB} \quad
+  \Gtyck{A\_1}{\ty}{\cA\_1}
+}{
+  \cfrac{
+    \Gcheval{a}{\piTy{\xx : \variant{\ctyLab} . \cB}}
+  }{
+    \Gcheval{
+      (\case{n}{\xx}{b}{a})
+    }{
+      \piTy{\xx : \variant{n : \cA\_1, \ctyLab} . \cB}
+    }
+  } \quad
+  \cfrac{
+    \Gcheval{a}{\piTy{\xx : [k] . \cB}}
+  }{
+    \Gcheval{
+      (\case{n}{\xx}{b}{a})
+    }{
+      \piTy{\xx : [\variantext{n : \cA\_1}{k}] . \cB}
     }
   }
 }

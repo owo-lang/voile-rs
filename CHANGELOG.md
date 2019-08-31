@@ -3,6 +3,7 @@
 # 0.1.3
 
 + Case-split parser (#82), core language elements (#2)
++ Update structopt to 0.3
 
 # 0.1.2
 
