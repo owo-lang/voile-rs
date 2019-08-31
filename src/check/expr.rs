@@ -241,7 +241,8 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             }
             ty => Err(TCE::NotRowType(Variant, (*info).clone(), ty.clone())),
         },
-        (CaseOr(label, binding, uid, body, or), Val::Dt(Pi, param_ty, ret_ty)) => {
+        // How about when `Dt` is `Plicit::Im`?
+        (CaseOr(label, binding, uid, body, or), Val::Dt(Pi, Plicit::Ex, param_ty, ret_ty)) => {
             let lam_info = merge_info(binding, &**body);
             let lam = Lam(lam_info, binding.clone(), *uid, body.clone());
             let (variants, ext) = match &**param_ty {
