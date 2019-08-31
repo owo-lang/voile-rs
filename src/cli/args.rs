@@ -3,8 +3,8 @@ use structopt::StructOpt;
 
 #[derive(StructOpt)]
 #[structopt(
+    about,
     name = "voilec",
-    rename_all = "kebab-case",
     global_settings(&[AppSettings::ColoredHelp])
 )]
 pub struct CliOptions {
@@ -58,9 +58,7 @@ fn app<'a, 'b>() -> App<'a, 'b> {
     // Introduced a variable because stupid CLion :(
     let app: App = CliOptions::clap();
     app.after_help(extra_help)
-        .version(env!("CARGO_PKG_VERSION"))
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .about(env!("CARGO_PKG_DESCRIPTION"))
+        .author("Tesla Ice Zhang <ice1000kotlin@foxmail.com>, Yichen Yan")
 }
 
 pub fn pre() -> CliOptions {
