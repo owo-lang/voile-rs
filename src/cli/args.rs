@@ -1,11 +1,11 @@
-use clap::{App, Shell};
+use clap::{App, AppSettings, Shell};
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
 #[structopt(
     name = "voilec",
     rename_all = "kebab-case",
-    raw(setting = "structopt::clap::AppSettings::ColoredHelp")
+    global_settings(&[AppSettings::ColoredHelp])
 )]
 pub struct CliOptions {
     /// the input file to type-check (Notice: file should be UTF-8 encoded)
@@ -45,7 +45,8 @@ enum GenShellSubCommand {
         #[structopt(
             name = "generate-completion-script-for",
             alias = "gcf",
-            raw(possible_values = "&Shell::variants()", case_insensitive = "true")
+            possible_values(&Shell::variants()),
+            case_insensitive(true)
         )]
         shell: Shell,
     },
