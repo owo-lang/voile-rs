@@ -30,7 +30,7 @@ impl Val {
 
 /// A value with syntax info.
 /// This is what should be stored inside of the context.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct ValInfo {
     pub ast: Val,
     pub info: SyntaxInfo,

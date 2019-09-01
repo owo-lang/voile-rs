@@ -1,7 +1,7 @@
 use std::mem::swap;
 
 use crate::syntax::abs::AbsDecl;
-use crate::syntax::common::{SyntaxInfo, ToSyntaxInfo};
+use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::{Neutral, TraverseNeutral, Val, ValInfo, TYPE_OMEGA};
 
 use super::monad::{ValTCM, TCE, TCM, TCS};
@@ -17,10 +17,7 @@ fn require_local_emptiness(tcs: &TCS) {
 }
 
 fn unimplemented_to_glob(v: &mut [ValInfo], i: usize) {
-    let mut placeholder = ValInfo {
-        ast: Default::default(),
-        info: SyntaxInfo::SourceInfo(Default::default()),
-    };
+    let mut placeholder = Default::default();
     swap(&mut v[i], &mut placeholder);
     placeholder = placeholder.map_ast(|ast| ast.unimplemented_to_glob());
     swap(&mut placeholder, &mut v[i]);
