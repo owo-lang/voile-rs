@@ -3,9 +3,7 @@ use VarRec::*;
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{merge_info, Plicit, SyntaxInfo, ToSyntaxInfo, VarRec};
-use crate::syntax::core::{
-    CaseSplit, Closure, Fields, Neutral, Val, ValInfo, Variants, TYPE_OMEGA,
-};
+use crate::syntax::core::{CaseSplit, Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
 use crate::syntax::level::{Level, LiftEx};
 
 use super::eval::compile_cons;
@@ -160,14 +158,10 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             Ok((lam.into_info_clone(&*full_info), tcs))
         }
         (Lam(..), Val::Dt(Pi, Plicit::Im, param_ty, ret_ty)) => {
-            let param_type = param_ty
-                .clone()
-                .into_info(SyntaxInfo::SourceInfo(Default::default()));
+            let param_type = param_ty.clone().into_info(Default::default());
             tcs.local_gamma.push(param_type);
             let mocked = Val::fresh_implicit();
-            let mocked_term = mocked
-                .clone()
-                .into_info(SyntaxInfo::SourceInfo(Default::default()));
+            let mocked_term = mocked.clone().into_info(Default::default());
             tcs.local_env.push(mocked_term);
             let ret_ty_body = ret_ty.instantiate_cloned(mocked);
 
@@ -487,13 +481,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 .as_ref()
                 .map(|abs| tcs.infer(&**abs).map_err(|e| e.wrap_clone(&info)))
                 .transpose()?
-                .unwrap_or((
-                    ValInfo {
-                        ast: Default::default(),
-                        info: SyntaxInfo::SourceInfo(Default::default()),
-                    },
-                    Default::default(),
-                ));
+                .unwrap_or_default();
             let (mut ext_fields, more) = match ext.ast {
                 Val::RowPoly(Record, fields) => (fields, None),
                 Val::Neut(Neutral::Row(Record, fields, more)) => (fields, Some(*more)),

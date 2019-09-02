@@ -126,6 +126,28 @@ pub enum SyntaxInfo {
     ImplicitMetaInfo(Box<Self>),
 }
 
+impl Default for SyntaxInfo {
+    fn default() -> Self {
+        SyntaxInfo::SourceInfo(Default::default())
+    }
+}
+
+impl ToSourceInfo for SyntaxInfo {
+    fn source_info(&self) -> SourceInfo {
+        use SyntaxInfo::*;
+        match self {
+            SourceInfo(s) => s.clone(),
+            ImplicitMetaInfo(s) => s.source_info(),
+        }
+    }
+}
+
+/// Something that holds a `SourceInfo`.
+pub trait ToSourceInfo {
+    /// Borrow the syntax info.
+    fn source_info(&self) -> SourceInfo;
+}
+
 /// Surface syntax tree element: Identifier.
 /// Also used in other syntax trees.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -166,15 +188,7 @@ impl Add for SyntaxInfo {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        match rhs {
-            SyntaxInfo::SourceInfo(rhs_source_info) => match self {
-                SyntaxInfo::SourceInfo(self_source_info) => {
-                    SyntaxInfo::SourceInfo(self_source_info.add(rhs_source_info))
-                }
-                _ => unimplemented!(),
-            },
-            SyntaxInfo::ImplicitMetaInfo(i) => self.add(*i),
-        }
+        SyntaxInfo::SourceInfo(self.source_info().add(rhs.source_info()))
     }
 }
 
