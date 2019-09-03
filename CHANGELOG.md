@@ -1,5 +1,8 @@
 # Change Log
 
+# 0.1.5
++ Implicit argument (#115)
+
 # 0.1.4
 
 # 0.1.3
