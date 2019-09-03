@@ -1,4 +1,4 @@
-val implicit_id: {{A : Type}} -> A -> A;
+val implicit_id: {A : Type} -> A -> A;
 let implicit_id = \a. a;
 
 val explicit_id: (A: Type) -> A -> A;

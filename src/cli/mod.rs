@@ -56,7 +56,7 @@ fn main() {
                 Default::default()
             }
         })
-        .unwrap_or_else(Default::default);
+        .unwrap_or_default();
 
     if let Some(abs) = args
         .evaluate

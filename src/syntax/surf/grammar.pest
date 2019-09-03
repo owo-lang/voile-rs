@@ -61,7 +61,7 @@ dollar_op = _{ "$" }
 
 // Parameters
 multi_param = { ident+ ~ ":" ~ expr }
-implicit = { "{{" ~ multi_param ~ "}}" }
+implicit = { "{" ~ multi_param ~ "}" }
 explicit = { "(" ~ multi_param ~ ")" }
 param =
  { implicit

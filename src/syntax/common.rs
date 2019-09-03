@@ -103,49 +103,22 @@ pub(crate) unsafe fn next_uid() -> UID {
 
 impl<'a> From<Span<'a>> for SyntaxInfo {
     fn from(span: Span) -> Self {
-        SyntaxInfo::SourceInfo(SourceInfo {
+        SyntaxInfo {
             line: span.start_pos().line_col().0,
             start: span.start(),
             end: span.end(),
-        })
+            is_generated: false,
+        }
     }
 }
 
 /// Trivial information about the surface syntax items.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
-pub struct SourceInfo {
+pub struct SyntaxInfo {
     pub start: usize,
     pub line: usize,
     pub end: usize,
-}
-
-/// Information related to any term, may be inserted during type-checking
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum SyntaxInfo {
-    SourceInfo(SourceInfo),
-    ImplicitMetaInfo(Box<Self>),
-}
-
-impl Default for SyntaxInfo {
-    fn default() -> Self {
-        SyntaxInfo::SourceInfo(Default::default())
-    }
-}
-
-impl ToSourceInfo for SyntaxInfo {
-    fn source_info(&self) -> SourceInfo {
-        use SyntaxInfo::*;
-        match self {
-            SourceInfo(s) => s.clone(),
-            ImplicitMetaInfo(s) => s.source_info(),
-        }
-    }
-}
-
-/// Something that holds a `SourceInfo`.
-pub trait ToSourceInfo {
-    /// Borrow the syntax info.
-    fn source_info(&self) -> SourceInfo;
+    pub is_generated: bool,
 }
 
 /// Surface syntax tree element: Identifier.
@@ -172,7 +145,7 @@ pub trait ToSyntaxInfo {
     fn syntax_info(&self) -> SyntaxInfo;
 }
 
-impl Add for SourceInfo {
+impl Add for SyntaxInfo {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -180,27 +153,14 @@ impl Add for SourceInfo {
             line: self.line,
             start: self.start,
             end: rhs.end,
+            is_generated: self.is_generated || rhs.is_generated,
         }
     }
 }
 
-impl Add for SyntaxInfo {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        SyntaxInfo::SourceInfo(self.source_info().add(rhs.source_info()))
-    }
-}
-
-impl Display for SourceInfo {
+impl Display for SyntaxInfo {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         write!(f, "line {:?} ({:?}:{:?})", self.line, self.start, self.end)
-    }
-}
-
-impl Display for SyntaxInfo {
-    fn fmt(&self, _f: &mut Formatter) -> Result<(), Error> {
-        unimplemented!()
     }
 }
 

@@ -576,22 +576,32 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             }
             f => {
                 let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap_clone(&info))?;
-                match f_ty.ast {
-                    Val::Dt(Pi, Plicit::Im, _param_type, _closure) => {
-                        // todo: need to do sth here otherwise check(f_ty, dt) will fail
-                        unimplemented!()
-                    }
-                    Val::Dt(Pi, Plicit::Ex, param_type, closure) => {
-                        let (new_a, tcs) = tcs
-                            .check(&**a, &*param_type)
-                            .map_err(|e| e.wrap_clone(&info))?;
-                        Ok((closure.instantiate(new_a.ast).into_info_clone(&info), tcs))
-                    }
-                    other => Err(TCE::NotPi(info, other)),
-                }
+                check_app_type(tcs, f, &info, a, &f_ty.ast)
             }
         },
         e => Err(TCE::CannotInfer(info, e.clone())),
+    }
+}
+
+/// Recursive function to insert meta for implicit argument
+fn check_app_type(tcs: TCS, f: &Abs, info: &SyntaxInfo, a: &Abs, ty: &Val) -> ValTCM {
+    match ty {
+        Val::Dt(Pi, Plicit::Ex, param_type, closure) => {
+            let (new_a, tcs) = tcs
+                .check(&a, &*param_type)
+                .map_err(|e| e.wrap_clone(&info))?;
+            Ok((
+                closure.instantiate_cloned(new_a.ast).into_info_clone(&info),
+                tcs,
+            ))
+        }
+        Val::Dt(Pi, Plicit::Im, _param_type, closure) => {
+            let mut tcs = tcs;
+            let inserted_meta = tcs.fresh_meta();
+            let instantiated_closure = closure.instantiate_cloned(inserted_meta);
+            check_app_type(tcs, f, info, a, &instantiated_closure)
+        }
+        other => Err(TCE::NotPi(*info, other.clone())),
     }
 }
 
