@@ -23,9 +23,6 @@ impl Val {
     pub fn into_info(self, syntax_info: SyntaxInfo) -> ValInfo {
         ValInfo::new(self, syntax_info)
     }
-    pub fn into_info_clone(self, syntax_info: &SyntaxInfo) -> ValInfo {
-        self.into_info(syntax_info.clone())
-    }
 }
 
 /// A value with syntax info.

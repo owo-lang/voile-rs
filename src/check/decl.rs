@@ -30,7 +30,7 @@ fn inline_metas(mut tcs: TCS, val: ValInfo) -> ValTCM {
         Meta(mi) => tcs.take_meta(mi).ok_or_else(|| TCE::MetaUnsolved(mi)),
         e => Ok(Val::Neut(e)),
     })?;
-    Ok((val.into_info_clone(&info), tcs))
+    Ok((val.into_info(info), tcs))
 }
 
 /**
@@ -110,7 +110,7 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             let (sign_fake, tcs) = tcs.check(&sign_abs, &TYPE_OMEGA)?;
             let (sign_fake, mut tcs) = inline_metas(tcs, sign_fake)?;
             let sign = sign_fake.map_ast(|ast| ast.generated_to_var());
-            let val_info = Val::fresh_unimplemented(self_index).into_info_clone(&syntax_info);
+            let val_info = Val::fresh_unimplemented(self_index).into_info(syntax_info);
             tcs.env.push(val_info);
             tcs.gamma.push(sign);
 

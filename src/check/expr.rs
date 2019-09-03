@@ -115,7 +115,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     match (expr, expected_type) {
         (Type(info, lower), Val::Type(upper)) => {
             if upper > lower {
-                Ok((Val::Type(*lower).into_info_clone(&*info), tcs))
+                Ok((Val::Type(*lower).into_info(*info), tcs))
             } else {
                 Err(TCE::LevelMismatch(expr.syntax_info(), *lower + 1, *upper))
             }
@@ -123,39 +123,35 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
         (RowKind(info, kind, labels), Val::Type(upper)) if *upper > From::from(0u32) => {
             let labels = labels.iter().map(|l| &l.text).cloned().collect();
             let expr = Val::RowKind(Default::default(), *kind, labels);
-            Ok((expr.into_info_clone(&*info), tcs))
+            Ok((expr.into_info(*info), tcs))
         }
-        (Meta(ident, mi), _) => Ok((Val::meta(*mi).into_info_clone(&ident.info), tcs)),
+        (Meta(ident, mi), _) => Ok((Val::meta(*mi).into_info(ident.info), tcs)),
         (Pair(info, fst, snd), Val::Dt(Sigma, Plicit::Ex, param_ty, closure)) => {
-            let (fst_term, mut tcs) = tcs
-                .check(&**fst, &**param_ty)
-                .map_err(|e| e.wrap_clone(&*info))?;
+            let (fst_term, mut tcs) = tcs.check(&**fst, &**param_ty).map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();
             let snd_ty = closure.instantiate_borrow(&fst_term_ast);
             // This `fst_term.syntax_info()` is probably wrong, but I'm not sure how to fix
-            let param_type = param_ty.clone().into_info_clone(&fst_term.syntax_info());
+            let param_type = param_ty.clone().into_info(fst_term.syntax_info());
             tcs.local_gamma.push(param_type);
             tcs.local_env.push(fst_term);
-            let (snd_term, mut tcs) = tcs
-                .check(&**snd, &snd_ty)
-                .map_err(|e| e.wrap_clone(&*info))?;
+            let (snd_term, mut tcs) = tcs.check(&**snd, &snd_ty).map_err(|e| e.wrap(*info))?;
             tcs.pop_local();
-            let pair = Val::pair(fst_term_ast, snd_term.ast).into_info_clone(&*info);
+            let pair = Val::pair(fst_term_ast, snd_term.ast).into_info(*info);
             Ok((pair, tcs))
         }
         (Lam(full_info, param_info, uid, body), Val::Dt(Pi, Plicit::Ex, param_ty, ret_ty)) => {
-            let param_type = param_ty.clone().into_info_clone(&param_info.info);
+            let param_type = param_ty.clone().into_info(param_info.info);
             tcs.local_gamma.push(param_type);
             let mocked = Val::postulate(*uid);
-            let mocked_term = mocked.clone().into_info_clone(&param_info.info);
+            let mocked_term = mocked.clone().into_info(param_info.info);
             tcs.local_env.push(mocked_term);
             let ret_ty_body = ret_ty.instantiate_cloned(mocked);
             let (lam_term, mut tcs) = tcs
                 .check(body, &ret_ty_body)
-                .map_err(|e| e.wrap_clone(&*full_info))?;
+                .map_err(|e| e.wrap(*full_info))?;
             tcs.pop_local();
             let lam = Val::closure_lam(lam_term.ast);
-            Ok((lam.into_info_clone(&*full_info), tcs))
+            Ok((lam.into_info(*full_info), tcs))
         }
         (Lam(..), Val::Dt(Pi, Plicit::Im, param_ty, ret_ty)) => {
             let param_type = param_ty.clone().into_info(Default::default());
@@ -173,26 +169,26 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
         (Dt(info, kind, uid, param_plicit, param, ret), Val::Type(..)) => {
             let (param, mut tcs) = tcs
                 .check(&**param, expected_type)
-                .map_err(|e| e.wrap_clone(&*info))?;
+                .map_err(|e| e.wrap(*info))?;
             tcs.local_gamma.push(param.clone());
-            let axiom = Val::postulate(*uid).into_info_clone(&param.syntax_info());
+            let axiom = Val::postulate(*uid).into_info(param.syntax_info());
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = tcs
                 .check(&**ret, expected_type)
-                .map_err(|e| e.wrap_clone(&*info))?;
+                .map_err(|e| e.wrap(*info))?;
             tcs.pop_local();
             let dt = Val::closure_dependent_type(*kind, *param_plicit, param.ast, ret.ast)
-                .into_info_clone(&*info);
+                .into_info(*info);
             Ok((dt, tcs))
         }
         (RowPoly(info, Record, variants, ext), Val::RowKind(l, Record, labels)) => {
-            check_row_polymorphic_type(tcs, &*info, *l, Record, variants, ext, labels)
+            check_row_polymorphic_type(tcs, *info, *l, Record, variants, ext, labels)
         }
         (RowPoly(info, Variant, variants, ext), Val::RowKind(l, Variant, labels)) => {
-            check_row_polymorphic_type(tcs, &*info, *l, Variant, variants, ext, labels)
+            check_row_polymorphic_type(tcs, *info, *l, Variant, variants, ext, labels)
         }
         (RowPoly(info, kind, variants, ext), Val::Type(l)) => {
-            check_row_polymorphic_type(tcs, &*info, *l, *kind, variants, ext, &[])
+            check_row_polymorphic_type(tcs, *info, *l, *kind, variants, ext, &[])
         }
         (Rec(info, fields, more), Val::RowPoly(Record, field_types)) => {
             // Warn about unneeded fields?
@@ -202,9 +198,9 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                     let more_type = Val::record_type(rest_field_types);
                     let (more, tcs) = tcs.check(&**more, &more_type)?;
                     let record = Val::Rec(nice_fields).rec_extend(more.ast);
-                    Ok((record.into_info_clone(&*info), tcs))
+                    Ok((record.into_info(*info), tcs))
                 }
-                None => check_fields_no_more(&*info, nice_fields, rest_field_types, tcs),
+                None => check_fields_no_more(*info, nice_fields, rest_field_types, tcs),
             }
         }
         (Rec(info, fields, more), Val::Neut(Neutral::Row(Record, field_types, more_types))) => {
@@ -218,20 +214,20 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                     };
                     let (more, tcs) = tcs.check(&**more, &more_type)?;
                     let record = Val::Rec(nice_fields).rec_extend(more.ast);
-                    Ok((record.into_info_clone(&*info), tcs))
+                    Ok((record.into_info(*info), tcs))
                 }
-                None => check_fields_no_more(&*info, nice_fields, rest_field_types, tcs),
+                None => check_fields_no_more(*info, nice_fields, rest_field_types, tcs),
             }
         }
         (Lift(info, levels, expr), anything) => {
             let (expr, tcs) = tcs
                 .check(&**expr, &anything.clone().lift(0 - *levels))
-                .map_err(|e| e.wrap_clone(&*info))?;
+                .map_err(|e| e.wrap(*info))?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
         (Whatever(info), Val::Dt(Pi, _, param_ty, ..)) => match &**param_ty {
             Val::RowPoly(Variant, variants) if variants.is_empty() => {
-                Ok((Val::Lam(Closure::default()).into_info_clone(&*info), tcs))
+                Ok((Val::Lam(Closure::default()).into_info(*info), tcs))
             }
             ty => Err(TCE::NotRowType(Variant, (*info).clone(), ty.clone())),
         },
@@ -272,19 +268,19 @@ fn check_fallback(tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     let (inferred, tcs) = tcs.infer(expr)?;
     Ok(tcs
         .subtype(&inferred.ast, expected_type)
-        .map_err(|e| e.wrap_clone(&inferred.info))?
+        .map_err(|e| e.wrap(inferred.info))?
         .evaluate(expr.clone()))
 }
 
 fn check_fields_no_more(
-    info: &SyntaxInfo,
+    info: SyntaxInfo,
     nice_fields: Fields,
     rest_field_types: Variants,
     tcs: TCS,
 ) -> ValTCM {
     match rest_field_types.keys().next() {
         Some(missing_field) => Err(TCE::MissingVariant(Record, missing_field.clone())),
-        None => Ok((Val::Rec(nice_fields).into_info_clone(&info), tcs)),
+        None => Ok((Val::Rec(nice_fields).into_info(info), tcs)),
     }
 }
 
@@ -349,7 +345,7 @@ $$
 */
 fn check_row_polymorphic_type(
     mut tcs: TCS,
-    info: &SyntaxInfo,
+    info: SyntaxInfo,
     level: Level,
     kind: VarRec,
     variants: &[LabAbs],
@@ -360,7 +356,7 @@ fn check_row_polymorphic_type(
     for labelled in variants {
         let (val, new_tcs) = tcs
             .check(&labelled.expr, &Val::Type(level))
-            .map_err(|e| e.wrap_clone(&info))?;
+            .map_err(|e| e.wrap(info))?;
         tcs = new_tcs;
         let label = &labelled.label.text;
         if out_variants.contains_key(label) {
@@ -371,16 +367,16 @@ fn check_row_polymorphic_type(
         out_variants.insert(label.clone(), val.ast);
     }
     match ext {
-        None => Ok((Val::RowPoly(kind, out_variants).into_info_clone(&info), tcs)),
+        None => Ok((Val::RowPoly(kind, out_variants).into_info(info), tcs)),
         Some(ext) => {
             let known_labels = out_variants.keys().chain(labels.iter()).cloned().collect();
             let expected_kind = Val::RowKind(Default::default(), kind, known_labels);
             let (ext, new_tcs) = tcs
                 .check(&**ext, &expected_kind)
-                .map_err(|e| e.wrap_clone(&info))?;
+                .map_err(|e| e.wrap(info))?;
             let row_poly = Val::RowPoly(kind, out_variants)
                 .row_extend(ext.ast)
-                .into_info_clone(&info);
+                .into_info(info);
             Ok((row_poly, new_tcs))
         }
     }
@@ -453,8 +449,8 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
     use Abs::*;
     let info = value.syntax_info();
     match value {
-        Type(_, level) => Ok((Val::Type(*level + 1).into_info_clone(&info), tcs)),
-        RowKind(..) => Ok((Val::Type(From::from(1u32)).into_info_clone(&info), tcs)),
+        Type(_, level) => Ok((Val::Type(*level + 1).into_info(info), tcs)),
+        RowKind(..) => Ok((Val::Type(From::from(1u32)).into_info(info), tcs)),
         RowPoly(_, kind, variants, more) => {
             let mut labels = Vec::with_capacity(variants.len());
             let mut tcs = tcs;
@@ -468,18 +464,18 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             }
             let kind_level = max_level + 1;
             match more {
-                None => Ok((Val::Type(kind_level).into_info_clone(&info), tcs)),
+                None => Ok((Val::Type(kind_level).into_info(info), tcs)),
                 Some(more) => {
                     let expected = Val::RowKind(kind_level, *kind, labels);
                     let (_, tcs) = tcs.check(&**more, &expected)?;
-                    Ok((Val::Type(kind_level).into_info_clone(&info), tcs))
+                    Ok((Val::Type(kind_level).into_info(info), tcs))
                 }
             }
         }
         Rec(_, fields, ext) => {
             let (ext, tcs) = ext
                 .as_ref()
-                .map(|abs| tcs.infer(&**abs).map_err(|e| e.wrap_clone(&info)))
+                .map(|abs| tcs.infer(&**abs).map_err(|e| e.wrap(info)))
                 .transpose()?
                 .unwrap_or_default();
             let (mut ext_fields, more) = match ext.ast {
@@ -492,8 +488,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 if ext_fields.contains_key(&field.label.text) {
                     return Err(TCE::duplicate_field(field.label.clone()));
                 }
-                let (inferred, new_tcs) =
-                    tcs.infer(&field.expr).map_err(|e| e.wrap_clone(&info))?;
+                let (inferred, new_tcs) = tcs.infer(&field.expr).map_err(|e| e.wrap(info))?;
                 tcs = new_tcs;
                 ext_fields.insert(field.label.text.clone(), inferred.ast);
             }
@@ -501,11 +496,11 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                 None => Val::record_type(ext_fields),
                 Some(more) => Val::neutral_record_type(ext_fields, more),
             };
-            Ok((ty.into_info_clone(&info), tcs))
+            Ok((ty.into_info(info), tcs))
         }
         Var(_, _, dbi) => {
             let local = tcs.local_type(*dbi).ast.clone().attach_dbi(*dbi);
-            Ok((local.into_info_clone(&info), tcs))
+            Ok((local.into_info(info), tcs))
         }
         Lam(..) => {
             let mut tcs = tcs;
@@ -517,66 +512,64 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             let pi = Val::pi(Plicit::Ex, param_meta, Closure::plain(ret_meta));
             let (_, tcs) = tcs.check(value, &pi)?;
             // tcs.pop_local();
-            Ok((pi.into_info_clone(&info), tcs))
+            Ok((pi.into_info(info), tcs))
         }
         Lift(_, levels, expr) => {
-            let (expr, tcs) = tcs.infer(&**expr).map_err(|e| e.wrap_clone(&info))?;
+            let (expr, tcs) = tcs.infer(&**expr).map_err(|e| e.wrap(info))?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
-        Ref(_, dbi) => Ok((tcs.glob_type(*dbi).ast.clone().into_info_clone(&info), tcs)),
+        Ref(_, dbi) => Ok((tcs.glob_type(*dbi).ast.clone().into_info(info), tcs)),
         Pair(_, fst, snd) => {
-            let (fst_ty, tcs) = tcs.infer(&**fst).map_err(|e| e.wrap_clone(&info))?;
-            let (snd_ty, tcs) = tcs.infer(&**snd).map_err(|e| e.wrap_clone(&info))?;
-            let sigma = Val::sig(fst_ty.ast, Closure::plain(snd_ty.ast)).into_info_clone(&info);
+            let (fst_ty, tcs) = tcs.infer(&**fst).map_err(|e| e.wrap(info))?;
+            let (snd_ty, tcs) = tcs.infer(&**snd).map_err(|e| e.wrap(info))?;
+            let sigma = Val::sig(fst_ty.ast, Closure::plain(snd_ty.ast)).into_info(info);
             Ok((sigma, tcs))
         }
         Fst(_, pair) => {
-            let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap_clone(&info))?;
+            let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
-                Val::Dt(Sigma, Plicit::Ex, param_type, ..) => {
-                    Ok((param_type.into_info_clone(&info), tcs))
-                }
+                Val::Dt(Sigma, Plicit::Ex, param_type, ..) => Ok((param_type.into_info(info), tcs)),
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
         Proj(_, record, field) => {
-            let (record_ty, tcs) = tcs.infer(&**record).map_err(|e| e.wrap_clone(&info))?;
+            let (record_ty, tcs) = tcs.infer(&**record).map_err(|e| e.wrap(info))?;
             match record_ty.ast {
                 Val::Neut(Neutral::Row(Record, mut fields, ..))
                 | Val::RowPoly(Record, mut fields) => fields
                     .remove(&field.text)
-                    .map(|ty| (ty.into_info_clone(&info), tcs))
+                    .map(|ty| (ty.into_info(info), tcs))
                     .ok_or_else(|| TCE::MissingVariant(Record, field.text.clone())),
                 ast => Err(TCE::NotRowType(Record, record_ty.info, ast)),
             }
         }
         Snd(_, pair) => {
-            let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap_clone(&info))?;
+            let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
                 Val::Dt(Sigma, Plicit::Ex, _, closure) => {
                     // Since we can infer the type of `pair`, it has to be well-typed
                     let (pair_compiled, tcs) = tcs.evaluate(*pair.clone());
                     let fst = pair_compiled.ast.first();
-                    Ok((closure.instantiate(fst).into_info_clone(&info), tcs))
+                    Ok((closure.instantiate(fst).into_info(info), tcs))
                 }
                 ast => Err(TCE::NotSigma(pair_ty.info, ast)),
             }
         }
         App(_, f, _app_plicit, a) => match &**f {
             Cons(variant_info) => {
-                let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap_clone(&info))?;
+                let (a, tcs) = tcs.infer(a).map_err(|e| e.wrap(info))?;
                 let mut variant = Variants::default();
                 variant.insert(variant_info.text[1..].to_owned(), a.ast);
-                Ok((Val::variant_type(variant).into_info_clone(&info), tcs))
+                Ok((Val::variant_type(variant).into_info(info), tcs))
             }
             Whatever(whatever_info) => {
                 let empty = Val::Lam(Closure::default());
-                let (_, mut tcs) = tcs.check(a, &empty).map_err(|e| e.wrap_clone(&info))?;
-                Ok((tcs.fresh_meta().into_info_clone(&*whatever_info), tcs))
+                let (_, mut tcs) = tcs.check(a, &empty).map_err(|e| e.wrap(info))?;
+                Ok((tcs.fresh_meta().into_info(*whatever_info), tcs))
             }
             f => {
-                let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap_clone(&info))?;
-                check_app_type(tcs, f, &info, a, &f_ty.ast)
+                let (f_ty, tcs) = tcs.infer(f).map_err(|e| e.wrap(info))?;
+                check_app_type(tcs, f, info, a, &f_ty.ast)
             }
         },
         e => Err(TCE::CannotInfer(info, e.clone())),
@@ -584,24 +577,19 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
 }
 
 /// Recursive function to insert meta for implicit argument
-fn check_app_type(tcs: TCS, f: &Abs, info: &SyntaxInfo, a: &Abs, ty: &Val) -> ValTCM {
-    match ty {
+fn check_app_type(tcs: TCS, f: &Abs, info: SyntaxInfo, a: &Abs, pi_ty: &Val) -> ValTCM {
+    match pi_ty {
         Val::Dt(Pi, Plicit::Ex, param_type, closure) => {
-            let (new_a, tcs) = tcs
-                .check(&a, &*param_type)
-                .map_err(|e| e.wrap_clone(&info))?;
-            Ok((
-                closure.instantiate_cloned(new_a.ast).into_info_clone(&info),
-                tcs,
-            ))
+            let (new_a, tcs) = tcs.check(&a, &*param_type).map_err(|e| e.wrap(info))?;
+            Ok((closure.instantiate_cloned(new_a.ast).into_info(info), tcs))
         }
         Val::Dt(Pi, Plicit::Im, _param_type, closure) => {
             let mut tcs = tcs;
             let inserted_meta = tcs.fresh_meta();
-            let instantiated_closure = closure.instantiate_cloned(inserted_meta);
-            check_app_type(tcs, f, info, a, &instantiated_closure)
+            let new_closure = closure.instantiate_cloned(inserted_meta);
+            check_app_type(tcs, f, info, a, &new_closure)
         }
-        other => Err(TCE::NotPi(*info, other.clone())),
+        other => Err(TCE::NotPi(info, other.clone())),
     }
 }
 
