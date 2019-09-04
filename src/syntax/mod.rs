@@ -4,10 +4,6 @@ pub mod common;
 /// `Level`-related definitions, extracted from [`common`](self::common).
 pub mod level;
 
-/// Helper functions for pest.
-#[macro_use]
-pub mod pest_util;
-
 /// A Lisp parser as some testing utility.
 pub mod lisp;
 

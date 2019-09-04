@@ -15,5 +15,11 @@ appveyor = { repository = "owo-lang/voile-rs", service = "github" }
 circle-ci = { repository = "owo-lang/voile-rs", branch = "master" }
 maintenance = { status = "passively-maintained" }
 
+[dependencies]
+pest = { version = "2.1.2", optional = true }
+
+[features]
+parser = ["pest"]
+
 [package.metadata.docs.rs]
 rustdoc-args = ["--document-private-items"]

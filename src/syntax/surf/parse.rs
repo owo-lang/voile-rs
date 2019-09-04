@@ -1,11 +1,11 @@
 use pest::Parser;
 use pest_derive::Parser;
 
+use voile_util::pest_util::end_of_rule;
 use voile_util::vec1::Vec1;
 
 use crate::syntax::common::{Ident, Plicit, SyntaxInfo, VarRec};
 use crate::syntax::level::Level;
-use crate::syntax::pest_util::end_of_rule;
 use crate::syntax::surf::LabExpr;
 
 use super::ast::Param;

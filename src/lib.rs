@@ -155,6 +155,9 @@ alt="" />
 </details></span>
 */
 
+#[macro_use]
+extern crate voile_util;
+
 /// Abstract syntax, surface syntax,
 /// parser and well-typed terms (core language).
 pub mod syntax;
