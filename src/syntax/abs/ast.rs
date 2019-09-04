@@ -1,5 +1,7 @@
-use crate::syntax::common::*;
 use voile_util::level::Level;
+use voile_util::uid::*;
+
+use crate::syntax::common::*;
 
 pub type LabAbs = Labelled<Abs>;
 

@@ -49,10 +49,6 @@ uid_basic_operations_impl!(MI);
 pub struct GI(pub usize);
 uid_basic_operations_impl!(GI);
 
-#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
-pub struct UID(pub usize);
-uid_basic_operations_impl!(UID);
-
 impl<'a> From<Span<'a>> for SyntaxInfo {
     fn from(span: Span) -> Self {
         SyntaxInfo {

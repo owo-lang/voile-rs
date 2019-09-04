@@ -1,5 +1,7 @@
 use std::collections::btree_map::BTreeMap;
 
+use voile_util::uid::*;
+
 use crate::check::monad::{TCE, TCM};
 use crate::syntax::common::{PiSig::*, *};
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};

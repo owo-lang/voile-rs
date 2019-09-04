@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 
-use crate::syntax::common::{PiSig, Plicit, VarRec, DBI, GI, MI, UID};
 use voile_util::level::Level;
+use voile_util::uid::UID;
+
+use crate::syntax::common::{PiSig, Plicit, VarRec, DBI, GI, MI};
 
 use super::{RedEx, TraverseNeutral};
 

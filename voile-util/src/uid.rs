@@ -37,6 +37,10 @@ macro_rules! uid_basic_operations_impl {
     };
 }
 
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
+pub struct UID(pub usize);
+uid_basic_operations_impl!(UID);
+
 /// Unique-ID generator internal counter.
 static mut UID_COUNT: usize = 0;
 
