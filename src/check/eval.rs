@@ -198,7 +198,7 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let info = merge_info(&label, &or);
             let mut split = CaseSplit::default();
             split.insert(label.text, Closure::plain(body.ast));
-            let lam = Val::Lam(Closure::Tree(split));
+            let lam = Val::case_tree(split);
             (or.ast.split_extend(lam).into_info(info), tcs)
         }
         Whatever(info) => (Val::Lam(Closure::default()).into_info(info), tcs),

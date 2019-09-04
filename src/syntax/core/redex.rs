@@ -78,11 +78,11 @@ impl RedEx for Neutral {
                     // Do we need to `reduce` after `apply` again?
                     f.apply(a.reduce_with_dbi_borrow(&arg, dbi))
                 }),
-            SplitOn(split, obj) => Val::Lam(Closure::Tree(split))
+            SplitOn(split, obj) => Val::case_tree(split)
                 .apply(obj.reduce_with_dbi_borrow(&arg, dbi))
                 // further reduce because the `split` is not yet reduced
                 .reduce_with_dbi(arg, dbi),
-            OrSplit(split, or) => Val::Lam(Closure::Tree(split))
+            OrSplit(split, or) => Val::case_tree(split)
                 .split_extend(or.reduce_with_dbi_borrow(&arg, dbi))
                 .reduce_with_dbi(arg, dbi),
             Fst(pair) => pair.reduce_with_dbi(arg, dbi).first(),
@@ -116,11 +116,11 @@ impl RedEx for Neutral {
                     // Do we need to `reduce` after `apply` again?
                     f.apply(a.reduce_with_dbi_borrow(arg, dbi))
                 }),
-            SplitOn(split, obj) => Val::Lam(Closure::Tree(split))
+            SplitOn(split, obj) => Val::case_tree(split)
                 .apply(obj.reduce_with_dbi_borrow(&arg, dbi))
                 // further reduce because the `split` is not yet reduced
                 .reduce_with_dbi_borrow(arg, dbi),
-            OrSplit(split, or) => Val::Lam(Closure::Tree(split))
+            OrSplit(split, or) => Val::case_tree(split)
                 .split_extend(or.reduce_with_dbi_borrow(arg, dbi))
                 .reduce_with_dbi_borrow(arg, dbi),
             Fst(pair) => pair.reduce_with_dbi_borrow(arg, dbi).first(),

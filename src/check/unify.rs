@@ -168,9 +168,7 @@ fn unify_closure(tcs: TCS, a: &Closure, b: &Closure) -> TCM {
             let b = b.instantiate_cloned(p);
             tcs.unify(&a, &b)
         }
-        (Tree(split_a), Tree(split_b)) if split_a.len() == split_b.len() => {
-            unify_case_split(tcs, split_a, split_b)
-        }
+        (Tree(split_a), Tree(split_b)) => tcs.unify_case_split(split_a, split_b),
         (Tree(split), _) | (_, Tree(split)) => {
             let mut tcs = tcs;
             for (label, branch) in split {
@@ -186,6 +184,12 @@ fn unify_closure(tcs: TCS, a: &Closure, b: &Closure) -> TCM {
 }
 
 fn unify_case_split(tcs: TCS, split_a: &CaseSplit, split_b: &CaseSplit) -> TCM {
+    if split_a.len() != split_b.len() {
+        return Err(TCE::CannotUnify(
+            Val::case_tree(split_a.clone()),
+            Val::case_tree(split_b.clone()),
+        ));
+    }
     let mut tcs = tcs;
     for (label, closure_a) in split_a {
         let case_b = split_b
@@ -258,9 +262,7 @@ fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
         }
         (Snd(a), Snd(b)) | (Fst(a), Fst(b)) => tcs.unify_neutral(&**a, &**b),
         (Proj(a, lab_a), Proj(b, lab_b)) if lab_a == lab_b => tcs.unify_neutral(&**a, &**b),
-        (SplitOn(split_a, a), SplitOn(split_b, b)) | (OrSplit(split_a, a), OrSplit(split_b, b))
-            if split_a.len() == split_b.len() =>
-        {
+        (SplitOn(split_a, a), SplitOn(split_b, b)) | (OrSplit(split_a, a), OrSplit(split_b, b)) => {
             tcs.unify_case_split(split_a, split_b)?
                 .unify_neutral(&**a, &**b)
         }

@@ -28,6 +28,10 @@ impl Val {
         Val::Cons(name, Box::new(param))
     }
 
+    pub fn case_tree(tree: CaseSplit) -> Self {
+        Val::Lam(Closure::Tree(tree))
+    }
+
     pub fn lift(levels: u32, expr: Neutral) -> Self {
         Val::Neut(Neutral::Lift(levels, Box::new(expr)))
     }

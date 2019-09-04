@@ -256,7 +256,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let (body, tcs) = tcs.check(&lam, &dt)?;
             let mut split = CaseSplit::default();
             split.insert(label.text.clone(), Closure::plain(body.ast));
-            let ext = Val::Lam(Closure::Tree(split));
+            let ext = Val::case_tree(split);
             let (or, tcs) = tcs.check(&**or, &stripped_function)?;
             Ok((or.ast.split_extend(ext).into_info(or.info), tcs))
         }
