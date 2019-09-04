@@ -1,5 +1,5 @@
 use crate::syntax::common::{VarRec, MI};
-use crate::syntax::core::{Closure, Neutral, TraverseNeutral, Val, Variants};
+use crate::syntax::core::{CaseSplit, Closure, Neutral, TraverseNeutral, Val, Variants};
 
 use super::monad::{MetaSolution, TCE, TCM, TCS};
 
@@ -169,14 +169,7 @@ fn unify_closure(tcs: TCS, a: &Closure, b: &Closure) -> TCM {
             tcs.unify(&a, &b)
         }
         (Tree(split_a), Tree(split_b)) if split_a.len() == split_b.len() => {
-            let mut tcs = tcs;
-            for (label, closure_a) in split_a {
-                let case_b = split_b
-                    .get(label)
-                    .ok_or_else(|| TCE::MissingVariant(VarRec::Variant, label.clone()))?;
-                tcs = tcs.unify_closure(closure_a, case_b)?;
-            }
-            Ok(tcs)
+            unify_case_split(tcs, split_a, split_b)
         }
         (Tree(split), _) | (_, Tree(split)) => {
             let mut tcs = tcs;
@@ -190,6 +183,17 @@ fn unify_closure(tcs: TCS, a: &Closure, b: &Closure) -> TCM {
             Ok(tcs)
         }
     }
+}
+
+fn unify_case_split(tcs: TCS, split_a: &CaseSplit, split_b: &CaseSplit) -> TCM {
+    let mut tcs = tcs;
+    for (label, closure_a) in split_a {
+        let case_b = split_b
+            .get(label)
+            .ok_or_else(|| TCE::MissingVariant(VarRec::Variant, label.clone()))?;
+        tcs = tcs.unify_closure(closure_a, case_b)?;
+    }
+    Ok(tcs)
 }
 
 /**
@@ -254,6 +258,12 @@ fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
         }
         (Snd(a), Snd(b)) | (Fst(a), Fst(b)) => tcs.unify_neutral(&**a, &**b),
         (Proj(a, lab_a), Proj(b, lab_b)) if lab_a == lab_b => tcs.unify_neutral(&**a, &**b),
+        (SplitOn(split_a, a), SplitOn(split_b, b)) | (OrSplit(split_a, a), OrSplit(split_b, b))
+            if split_a.len() == split_b.len() =>
+        {
+            tcs.unify_case_split(split_a, split_b)?
+                .unify_neutral(&**a, &**b)
+        }
         (e, t) => Err(TCE::CannotUnify(Val::Neut(e.clone()), Val::Neut(t.clone()))),
     }
 }
@@ -273,6 +283,11 @@ impl TCS {
     #[inline]
     fn unify_closure(self, a: &Closure, b: &Closure) -> TCM {
         unify_closure(self, a, b)
+    }
+
+    #[inline]
+    fn unify_case_split(self, a: &CaseSplit, b: &CaseSplit) -> TCM {
+        unify_case_split(self, a, b)
     }
 
     #[inline]
