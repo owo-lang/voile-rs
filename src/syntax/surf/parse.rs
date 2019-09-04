@@ -5,8 +5,8 @@ use voile_util::pest_util::end_of_rule;
 use voile_util::vec1::Vec1;
 
 use crate::syntax::common::{Ident, Plicit, SyntaxInfo, VarRec};
-use crate::syntax::level::Level;
 use crate::syntax::surf::LabExpr;
+use voile_util::level::Level;
 
 use super::ast::Param;
 use super::{Decl, DeclKind, Expr};

@@ -1,6 +1,6 @@
 use super::{CaseSplit, Closure, Neutral, Val, Variants};
 use crate::syntax::common::DBI;
-use crate::syntax::level::LiftEx;
+use voile_util::level::LiftEx;
 
 /// Reducible expressions.
 pub trait RedEx<T: Sized = Val>: Sized {

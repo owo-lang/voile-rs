@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::syntax::common::{PiSig, Plicit, VarRec, DBI, GI, MI, UID};
-use crate::syntax::level::Level;
+use voile_util::level::Level;
 
 use super::{RedEx, TraverseNeutral};
 

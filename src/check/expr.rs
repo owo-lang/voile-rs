@@ -4,7 +4,7 @@ use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
 use crate::syntax::common::{merge_info, Plicit, SyntaxInfo, ToSyntaxInfo, VarRec};
 use crate::syntax::core::{CaseSplit, Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
-use crate::syntax::level::{Level, LiftEx};
+use voile_util::level::{Level, LiftEx};
 
 use super::eval::compile_cons;
 use super::monad::{ValTCM, TCE, TCM, TCS};

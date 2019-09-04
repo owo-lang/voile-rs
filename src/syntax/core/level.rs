@@ -1,6 +1,6 @@
 use super::{Closure, Neutral, Val};
-use crate::syntax::level::{Level, LevelCalcState, LiftEx};
 use std::collections::BTreeMap;
+use voile_util::level::{Level, LevelCalcState, LiftEx};
 
 pub const TYPE_OMEGA: Val = Val::Type(Level::Omega);
 

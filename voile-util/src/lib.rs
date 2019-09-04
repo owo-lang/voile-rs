@@ -14,6 +14,9 @@ All dependencies are optional, thus very lightweight.
  [Pest]: https://pest.rs
 */
 
+/// `Level`-related definitions and relevant operations and traits.
+pub mod level;
+
 /// Helper functions for pest.
 #[cfg(feature = "parser")]
 #[macro_use]
