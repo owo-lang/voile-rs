@@ -22,13 +22,8 @@ ident_following =
 
 ///Yellow
 ident =
- @{ !"case"
-  ~ !"or"
-  ~ ident_raw
-  | "case"
-  ~ ident_following+
-  | "or"
-  ~ ident_following+
+ @{ !"or" ~ ident_raw
+  |  "or" ~ ident_following+
   }
 ///Pink
 cons = @{ "@" ~ ident_raw }

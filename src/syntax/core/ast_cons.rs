@@ -90,22 +90,12 @@ impl Val {
         Val::Neut(Neutral::Proj(Box::new(record), field))
     }
 
-    pub fn closure_dependent_type(
-        kind: PiSig,
-        param_plicit: Plicit,
-        param_type: TVal,
-        body: TVal,
-    ) -> TVal {
-        Self::dependent_type(kind, param_plicit, param_type, Closure::plain(body))
+    pub fn closure_dependent_type(kind: PiSig, visib: Plicit, param_ty: TVal, body: TVal) -> TVal {
+        Self::dependent_type(kind, visib, param_ty, Closure::plain(body))
     }
 
-    pub fn dependent_type(
-        kind: PiSig,
-        param_plicit: Plicit,
-        param_type: TVal,
-        closure: Closure,
-    ) -> TVal {
-        Val::Dt(kind, param_plicit, Box::new(param_type), closure)
+    pub fn dependent_type(kind: PiSig, plicit: Plicit, param_type: TVal, closure: Closure) -> TVal {
+        Val::Dt(kind, plicit, Box::new(param_type), closure)
     }
 
     pub fn variant_type(variants: Variants) -> TVal {
