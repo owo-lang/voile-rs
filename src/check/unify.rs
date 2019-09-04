@@ -71,6 +71,7 @@ $$
 \newcommand{\cA}[0]{\mathcal A}
 \newcommand{\cB}[0]{\mathcal B}
 \newcommand{\recordext}[2]{\record{#1 \mid #2}}
+\newcommand{\clabVal}[0]{\delta}
 \newcommand{\recExt}[1]{\mid #1}
 \newcommand{\variantext}[2]{\variant{#1 \mid #2}}
 \cfrac{
@@ -80,6 +81,18 @@ $$
 }
 \quad
 \cfrac{}{\Gvdash \cA \simeq \cA}
+\\\\ \space \\\\
+\cfrac{}{
+  \Gvdash \\{\\} \simeq \\{\\}
+} \quad
+\cfrac{\Gvdash \alpha \simeq \beta}{
+  \Gvdash n\\ \alpha \simeq n\\ \beta
+  \quad
+  \cfrac{\Gvdash \\{ \clabVal\_0 \\} \simeq \\{ \clabVal\_1 \\}}{
+    \Gvdash \\{ n\\ = \alpha, \clabVal\_0 \\}
+    \simeq \\{ n\\ = \beta, \clabVal\_1 \\}
+  }
+}
 $$
 */
 fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
@@ -179,6 +192,50 @@ fn unify_closure(tcs: TCS, a: &Closure, b: &Closure) -> TCM {
     }
 }
 
+/**
+Unify two neutral terms.
+$$
+\newcommand{\casevS}[2]{\textbf{split}\\ #1\\ (#2)}
+\newcommand{\caseTr}[0]{\text{ct}}
+\newcommand{\clabVal}[0]{\delta}
+\newcommand{\caseextS}[2]{\textbf{split}\\ (#1)\\ \textbf{or}\\ #2}
+\newcommand{\Gvdash}[0]{\Gamma \vdash}
+\newcommand{\recExt}[1]{\mid #1}
+\cfrac{
+  \Gvdash [k\_0] \simeq [k\_1]
+}{
+  \Gvdash [k\_0 .n] \simeq [k\_1 .n]
+  \quad
+  \cfrac{\Gvdash \\{ \clabVal\_0 \\} \simeq \\{ \clabVal_1 \\}}{
+    \Gvdash [\\{ \clabVal\_0 \recExt{k\_0} \\}]
+    \simeq [\\{ \clabVal\_1 \recExt{k\_1} \\}]
+  } \quad
+}
+\\\\ \space \\\\
+\cfrac{
+  \Gvdash \lambda c\_0 \simeq \lambda c\_1
+  \quad
+  \Gvdash \lambda \langle \caseTr_0 \rangle
+  \simeq \lambda \langle \caseTr_1 \rangle
+}{
+  \Gvdash \lambda \langle n\\ c\_0, \caseTr\_0 \rangle
+  \simeq \lambda \langle n\\ c\_1, \caseTr\_1 \rangle
+}
+\\\\ \space \\\\
+\cfrac{
+  \Gvdash [k\_0] \simeq [k\_1]
+  \quad
+  \Gvdash \lambda \langle \caseTr_0 \rangle
+  \simeq \lambda \langle \caseTr_1 \rangle
+}{
+  \Gvdash [\caseextS{\caseTr\_0}{k\_0}]
+  \simeq [\caseextS{\caseTr\_1}{k\_1}]
+  \quad
+  \Gvdash [\casevS{k\_0}{\caseTr\_0}]
+  \simeq [\casevS{k\_1}{\caseTr\_1}]
+}
+$$
+*/
 fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
     use Neutral::*;
     match (a, b) {
