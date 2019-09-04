@@ -3,6 +3,8 @@
 # 0.1.4
 
 + Implicit argument (#115)
+  (https://github.com/owo-lang/voile-rs/compare/0.1.3...b592c09870bf27b8a89cc2b65c2578a231cd1ec4)
++ More unification rules
 
 # 0.1.3
 

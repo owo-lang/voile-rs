@@ -139,18 +139,44 @@ Beta-rule in `unify`.
 $$
 \newcommand{\xx}[0]{\texttt{x}}
 \newcommand{\Gvdash}[0]{\Gamma \vdash}
-\cfrac{
-  \Gvdash \alpha\_0 [\xx := \alpha] \simeq \alpha_1\\ \alpha
-}{
-  \Gvdash (\lambda \xx . \alpha\_0) \simeq \alpha_1
+\cfrac{}{
+  \Gvdash t \simeq \lambda \xx. t \xx
+  \quad
+  \Gvdash \lambda \langle \rangle \simeq \lambda \langle \rangle
 }
 $$
 */
 fn unify_closure(tcs: TCS, a: &Closure, b: &Closure) -> TCM {
-    let p = Val::fresh_axiom();
-    let a = a.instantiate_borrow(&p);
-    let b = b.instantiate_cloned(p);
-    tcs.unify(&a, &b)
+    use Closure::*;
+    match (a, b) {
+        (Plain(..), Plain(..)) => {
+            let p = Val::fresh_axiom();
+            let a = a.instantiate_borrow(&p);
+            let b = b.instantiate_cloned(p);
+            tcs.unify(&a, &b)
+        }
+        (Tree(split_a), Tree(split_b)) if split_a.len() == split_b.len() => {
+            let mut tcs = tcs;
+            for (label, closure_a) in split_a {
+                let case_b = split_b
+                    .get(label)
+                    .ok_or_else(|| TCE::MissingVariant(VarRec::Variant, label.clone()))?;
+                tcs = tcs.unify_closure(closure_a, case_b)?;
+            }
+            Ok(tcs)
+        }
+        (Tree(split), _) | (_, Tree(split)) => {
+            let mut tcs = tcs;
+            for (label, branch) in split {
+                let p = Val::fresh_axiom();
+                let cons = Val::cons(label.clone(), p.clone());
+                let a = branch.instantiate_cloned(p);
+                let b = b.instantiate_cloned(cons);
+                tcs = tcs.unify(&a, &b)?;
+            }
+            Ok(tcs)
+        }
+    }
 }
 
 fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
@@ -169,9 +195,8 @@ fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
             tcs.unify_variants(*a_kind, a_fields, b_fields)?
                 .unify_neutral(&**a_more, &**b_more)
         }
-        (Snd(a), Snd(b)) | (Fst(a), Fst(b)) | (Proj(a, ..), Proj(b, ..)) => {
-            tcs.unify_neutral(&**a, &**b)
-        }
+        (Snd(a), Snd(b)) | (Fst(a), Fst(b)) => tcs.unify_neutral(&**a, &**b),
+        (Proj(a, lab_a), Proj(b, lab_b)) if lab_a == lab_b => tcs.unify_neutral(&**a, &**b),
         (e, t) => Err(TCE::CannotUnify(Val::Neut(e.clone()), Val::Neut(t.clone()))),
     }
 }
