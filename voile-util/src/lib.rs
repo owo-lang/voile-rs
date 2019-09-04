@@ -6,7 +6,8 @@ to help the development of other dependently-typed lambda calculus type checkers
 
 It contains helper functions for the [Pest] parser
 (supported via optional feature `parser`),
-a non-empty vector.
+a non-empty vector, some location utils, a unique-ID type with utils,
+and universe level utilities (with omega).
 
 All dependencies are optional, thus very lightweight.
 

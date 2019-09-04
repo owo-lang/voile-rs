@@ -28,6 +28,8 @@ For language description, please head to the [docs.rs][doc-rs] page.
 + [Change Log](CHANGELOG.md), useful resource for tracking language evolution
 + [IntelliJ Plugin][plugin], which can export your code as clickable HTML
 + [Code Examples](samples), which also acts as integration test suites
++ [Utilities Library](voile-util), a rust crate extracted
+  from Voile's prototype implementation with some util codes
 
 ## Install
 
@@ -59,3 +61,4 @@ voilec -i
 + [X] Record projection
 + [X] Variant constructor
 + [X] Variant eliminator (case-split)
++ [X] Implicit arguments
