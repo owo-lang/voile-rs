@@ -4,7 +4,9 @@
 
 + Create another subcrate `voile-util`,
   move the pest helpers, `vec1`, `UID`-relevant utilities and
-  `SyntaxInfo` (renamed to `Loc`) into it
+ `SyntaxInfo` into it
++ Rename `SyntaxInfo` to `Loc`, `ToSyntaxInfo` to `ToLoc`,
+  `syntax_info` to `loc`, etc.
 
 # 0.1.4
 
