@@ -1,10 +1,11 @@
+use voile_util::level::{Level, LiftEx};
+use voile_util::loc::*;
 use VarRec::*;
 
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::common::PiSig::*;
-use crate::syntax::common::{merge_info, Plicit, SyntaxInfo, ToSyntaxInfo, VarRec};
+use crate::syntax::common::{Plicit, VarRec};
 use crate::syntax::core::{CaseSplit, Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
-use voile_util::level::{Level, LiftEx};
 
 use super::eval::compile_cons;
 use super::monad::{ValTCM, TCE, TCM, TCS};
@@ -117,7 +118,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             if upper > lower {
                 Ok((Val::Type(*lower).into_info(*info), tcs))
             } else {
-                Err(TCE::LevelMismatch(expr.syntax_info(), *lower + 1, *upper))
+                Err(TCE::LevelMismatch(expr.loc(), *lower + 1, *upper))
             }
         }
         (RowKind(info, kind, labels), Val::Type(upper)) if *upper > From::from(0u32) => {
@@ -131,7 +132,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let fst_term_ast = fst_term.ast.clone();
             let snd_ty = closure.instantiate_borrow(&fst_term_ast);
             // This `fst_term.syntax_info()` is probably wrong, but I'm not sure how to fix
-            let param_type = param_ty.clone().into_info(fst_term.syntax_info());
+            let param_type = param_ty.clone().into_info(fst_term.loc());
             tcs.local_gamma.push(param_type);
             tcs.local_env.push(fst_term);
             let (snd_term, mut tcs) = tcs.check(&**snd, &snd_ty).map_err(|e| e.wrap(*info))?;
@@ -171,7 +172,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 .check(&**param, expected_type)
                 .map_err(|e| e.wrap(*info))?;
             tcs.local_gamma.push(param.clone());
-            let axiom = Val::postulate(*uid).into_info(param.syntax_info());
+            let axiom = Val::postulate(*uid).into_info(param.loc());
             tcs.local_env.push(axiom);
             let (ret, mut tcs) = tcs
                 .check(&**ret, expected_type)
@@ -273,7 +274,7 @@ fn check_fallback(tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
 }
 
 fn check_fields_no_more(
-    info: SyntaxInfo,
+    info: Loc,
     nice_fields: Fields,
     rest_field_types: Variants,
     tcs: TCS,
@@ -345,7 +346,7 @@ $$
 */
 fn check_row_polymorphic_type(
     mut tcs: TCS,
-    info: SyntaxInfo,
+    info: Loc,
     level: Level,
     kind: VarRec,
     variants: &[LabAbs],
@@ -447,7 +448,7 @@ $$
 */
 fn infer(tcs: TCS, value: &Abs) -> ValTCM {
     use Abs::*;
-    let info = value.syntax_info();
+    let info = value.loc();
     match value {
         Type(_, level) => Ok((Val::Type(*level + 1).into_info(info), tcs)),
         RowKind(..) => Ok((Val::Type(From::from(1u32)).into_info(info), tcs)),
@@ -577,7 +578,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
 }
 
 /// Recursive function to insert meta for implicit argument
-fn check_app_type(tcs: TCS, f: &Abs, info: SyntaxInfo, a: &Abs, pi_ty: &Val) -> ValTCM {
+fn check_app_type(tcs: TCS, f: &Abs, info: Loc, a: &Abs, pi_ty: &Val) -> ValTCM {
     match pi_ty {
         Val::Dt(Pi, Plicit::Ex, param_type, closure) => {
             let (new_a, tcs) = tcs.check(&a, &*param_type).map_err(|e| e.wrap(info))?;

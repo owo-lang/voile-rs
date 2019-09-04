@@ -1,4 +1,4 @@
-use super::common::{SyntaxInfo, ToSyntaxInfo};
+use voile_util::loc::{Loc, ToLoc};
 
 pub use self::ast::*;
 pub use self::ast_cons::*;
@@ -20,7 +20,7 @@ mod pretty;
 mod redex;
 
 impl Val {
-    pub fn into_info(self, syntax_info: SyntaxInfo) -> ValInfo {
+    pub fn into_info(self, syntax_info: Loc) -> ValInfo {
         ValInfo::new(self, syntax_info)
     }
 }
@@ -30,11 +30,11 @@ impl Val {
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct ValInfo {
     pub ast: Val,
-    pub info: SyntaxInfo,
+    pub info: Loc,
 }
 
 impl ValInfo {
-    pub fn new(ast: Val, info: SyntaxInfo) -> Self {
+    pub fn new(ast: Val, info: Loc) -> Self {
         Self { ast, info }
     }
 
@@ -43,8 +43,8 @@ impl ValInfo {
     }
 }
 
-impl ToSyntaxInfo for ValInfo {
-    fn syntax_info(&self) -> SyntaxInfo {
+impl ToLoc for ValInfo {
+    fn loc(&self) -> Loc {
         self.info.clone()
     }
 }

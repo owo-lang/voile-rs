@@ -1,5 +1,7 @@
 use pest::iterators::Pairs;
-use pest::RuleType;
+use pest::{RuleType, Span};
+
+use crate::loc::Loc;
 
 // Tik♂Tok on the clock but the party don't stop!
 #[macro_export]
@@ -43,4 +45,15 @@ macro_rules! define_parse_str {
 #[inline]
 pub fn end_of_rule<Rule: RuleType>(inner: &mut Pairs<Rule>) {
     debug_assert_eq!(inner.next(), None);
+}
+
+impl<'a> From<Span<'a>> for Loc {
+    fn from(span: Span) -> Self {
+        Loc {
+            line: span.start_pos().line_col().0,
+            start: span.start(),
+            end: span.end(),
+            is_generated: false,
+        }
+    }
 }

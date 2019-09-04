@@ -1,7 +1,8 @@
+use voile_util::level::Level;
+use voile_util::loc::{Ident, Loc};
 use voile_util::vec1::Vec1;
 
-use crate::syntax::common::{Ident, Labelled, Plicit, SyntaxInfo, VarRec};
-use voile_util::level::Level;
+use crate::syntax::common::{Labelled, Plicit, VarRec};
 
 pub type LabExpr = Labelled<Expr>;
 
@@ -28,11 +29,11 @@ pub enum Expr {
     /// Explicit meta variable.
     Meta(Ident),
     /// Lift an expression many times.
-    Lift(SyntaxInfo, u32, Box<Self>),
+    Lift(Loc, u32, Box<Self>),
     /// Record projections.
     Proj(Box<Self>, Vec1<Ident>),
     /// `Type` literal, with levels.
-    Type(SyntaxInfo, Level),
+    Type(Loc, Level),
     /// Function application.<br/>
     /// Application operator, where `f a b c` is represented as `App(f, vec![a, b, c])`
     /// instead of `App(App(App(f, a), b), c)`.
@@ -46,11 +47,11 @@ pub enum Expr {
     /// instead of `Tup(Tup(a, b), c)`.
     Tup(Box<Vec1<Self>>),
     /// Row-polymorphic types, either record types or variant types.
-    RowPoly(SyntaxInfo, VarRec, Vec<LabExpr>, Option<Box<Self>>),
+    RowPoly(Loc, VarRec, Vec<LabExpr>, Option<Box<Self>>),
     /// Record literals.
-    Rec(SyntaxInfo, Vec<LabExpr>, Option<Box<Self>>),
+    Rec(Loc, Vec<LabExpr>, Option<Box<Self>>),
     /// Row-polymorphic kinds, either record types or variant kinds.
-    RowKind(SyntaxInfo, VarRec, Vec<Ident>),
+    RowKind(Loc, VarRec, Vec<Ident>),
     /// Pi-type expression, where `a -> b -> c` is represented as `Pi(vec![a, b], c)`
     /// instead of `Pi(a, Pi(b, c))`.
     /// `a` and `b` here can introduce telescopes.
@@ -63,9 +64,9 @@ pub enum Expr {
     /// Label, binding, body, rest of the clauses
     Cases(Ident, Ident, Box<Self>, Box<Self>),
     /// Termination of a case-chain.
-    Whatever(SyntaxInfo),
+    Whatever(Loc),
     /// Anonymous function, aka lambda expression.
-    Lam(SyntaxInfo, Vec<Ident>, Box<Self>),
+    Lam(Loc, Vec<Ident>, Box<Self>),
 }
 
 impl Expr {
@@ -73,7 +74,7 @@ impl Expr {
         Expr::Pi(params, Box::new(expr))
     }
 
-    pub fn lam(info: SyntaxInfo, params: Vec<Ident>, expr: Self) -> Self {
+    pub fn lam(info: Loc, params: Vec<Ident>, expr: Self) -> Self {
         Expr::Lam(info, params, Box::new(expr))
     }
 
@@ -81,7 +82,7 @@ impl Expr {
         Expr::App(Box::new(Vec1::new(applied, arguments)))
     }
 
-    pub fn lift(info: SyntaxInfo, count: u32, target: Self) -> Self {
+    pub fn lift(info: Loc, count: u32, target: Self) -> Self {
         Expr::Lift(info, count, Box::new(target))
     }
 
@@ -90,7 +91,7 @@ impl Expr {
     }
 
     pub fn row_polymorphic_type(
-        info: SyntaxInfo,
+        info: Loc,
         labels: Vec<LabExpr>,
         kind: VarRec,
         rest: Option<Self>,
@@ -98,15 +99,15 @@ impl Expr {
         Expr::RowPoly(info, kind, labels, rest.map(Box::new))
     }
 
-    pub fn record(info: SyntaxInfo, fields: Vec<LabExpr>, rest: Option<Self>) -> Self {
+    pub fn record(info: Loc, fields: Vec<LabExpr>, rest: Option<Self>) -> Self {
         Expr::Rec(info, fields, rest.map(Box::new))
     }
 
-    pub fn sum(info: SyntaxInfo, labels: Vec<LabExpr>, rest: Option<Self>) -> Self {
+    pub fn sum(info: Loc, labels: Vec<LabExpr>, rest: Option<Self>) -> Self {
         Self::row_polymorphic_type(info, labels, VarRec::Variant, rest)
     }
 
-    pub fn rec(info: SyntaxInfo, labels: Vec<LabExpr>, rest: Option<Self>) -> Self {
+    pub fn rec(info: Loc, labels: Vec<LabExpr>, rest: Option<Self>) -> Self {
         Self::row_polymorphic_type(info, labels, VarRec::Record, rest)
     }
 

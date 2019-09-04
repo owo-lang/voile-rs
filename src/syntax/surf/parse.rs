@@ -1,12 +1,13 @@
 use pest::Parser;
 use pest_derive::Parser;
 
+use voile_util::level::Level;
+use voile_util::loc::{Ident, Loc};
 use voile_util::pest_util::end_of_rule;
 use voile_util::vec1::Vec1;
 
-use crate::syntax::common::{Ident, Plicit, SyntaxInfo, VarRec};
+use crate::syntax::common::{Plicit, VarRec};
 use crate::syntax::surf::LabExpr;
-use voile_util::level::Level;
 
 use super::ast::Param;
 use super::{Decl, DeclKind, Expr};
@@ -87,20 +88,20 @@ many_prefix_parser!(row_polymorphic, LabExpr, labelled, row_rest);
 many_prefix_parser!(record_literal, LabExpr, rec_field, row_rest);
 
 fn record(rules: Tok) -> Expr {
-    let info = SyntaxInfo::from(rules.as_span());
+    let info = Loc::from(rules.as_span());
     let (fields, rest) = record_literal(rules);
     Expr::record(info, fields, rest)
 }
 
 fn variant_record(rules: Tok, kind: VarRec) -> Expr {
-    let info = SyntaxInfo::from(rules.as_span());
+    let info = Loc::from(rules.as_span());
     let mut inner: Tik = rules.into_inner();
     let (labels, rest) = next_rule!(inner, row_polymorphic);
     Expr::row_polymorphic_type(info, labels, kind, rest)
 }
 
 fn variant_record_kind(rules: Tok, kind: VarRec) -> Expr {
-    let info = SyntaxInfo::from(rules.as_span());
+    let info = Loc::from(rules.as_span());
     let rules = rules.into_inner().next().unwrap();
     let labels = rules.into_inner().into_iter().map(ident).collect();
     Expr::RowKind(info, kind, labels)
@@ -155,7 +156,7 @@ fn proj_expr(rules: Tok) -> Expr {
     for projection in inner {
         assert_eq!(projection.as_rule(), Rule::proj_op);
         let ident = Ident {
-            info: SyntaxInfo::from(projection.as_span()),
+            info: Loc::from(projection.as_span()),
             text: projection.as_str()[1..].to_owned(),
         };
         match projections {
@@ -266,14 +267,14 @@ fn case_expr(rules: Tok) -> Expr {
 }
 
 fn lambda(rules: Tok) -> Expr {
-    let syntax_info = SyntaxInfo::from(rules.as_span());
+    let syntax_info = Loc::from(rules.as_span());
     let (params, ret) = lambda_internal(rules);
     let ret = ret.unwrap();
     Expr::lam(syntax_info, params, ret)
 }
 
 fn type_keyword(rules: Tok) -> Expr {
-    let syntax_info: SyntaxInfo = From::from(rules.as_span());
+    let syntax_info: Loc = From::from(rules.as_span());
     let mut inner: Tik = rules.into_inner();
     let level_ast_node: Tok = inner.next().unwrap();
     debug_assert_eq!(level_ast_node.as_rule(), Rule::type_level);

@@ -14,6 +14,9 @@ All dependencies are optional, thus very lightweight.
  [Pest]: https://pest.rs
 */
 
+/// Syntactical information.
+pub mod loc;
+
 /// Unique-ID utilities.
 pub mod uid;
 

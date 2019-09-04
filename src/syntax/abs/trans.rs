@@ -1,5 +1,6 @@
 use std::collections::btree_map::BTreeMap;
 
+use voile_util::loc::*;
 use voile_util::uid::*;
 
 use crate::check::monad::{TCE, TCM};
@@ -62,11 +63,11 @@ fn trans_one_decl(mut tcs: TransState, decl: Decl) -> TCM<TransState> {
         }
         // Re-type-signaturing something, should give error
         (DeclKind::Sign, Some(thing)) => {
-            return Err(TCE::ReDefine(decl.name.info, thing.syntax_info()));
+            return Err(TCE::ReDefine(decl.name.info, thing.loc()));
         }
         // Re-defining something, should give error
         (_, Some(AbsDecl::Impl(thing, ..))) | (_, Some(AbsDecl::Decl(thing))) => {
-            return Err(TCE::ReDefine(decl.name.info, thing.syntax_info()));
+            return Err(TCE::ReDefine(decl.name.info, thing.loc()));
         }
         (DeclKind::Impl, None) => {
             tcs.decl_count += 1;
@@ -138,7 +139,7 @@ fn trans_expr_inner(
         }
         Expr::Tup(tup_vec) => Ok(tup_vec
             .try_map(recursion)?
-            .fold1(|pair, abs| Abs::pair(abs.syntax_info(), pair, abs))),
+            .fold1(|pair, abs| Abs::pair(abs.loc(), pair, abs))),
         Expr::Sig(initial, last) => trans_dependent_type(
             meta_count, env, global_map, local_env, local_map, initial, *last, Sigma,
         ),
@@ -225,7 +226,7 @@ fn trans_dependent_type(
     Ok(pi_vec.into_iter().rev().fold(
         trans_expr_inner(result, meta_count, env, global_map, &pi_env, &pi_map)?,
         |pi_abs, (param, plicit)| {
-            let info = param.syntax_info() + pi_abs.syntax_info();
+            let info = param.loc() + pi_abs.loc();
             let pop_empty = "The stack `names` is empty. Please report this as a bug.";
             Abs::dependent_type(
                 info,

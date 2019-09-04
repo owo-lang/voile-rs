@@ -1,4 +1,5 @@
 use voile_util::level::Level;
+use voile_util::loc::*;
 use voile_util::uid::*;
 
 use crate::syntax::common::*;
@@ -7,7 +8,7 @@ pub type LabAbs = Labelled<Abs>;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Abs {
-    Type(SyntaxInfo, Level),
+    Type(Loc, Level),
     /// Local variable
     Var(Ident, UID, DBI),
     /// Global variable
@@ -15,35 +16,35 @@ pub enum Abs {
     /// Meta variable
     Meta(Ident, MI),
     /// Lift an expression many times
-    Lift(SyntaxInfo, u32, Box<Self>),
+    Lift(Loc, u32, Box<Self>),
     /// Constructor call
     Cons(Ident),
     /// Record projection
-    Proj(SyntaxInfo, Box<Self>, Ident),
+    Proj(Loc, Box<Self>, Ident),
     /// Apply or Pipeline in surface
-    App(SyntaxInfo, Box<Self>, Plicit, Box<Self>),
+    App(Loc, Box<Self>, Plicit, Box<Self>),
     /// Dependent Type, `(a -> b -> c)` as `Dt(_, DtKind::Pi, _, _, a, Dt(_, DtKind::Pi, _, _, b, c))`
-    Dt(SyntaxInfo, PiSig, UID, Plicit, Box<Self>, Box<Self>),
+    Dt(Loc, PiSig, UID, Plicit, Box<Self>, Box<Self>),
     /// The first `SyntaxInfo` is the syntax info of this whole lambda,
     /// while the second is about its parameter
-    Lam(SyntaxInfo, Ident, UID, Box<Self>),
-    Pair(SyntaxInfo, Box<Self>, Box<Self>),
-    Fst(SyntaxInfo, Box<Self>),
-    Snd(SyntaxInfo, Box<Self>),
+    Lam(Loc, Ident, UID, Box<Self>),
+    Pair(Loc, Box<Self>, Box<Self>),
+    Fst(Loc, Box<Self>),
+    Snd(Loc, Box<Self>),
     /// Row-polymorphic types, corresponds to [RowPoly](crate::syntax::surf::Expr::RowPoly)
-    RowPoly(SyntaxInfo, VarRec, Vec<LabAbs>, Option<Box<Self>>),
+    RowPoly(Loc, VarRec, Vec<LabAbs>, Option<Box<Self>>),
     /// Record literals
-    Rec(SyntaxInfo, Vec<LabAbs>, Option<Box<Self>>),
+    Rec(Loc, Vec<LabAbs>, Option<Box<Self>>),
     /// Empty type eliminator,
-    Whatever(SyntaxInfo),
+    Whatever(Loc),
     /// Case-split expressions.
     CaseOr(Ident, Ident, UID, Box<Self>, Box<Self>),
     /// Row-polymorphic kinds, corresponds to [RowKind](crate::syntax::surf::Expr::RowKind)
-    RowKind(SyntaxInfo, VarRec, Vec<Ident>),
+    RowKind(Loc, VarRec, Vec<Ident>),
 }
 
-impl ToSyntaxInfo for Abs {
-    fn syntax_info(&self) -> SyntaxInfo {
+impl ToLoc for Abs {
+    fn loc(&self) -> Loc {
         match self {
             Abs::Type(info, ..)
             | Abs::App(info, ..)
@@ -68,7 +69,7 @@ impl ToSyntaxInfo for Abs {
 
 impl Abs {
     pub fn dependent_type(
-        info: SyntaxInfo,
+        info: Loc,
         kind: PiSig,
         name: UID,
         plicit: Plicit,
@@ -79,7 +80,7 @@ impl Abs {
     }
 
     pub fn row_polymorphic_type(
-        info: SyntaxInfo,
+        info: Loc,
         kind: VarRec,
         labels: Vec<LabAbs>,
         rest: Option<Self>,
@@ -87,31 +88,31 @@ impl Abs {
         Abs::RowPoly(info, kind, labels, rest.map(Box::new))
     }
 
-    pub fn record(info: SyntaxInfo, fields: Vec<LabAbs>, rest: Option<Self>) -> Self {
+    pub fn record(info: Loc, fields: Vec<LabAbs>, rest: Option<Self>) -> Self {
         Abs::Rec(info, fields, rest.map(Box::new))
     }
 
-    pub fn app(info: SyntaxInfo, function: Self, plicit: Plicit, argument: Self) -> Self {
+    pub fn app(info: Loc, function: Self, plicit: Plicit, argument: Self) -> Self {
         Abs::App(info, Box::new(function), plicit, Box::new(argument))
     }
 
-    pub fn proj(info: SyntaxInfo, record: Self, field: Ident) -> Self {
+    pub fn proj(info: Loc, record: Self, field: Ident) -> Self {
         Abs::Proj(info, Box::new(record), field)
     }
 
-    pub fn fst(info: SyntaxInfo, of: Self) -> Self {
+    pub fn fst(info: Loc, of: Self) -> Self {
         Abs::Fst(info, Box::new(of))
     }
 
-    pub fn snd(info: SyntaxInfo, of: Self) -> Self {
+    pub fn snd(info: Loc, of: Self) -> Self {
         Abs::Snd(info, Box::new(of))
     }
 
-    pub fn lam(whole_info: SyntaxInfo, param: Ident, name: UID, body: Self) -> Self {
+    pub fn lam(whole_info: Loc, param: Ident, name: UID, body: Self) -> Self {
         Abs::Lam(whole_info, param, name, Box::new(body))
     }
 
-    pub fn pair(info: SyntaxInfo, first: Self, second: Self) -> Self {
+    pub fn pair(info: Loc, first: Self, second: Self) -> Self {
         Abs::Pair(info, Box::new(first), Box::new(second))
     }
 
@@ -119,15 +120,15 @@ impl Abs {
         Abs::CaseOr(label, binding, uid, Box::new(clause), Box::new(or))
     }
 
-    pub fn lift(info: SyntaxInfo, lift_count: u32, expr: Self) -> Self {
+    pub fn lift(info: Loc, lift_count: u32, expr: Self) -> Self {
         Abs::Lift(info, lift_count, Box::new(expr))
     }
 
-    pub fn pi(info: SyntaxInfo, name: UID, plicit: Plicit, input: Self, output: Self) -> Self {
+    pub fn pi(info: Loc, name: UID, plicit: Plicit, input: Self, output: Self) -> Self {
         Self::dependent_type(info, PiSig::Pi, name, plicit, input, output)
     }
 
-    pub fn sig(info: SyntaxInfo, name: UID, plicit: Plicit, first: Self, second: Self) -> Self {
+    pub fn sig(info: Loc, name: UID, plicit: Plicit, first: Self, second: Self) -> Self {
         Self::dependent_type(info, PiSig::Sigma, name, plicit, first, second)
     }
 }
@@ -144,11 +145,11 @@ pub enum AbsDecl {
     Impl(Abs, GI),
 }
 
-impl ToSyntaxInfo for AbsDecl {
-    fn syntax_info(&self) -> SyntaxInfo {
+impl ToLoc for AbsDecl {
+    fn loc(&self) -> Loc {
         use AbsDecl::*;
         match self {
-            Sign(abs, ..) | Decl(abs) | Impl(abs, ..) => abs.syntax_info(),
+            Sign(abs, ..) | Decl(abs) | Impl(abs, ..) => abs.loc(),
         }
     }
 }

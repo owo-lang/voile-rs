@@ -1,7 +1,8 @@
 use std::mem::swap;
 
+use voile_util::loc::ToLoc;
+
 use crate::syntax::abs::AbsDecl;
-use crate::syntax::common::ToSyntaxInfo;
 use crate::syntax::core::{Neutral, TraverseNeutral, Val, ValInfo, TYPE_OMEGA};
 
 use super::monad::{ValTCM, TCE, TCM, TCS};
@@ -106,7 +107,7 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             tcs
         }
         AbsDecl::Sign(sign_abs, self_index) => {
-            let syntax_info = sign_abs.syntax_info();
+            let syntax_info = sign_abs.loc();
             let (sign_fake, tcs) = tcs.check(&sign_abs, &TYPE_OMEGA)?;
             let (sign_fake, mut tcs) = inline_metas(tcs, sign_fake)?;
             let sign = sign_fake.map_ast(|ast| ast.generated_to_var());

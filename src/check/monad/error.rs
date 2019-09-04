@@ -1,10 +1,11 @@
 use std::fmt::{Display, Error as FmtError, Formatter};
 
 use voile_util::level::Level;
+use voile_util::loc::{Ident, Loc};
 use voile_util::uid::DBI;
 
 use crate::syntax::abs::Abs;
-use crate::syntax::common::{Ident, SyntaxInfo, VarRec, MI};
+use crate::syntax::common::{VarRec, MI};
 use crate::syntax::core::{TVal, Val};
 
 /// Type-Checking Error.
@@ -13,52 +14,52 @@ pub enum TCE {
     Textual(String),
 
     // == "Cannot"s ==
-    CannotInfer(SyntaxInfo, Abs),
+    CannotInfer(Loc, Abs),
     CannotUnify(Val, Val),
 
     // == "Not"s ==
-    NotSigma(SyntaxInfo, TVal),
-    NotPi(SyntaxInfo, TVal),
+    NotSigma(Loc, TVal),
+    NotPi(Loc, TVal),
     /// Expected the first `TVal` to be the subtype of
     /// the second `TVal`.
     NotSubtype(TVal, TVal),
-    NotTypeAbs(SyntaxInfo, Abs),
-    NotTypeVal(SyntaxInfo, Val),
-    NotRowType(VarRec, SyntaxInfo, Val),
-    NotRecVal(SyntaxInfo, Val),
-    NotUniverseVal(SyntaxInfo, Val),
+    NotTypeAbs(Loc, Abs),
+    NotTypeVal(Loc, Val),
+    NotRowType(VarRec, Loc, Val),
+    NotRecVal(Loc, Val),
+    NotUniverseVal(Loc, Val),
 
     // == Elaboration ==
-    TypeNotInGamma(SyntaxInfo),
-    OverlappingVariant(SyntaxInfo, String),
-    DuplicateField(SyntaxInfo, String),
-    UnexpectedVariant(SyntaxInfo, String),
+    TypeNotInGamma(Loc),
+    OverlappingVariant(Loc, String),
+    DuplicateField(Loc, String),
+    UnexpectedVariant(Loc, String),
     MissingVariant(VarRec, String),
     /// Maximum `DBI` vs. Requested `DBI`
     DbiOverflow(DBI, DBI),
     /// Expected the first level to be smaller than second.
     /// The `String` represents the expression.
-    LevelMismatch(SyntaxInfo, Level, Level),
+    LevelMismatch(Loc, Level, Level),
     /// Cannot find the definition.
     LookUpFailed(Ident),
-    Wrapped(Box<Self>, SyntaxInfo),
+    Wrapped(Box<Self>, Loc),
 
     // == Scoping ==
     /// The definition at the first `SyntaxInfo` will
     /// hide the definition at the second `SyntaxInfo`.
-    ReDefine(SyntaxInfo, SyntaxInfo),
+    ReDefine(Loc, Loc),
 
     // == "Meta"s ==
     /// Recursive metas are disallowed.
     MetaRecursion(MI),
     /// Meta solution should be passed with bound variables only.
-    MetaWithNonVar(SyntaxInfo),
+    MetaWithNonVar(Loc),
     /// Unsolved metas are reported as errors.
     MetaUnsolved(MI),
 }
 
 impl TCE {
-    pub fn wrap(self, info: SyntaxInfo) -> Self {
+    pub fn wrap(self, info: Loc) -> Self {
         TCE::Wrapped(Box::new(self), info)
     }
 
