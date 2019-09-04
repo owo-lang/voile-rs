@@ -1,6 +1,8 @@
+use voile_util::uid::DBI;
+
 use crate::check::monad::TCE;
 use crate::syntax::abs::{trans_expr, Abs};
-use crate::syntax::common::{Ident, PiSig, DBI, GI, MI};
+use crate::syntax::common::{Ident, PiSig, GI, MI};
 use crate::syntax::surf::parse_str_err_printed;
 
 use super::{trans_decls, AbsDecl};

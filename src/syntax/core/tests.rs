@@ -1,6 +1,7 @@
-use crate::syntax::common::UID;
+use voile_util::level::LiftEx;
+use voile_util::uid::UID;
+
 use crate::syntax::core::Val;
-use crate::syntax::level::LiftEx;
 use crate::syntax::lisp::{self, Lisp};
 
 fn from_str(s: &str) -> Val {
