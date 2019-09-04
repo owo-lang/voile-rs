@@ -1,5 +1,5 @@
 use std::fmt::{Display, Error, Formatter};
-use std::ops::{Add, AddAssign};
+use std::ops::Add;
 
 use pest::Span;
 
@@ -33,73 +33,25 @@ pub enum Plicit {
     Im,
 }
 
-macro_rules! impl_usize {
-    ($name:ident) => {
-        impl Add<usize> for $name {
-            type Output = $name;
-
-            fn add(self, rhs: usize) -> Self::Output {
-                Self(self.0 + rhs)
-            }
-        }
-
-        impl Add for $name {
-            type Output = $name;
-
-            fn add(self, rhs: $name) -> Self::Output {
-                Self(self.0 + rhs.0)
-            }
-        }
-
-        impl AddAssign<usize> for $name {
-            fn add_assign(&mut self, rhs: usize) {
-                self.0 += rhs
-            }
-        }
-
-        impl AddAssign for $name {
-            fn add_assign(&mut self, rhs: $name) {
-                self.0 += rhs.0
-            }
-        }
-
-        impl Display for $name {
-            fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-                self.0.fmt(f)
-            }
-        }
-    };
-}
-
 /// De Bruijn Indices. Checkout [Wikipedia](https://en.wikipedia.org/wiki/De_Bruijn_index) if you
 /// are curious but have no idea about it.
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
 pub struct DBI(pub usize);
-impl_usize!(DBI);
+uid_basic_operations_impl!(DBI);
 
 /// Meta variable indices (they're resolved as global reference).
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
 pub struct MI(pub usize);
-impl_usize!(MI);
+uid_basic_operations_impl!(MI);
 
 /// Global reference indices.
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
 pub struct GI(pub usize);
-impl_usize!(GI);
+uid_basic_operations_impl!(GI);
 
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
 pub struct UID(pub usize);
-impl_usize!(UID);
-
-/// Unique-ID generator internal counter.
-static mut UID_COUNT: usize = 0;
-
-/// Unique-ID generation function.
-pub(crate) unsafe fn next_uid() -> UID {
-    let val = UID_COUNT;
-    UID_COUNT += 1;
-    UID(val)
-}
+uid_basic_operations_impl!(UID);
 
 impl<'a> From<Span<'a>> for SyntaxInfo {
     fn from(span: Span) -> Self {

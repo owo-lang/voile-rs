@@ -14,6 +14,9 @@ All dependencies are optional, thus very lightweight.
  [Pest]: https://pest.rs
 */
 
+/// Unique-ID utilities.
+pub mod uid;
+
 /// `Level`-related definitions and relevant operations and traits.
 pub mod level;
 
