@@ -13,7 +13,7 @@ repository = "https://github.com/owo-lang/voile-rs"
 [badges]
 appveyor = { repository = "owo-lang/voile-rs", service = "github" }
 circle-ci = { repository = "owo-lang/voile-rs", branch = "master" }
-maintenance = { status = "experimental" }
+maintenance = { status = "passively-maintained" }
 is-it-maintained-issue-resolution = { repository = "owo-lang/voile-rs" }
 is-it-maintained-open-issues = { repository = "owo-lang/voile-rs" }
 
@@ -23,6 +23,7 @@ rustdoc-args = ["--html-in-header", "rustdoc/katex-header.html", "--document-pri
 [dependencies]
 pest = "2.1.2"
 pest_derive = "2.1.0"
+voile-util = { path = "voile-util" }
 clap = { version = "2.33.0", optional = true }
 structopt = { version = "0.3", optional = true }
 rustyline = { version = "5.0.0", optional = true }
@@ -30,6 +31,9 @@ rustyline = { version = "5.0.0", optional = true }
 [features]
 default = ["cli"]
 cli = ["clap", "structopt", "rustyline"]
+
+[workspace]
+members = ["voile-util"]
 
 [lib]
 name = "voile"

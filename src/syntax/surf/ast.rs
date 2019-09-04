@@ -1,6 +1,7 @@
+use voile_util::vec1::Vec1;
+
 use crate::syntax::common::{Ident, Labelled, Plicit, SyntaxInfo, VarRec};
 use crate::syntax::level::Level;
-use crate::util::vec1::Vec1;
 
 pub type LabExpr = Labelled<Expr>;
 

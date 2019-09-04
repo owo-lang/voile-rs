@@ -1,14 +1,15 @@
 use pest::Parser;
 use pest_derive::Parser;
 
+use voile_util::vec1::Vec1;
+
 use crate::syntax::common::{Ident, Plicit, SyntaxInfo, VarRec};
 use crate::syntax::level::Level;
 use crate::syntax::pest_util::end_of_rule;
+use crate::syntax::surf::LabExpr;
 
 use super::ast::Param;
 use super::{Decl, DeclKind, Expr};
-use crate::syntax::surf::LabExpr;
-use crate::util::vec1::Vec1;
 
 #[derive(Parser)]
 #[grammar = "syntax/surf/grammar.pest"]

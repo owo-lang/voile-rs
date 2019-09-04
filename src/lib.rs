@@ -155,9 +155,6 @@ alt="" />
 </details></span>
 */
 
-/// Tool functions.
-pub mod util;
-
 /// Abstract syntax, surface syntax,
 /// parser and well-typed terms (core language).
 pub mod syntax;
