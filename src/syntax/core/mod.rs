@@ -20,8 +20,8 @@ mod pretty;
 mod redex;
 
 impl Val {
-    pub fn into_info(self, syntax_info: Loc) -> ValInfo {
-        ValInfo::new(self, syntax_info)
+    pub fn into_info(self, loc: Loc) -> ValInfo {
+        ValInfo::new(self, loc)
     }
 }
 
@@ -30,22 +30,22 @@ impl Val {
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct ValInfo {
     pub ast: Val,
-    pub info: Loc,
+    pub loc: Loc,
 }
 
 impl ValInfo {
-    pub fn new(ast: Val, info: Loc) -> Self {
-        Self { ast, info }
+    pub fn new(ast: Val, loc: Loc) -> Self {
+        Self { ast, loc }
     }
 
     pub fn map_ast(self, f: impl FnOnce(Val) -> Val) -> Self {
-        Self::new(f(self.ast), self.info)
+        Self::new(f(self.ast), self.loc)
     }
 }
 
 impl ToLoc for ValInfo {
     fn loc(&self) -> Loc {
-        self.info.clone()
+        self.loc.clone()
     }
 }
 

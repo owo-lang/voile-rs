@@ -126,12 +126,12 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let expr = Val::RowKind(Default::default(), *kind, labels);
             Ok((expr.into_info(*info), tcs))
         }
-        (Meta(ident, mi), _) => Ok((Val::meta(*mi).into_info(ident.info), tcs)),
+        (Meta(ident, mi), _) => Ok((Val::meta(*mi).into_info(ident.loc), tcs)),
         (Pair(info, fst, snd), Val::Dt(Sigma, Plicit::Ex, param_ty, closure)) => {
             let (fst_term, mut tcs) = tcs.check(&**fst, &**param_ty).map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();
             let snd_ty = closure.instantiate_borrow(&fst_term_ast);
-            // This `fst_term.syntax_info()` is probably wrong, but I'm not sure how to fix
+            // This `fst_term.loc()` is probably wrong, but I'm not sure how to fix
             let param_type = param_ty.clone().into_info(fst_term.loc());
             tcs.local_gamma.push(param_type);
             tcs.local_env.push(fst_term);
@@ -140,19 +140,19 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let pair = Val::pair(fst_term_ast, snd_term.ast).into_info(*info);
             Ok((pair, tcs))
         }
-        (Lam(full_info, param_info, uid, body), Val::Dt(Pi, Plicit::Ex, param_ty, ret_ty)) => {
-            let param_type = param_ty.clone().into_info(param_info.info);
+        (Lam(full_loc, param_loc, uid, body), Val::Dt(Pi, Plicit::Ex, param_ty, ret_ty)) => {
+            let param_type = param_ty.clone().into_info(param_loc.loc);
             tcs.local_gamma.push(param_type);
             let mocked = Val::postulate(*uid);
-            let mocked_term = mocked.clone().into_info(param_info.info);
+            let mocked_term = mocked.clone().into_info(param_loc.loc);
             tcs.local_env.push(mocked_term);
             let ret_ty_body = ret_ty.instantiate_cloned(mocked);
             let (lam_term, mut tcs) = tcs
                 .check(body, &ret_ty_body)
-                .map_err(|e| e.wrap(*full_info))?;
+                .map_err(|e| e.wrap(*full_loc))?;
             tcs.pop_local();
             let lam = Val::closure_lam(lam_term.ast);
-            Ok((lam.into_info(*full_info), tcs))
+            Ok((lam.into_info(*full_loc), tcs))
         }
         (Lam(..), Val::Dt(Pi, Plicit::Im, param_ty, ret_ty)) => {
             let param_type = param_ty.clone().into_info(Default::default());
@@ -259,7 +259,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             split.insert(label.text.clone(), Closure::plain(body.ast));
             let ext = Val::case_tree(split);
             let (or, tcs) = tcs.check(&**or, &stripped_function)?;
-            Ok((or.ast.split_extend(ext).into_info(or.info), tcs))
+            Ok((or.ast.split_extend(ext).into_info(or.loc), tcs))
         }
         (expr, anything) => check_fallback(tcs, expr, anything),
     }
@@ -269,7 +269,7 @@ fn check_fallback(tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
     let (inferred, tcs) = tcs.infer(expr)?;
     Ok(tcs
         .subtype(&inferred.ast, expected_type)
-        .map_err(|e| e.wrap(inferred.info))?
+        .map_err(|e| e.wrap(inferred.loc))?
         .evaluate(expr.clone()))
 }
 
@@ -361,9 +361,9 @@ fn check_row_polymorphic_type(
         tcs = new_tcs;
         let label = &labelled.label.text;
         if out_variants.contains_key(label) {
-            return Err(TCE::OverlappingVariant(val.info, label.clone()));
+            return Err(TCE::OverlappingVariant(val.loc, label.clone()));
         } else if labels.contains(label) {
-            return Err(TCE::UnexpectedVariant(val.info, label.clone()));
+            return Err(TCE::UnexpectedVariant(val.loc, label.clone()));
         }
         out_variants.insert(label.clone(), val.ast);
     }
@@ -482,7 +482,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             let (mut ext_fields, more) = match ext.ast {
                 Val::RowPoly(Record, fields) => (fields, None),
                 Val::Neut(Neutral::Row(Record, fields, more)) => (fields, Some(*more)),
-                e => return Err(TCE::NotRecVal(ext.info, e)),
+                e => return Err(TCE::NotRecVal(ext.loc, e)),
             };
             let mut tcs = tcs;
             for field in fields {
@@ -530,7 +530,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
             let (pair_ty, tcs) = tcs.infer(&**pair).map_err(|e| e.wrap(info))?;
             match pair_ty.ast {
                 Val::Dt(Sigma, Plicit::Ex, param_type, ..) => Ok((param_type.into_info(info), tcs)),
-                ast => Err(TCE::NotSigma(pair_ty.info, ast)),
+                ast => Err(TCE::NotSigma(pair_ty.loc, ast)),
             }
         }
         Proj(_, record, field) => {
@@ -541,7 +541,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                     .remove(&field.text)
                     .map(|ty| (ty.into_info(info), tcs))
                     .ok_or_else(|| TCE::MissingVariant(Record, field.text.clone())),
-                ast => Err(TCE::NotRowType(Record, record_ty.info, ast)),
+                ast => Err(TCE::NotRowType(Record, record_ty.loc, ast)),
             }
         }
         Snd(_, pair) => {
@@ -553,7 +553,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
                     let fst = pair_compiled.ast.first();
                     Ok((closure.instantiate(fst).into_info(info), tcs))
                 }
-                ast => Err(TCE::NotSigma(pair_ty.info, ast)),
+                ast => Err(TCE::NotSigma(pair_ty.loc, ast)),
             }
         }
         App(_, f, _app_plicit, a) => match &**f {

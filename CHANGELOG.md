@@ -2,6 +2,10 @@
 
 # 0.1.5
 
++ Create another subcrate `voile-util`,
+  move the pest helpers, `vec1`, `UID`-relevant utilities and
+  `SyntaxInfo` (renamed to `Loc`) into it
+
 # 0.1.4
 
 + Implicit argument (#115)

@@ -79,7 +79,7 @@ impl Display for Closure {
 
 impl Display for ValInfo {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        write!(f, "{} at {}", self.ast, self.info)
+        write!(f, "{} at {}", self.ast, self.loc)
     }
 }
 

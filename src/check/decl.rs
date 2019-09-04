@@ -26,7 +26,7 @@ fn unimplemented_to_glob(v: &mut [ValInfo], i: usize) {
 
 fn inline_metas(mut tcs: TCS, val: ValInfo) -> ValTCM {
     use Neutral::*;
-    let info = val.info;
+    let info = val.loc;
     let val = val.ast.try_map_neutral(&mut |neut| match neut {
         Meta(mi) => tcs.take_meta(mi).ok_or_else(|| TCE::MetaUnsolved(mi)),
         e => Ok(Val::Neut(e)),
@@ -107,11 +107,11 @@ fn check_decl(tcs: TCS, decl: AbsDecl) -> TCM {
             tcs
         }
         AbsDecl::Sign(sign_abs, self_index) => {
-            let syntax_info = sign_abs.loc();
+            let loc = sign_abs.loc();
             let (sign_fake, tcs) = tcs.check(&sign_abs, &TYPE_OMEGA)?;
             let (sign_fake, mut tcs) = inline_metas(tcs, sign_fake)?;
             let sign = sign_fake.map_ast(|ast| ast.generated_to_var());
-            let val_info = Val::fresh_unimplemented(self_index).into_info(syntax_info);
+            let val_info = Val::fresh_unimplemented(self_index).into_info(loc);
             tcs.env.push(val_info);
             tcs.gamma.push(sign);
 

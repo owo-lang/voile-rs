@@ -25,7 +25,7 @@ pub enum Abs {
     App(Loc, Box<Self>, Plicit, Box<Self>),
     /// Dependent Type, `(a -> b -> c)` as `Dt(_, DtKind::Pi, _, _, a, Dt(_, DtKind::Pi, _, _, b, c))`
     Dt(Loc, PiSig, UID, Plicit, Box<Self>, Box<Self>),
-    /// The first `SyntaxInfo` is the syntax info of this whole lambda,
+    /// The first `Loc` is the syntax info of this whole lambda,
     /// while the second is about its parameter
     Lam(Loc, Ident, UID, Box<Self>),
     Pair(Loc, Box<Self>, Box<Self>),
@@ -61,7 +61,7 @@ impl ToLoc for Abs {
             | Abs::Lam(info, ..) => (*info).clone(),
             Abs::CaseOr(ident, _, _, _, last) => merge_info(ident, &**last),
             Abs::Var(ident, ..) | Abs::Ref(ident, ..) | Abs::Meta(ident, ..) | Abs::Cons(ident) => {
-                ident.info.clone()
+                ident.loc.clone()
             }
         }
     }

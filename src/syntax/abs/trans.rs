@@ -63,11 +63,11 @@ fn trans_one_decl(mut tcs: TransState, decl: Decl) -> TCM<TransState> {
         }
         // Re-type-signaturing something, should give error
         (DeclKind::Sign, Some(thing)) => {
-            return Err(TCE::ReDefine(decl.name.info, thing.loc()));
+            return Err(TCE::ReDefine(decl.name.loc, thing.loc()));
         }
         // Re-defining something, should give error
         (_, Some(AbsDecl::Impl(thing, ..))) | (_, Some(AbsDecl::Decl(thing))) => {
-            return Err(TCE::ReDefine(decl.name.info, thing.loc()));
+            return Err(TCE::ReDefine(decl.name.loc, thing.loc()));
         }
         (DeclKind::Impl, None) => {
             tcs.decl_count += 1;

@@ -118,7 +118,7 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
         Type(info, level) => (Val::Type(level).into_info(info), tcs),
         Var(ident, _, i) => {
             let resolved = tcs.local_val(i).ast.clone().attach_dbi(i);
-            (resolved.into_info(ident.info), tcs)
+            (resolved.into_info(ident.loc), tcs)
         }
         Rec(info, fields, ext) => {
             let (variants, tcs) = evaluate_variants(tcs, fields);
@@ -131,7 +131,7 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
                 }
             }
         }
-        Ref(ident, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(ident.info), tcs),
+        Ref(ident, dbi) => (tcs.glob_val(dbi).ast.clone().into_info(ident.loc), tcs),
         Cons(info) => (compile_cons(info), tcs),
         App(info, f, _, a) => {
             // The function should always be compiled to DBI-based terms
@@ -177,7 +177,7 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let (expr, tcs) = tcs.expand_global(expr.ast);
             (expr.lift(levels).into_info(info), tcs)
         }
-        Meta(ident, mi) => (Val::meta(mi).into_info(ident.info), tcs),
+        Meta(ident, mi) => (Val::meta(mi).into_info(ident.loc), tcs),
         RowPoly(info, kind, variants, ext) => {
             let (variants, tcs) = evaluate_variants(tcs, variants);
             let row_poly = Val::RowPoly(kind, variants);
@@ -236,7 +236,7 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
 pub fn compile_cons(info: Ident) -> ValInfo {
     let mut text = info.text;
     text.remove(0);
-    Val::closure_lam(Val::cons(text, Val::var(DBI(0)))).into_info(info.info)
+    Val::closure_lam(Val::cons(text, Val::var(DBI(0)))).into_info(info.loc)
 }
 
 /// So you can do some functional programming based on method call chains.

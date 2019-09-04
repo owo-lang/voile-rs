@@ -15,13 +15,13 @@ pub struct Loc {
 /// Also used in other syntax trees.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Ident {
-    pub info: Loc,
+    pub loc: Loc,
     pub text: String,
 }
 
 impl ToLoc for Ident {
     fn loc(&self) -> Loc {
-        self.info.clone()
+        self.loc.clone()
     }
 }
 

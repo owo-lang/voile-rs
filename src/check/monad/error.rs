@@ -45,8 +45,8 @@ pub enum TCE {
     Wrapped(Box<Self>, Loc),
 
     // == Scoping ==
-    /// The definition at the first `SyntaxInfo` will
-    /// hide the definition at the second `SyntaxInfo`.
+    /// The definition at the first `Loc` will
+    /// hide the definition at the second `Loc`.
     ReDefine(Loc, Loc),
 
     // == "Meta"s ==
@@ -64,7 +64,7 @@ impl TCE {
     }
 
     pub fn duplicate_field(ident: Ident) -> Self {
-        TCE::DuplicateField(ident.info, ident.text)
+        TCE::DuplicateField(ident.loc, ident.text)
     }
 }
 
@@ -130,9 +130,7 @@ impl Display for TCE {
                 "DBI overflow, maximum: `{}`, got: `{}`.",
                 expected, actual
             ),
-            TCE::LookUpFailed(var) => {
-                write!(f, "Look up failed for `{}` at {}", var.text, var.info)
-            }
+            TCE::LookUpFailed(var) => write!(f, "Look up failed for `{}` at {}", var.text, var.loc),
             TCE::LevelMismatch(expr, expected_to_be_small, big) => write!(
                 f,
                 "Expression `{}` has level {}, which is not smaller than {}.",

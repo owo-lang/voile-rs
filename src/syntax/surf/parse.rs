@@ -129,7 +129,7 @@ expr_parser!(app_expr, primary_expr, app);
 
 fn lift_expr(rules: Tok) -> Expr {
     let mut lift_count = 0u32;
-    let syntax_info = From::from(rules.as_span());
+    let loc = From::from(rules.as_span());
     for smaller in rules.into_inner() {
         match smaller.as_rule() {
             Rule::lift_op => {
@@ -140,7 +140,7 @@ fn lift_expr(rules: Tok) -> Expr {
                 return if lift_count == 0 {
                     expr
                 } else {
-                    Expr::lift(syntax_info, lift_count, expr)
+                    Expr::lift(loc, lift_count, expr)
                 };
             }
             _ => unreachable!(),
@@ -156,7 +156,7 @@ fn proj_expr(rules: Tok) -> Expr {
     for projection in inner {
         assert_eq!(projection.as_rule(), Rule::proj_op);
         let ident = Ident {
-            info: Loc::from(projection.as_span()),
+            loc: Loc::from(projection.as_span()),
             text: projection.as_str()[1..].to_owned(),
         };
         match projections {
@@ -267,25 +267,25 @@ fn case_expr(rules: Tok) -> Expr {
 }
 
 fn lambda(rules: Tok) -> Expr {
-    let syntax_info = Loc::from(rules.as_span());
+    let loc = Loc::from(rules.as_span());
     let (params, ret) = lambda_internal(rules);
     let ret = ret.unwrap();
-    Expr::lam(syntax_info, params, ret)
+    Expr::lam(loc, params, ret)
 }
 
 fn type_keyword(rules: Tok) -> Expr {
-    let syntax_info: Loc = From::from(rules.as_span());
+    let loc = Loc::from(rules.as_span());
     let mut inner: Tik = rules.into_inner();
     let level_ast_node: Tok = inner.next().unwrap();
     debug_assert_eq!(level_ast_node.as_rule(), Rule::type_level);
     let level = Level::Num(level_ast_node.as_str().parse().unwrap_or(0));
     end_of_rule(&mut inner);
-    Expr::Type(syntax_info, level)
+    Expr::Type(loc, level)
 }
 
 fn ident(rule: Tok) -> Ident {
     Ident {
         text: rule.as_str().to_owned(),
-        info: From::from(rule.as_span()),
+        loc: From::from(rule.as_span()),
     }
 }
