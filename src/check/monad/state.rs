@@ -1,7 +1,10 @@
-use crate::syntax::common::{DBI, GI, MI};
-use crate::syntax::core::{Val, ValInfo};
 use std::hint::unreachable_unchecked;
 use std::mem::swap;
+
+use voile_util::uid::DBI;
+
+use crate::syntax::common::{GI, MI};
+use crate::syntax::core::{Val, ValInfo};
 
 /// Typing context.
 pub type Gamma = Vec<ValInfo>;

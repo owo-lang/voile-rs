@@ -37,6 +37,12 @@ macro_rules! uid_basic_operations_impl {
     };
 }
 
+/// De Bruijn Indices. Checkout [Wikipedia](https://en.wikipedia.org/wiki/De_Bruijn_index) if you
+/// are curious but have no idea about it.
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
+pub struct DBI(pub usize);
+uid_basic_operations_impl!(DBI);
+
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
 pub struct UID(pub usize);
 uid_basic_operations_impl!(UID);

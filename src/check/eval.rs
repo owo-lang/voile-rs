@@ -1,8 +1,10 @@
+use voile_util::level::LiftEx;
+use voile_util::uid::DBI;
+
 use crate::check::monad::{MetaSolution, TCS};
 use crate::syntax::abs::{Abs, LabAbs};
-use crate::syntax::common::{merge_info, Ident, DBI};
+use crate::syntax::common::{merge_info, Ident};
 use crate::syntax::core::{CaseSplit, Closure, Neutral, TraverseNeutral, Val, ValInfo, Variants};
-use voile_util::level::LiftEx;
 
 /**
 Evaluation rules.

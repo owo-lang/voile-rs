@@ -1,9 +1,11 @@
 use std::fmt::{Display, Error as FmtError, Formatter};
 
-use crate::syntax::abs::Abs;
-use crate::syntax::common::{Ident, SyntaxInfo, VarRec, DBI, MI};
-use crate::syntax::core::{TVal, Val};
 use voile_util::level::Level;
+use voile_util::uid::DBI;
+
+use crate::syntax::abs::Abs;
+use crate::syntax::common::{Ident, SyntaxInfo, VarRec, MI};
+use crate::syntax::core::{TVal, Val};
 
 /// Type-Checking Error.
 #[derive(Debug, PartialEq, Eq, Clone)]

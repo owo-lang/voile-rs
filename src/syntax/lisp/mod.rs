@@ -2,8 +2,7 @@ use pest::Parser;
 use pest_derive::Parser;
 
 use voile_util::pest_util::end_of_rule;
-
-use super::common::DBI;
+use voile_util::uid::DBI;
 
 #[derive(Parser)]
 #[grammar = "syntax/lisp/lisp.pest"]
