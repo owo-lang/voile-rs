@@ -68,11 +68,14 @@ impl Val {
                 fields.append(&mut ext);
                 Rec(fields)
             }
-            (Rec(mut fields), Neut(Neutral::Rec(mut more, ext))) => {
+            (Rec(mut fields), Neut(Neutral::Rec(mut more, ext)))
+            | (Neut(Neutral::Rec(mut more, ext)), Rec(mut fields)) => {
                 fields.append(&mut more);
                 Rec(fields).rec_extend(Neut(*ext))
             }
-            (Rec(fields), Neut(otherwise)) => Self::neutral_record(fields, otherwise),
+            (Rec(fields), Neut(otherwise)) | (Neut(otherwise), Rec(fields)) => {
+                Self::neutral_record(fields, otherwise)
+            }
             (a, b) => panic!("Cannot extend `{}` by `{}`.", a, b),
         }
     }
@@ -85,11 +88,14 @@ impl Val {
                 split.append(&mut ext);
                 Lam(Tree(split))
             }
-            (Lam(Tree(mut split)), Neut(Neutral::OrSplit(mut more, ext))) => {
+            (Lam(Tree(mut split)), Neut(Neutral::OrSplit(mut more, ext)))
+            | (Neut(Neutral::OrSplit(mut more, ext)), Lam(Tree(mut split))) => {
                 split.append(&mut more);
                 Lam(Tree(split)).split_extend(Neut(*ext))
             }
-            (Lam(Tree(split)), Neut(otherwise)) => Val::or_split(split, otherwise),
+            (Neut(otherwise), Lam(Tree(split))) | (Lam(Tree(split)), Neut(otherwise)) => {
+                Val::or_split(split, otherwise)
+            }
             (a, b) => panic!("Cannot extend `{}` by `{}`.", a, b),
         }
     }
