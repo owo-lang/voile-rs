@@ -19,6 +19,7 @@ All dependencies are optional, thus very lightweight.
 pub mod loc;
 
 /// Unique-ID utilities.
+#[macro_use]
 pub mod uid;
 
 /// `Level`-related definitions and relevant operations and traits.
@@ -31,3 +32,6 @@ pub mod pest_util;
 
 /// Not using https://docs.rs/vec1/1.4.0 because it doesn't have `fold1`.
 pub mod vec1;
+
+/// Generic meta variable utilities.
+pub mod meta;

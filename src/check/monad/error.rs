@@ -2,10 +2,11 @@ use std::fmt::{Display, Error as FmtError, Formatter};
 
 use voile_util::level::Level;
 use voile_util::loc::{Ident, Loc};
+use voile_util::meta::MI;
 use voile_util::uid::DBI;
 
 use crate::syntax::abs::Abs;
-use crate::syntax::common::{VarRec, MI};
+use crate::syntax::common::VarRec;
 use crate::syntax::core::{TVal, Val};
 
 /// Type-Checking Error.
