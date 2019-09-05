@@ -1,7 +1,7 @@
 # voile-rs
 
-[![Crates.io](https://img.shields.io/crates/d/voile.svg)][lib-rs]
-[![Crates.io](https://img.shields.io/crates/v/voile.svg)][crates]
+[![Crates.io](https://img.shields.io/crates/d/voile.svg)][crates]
+[![Crates.io](https://img.shields.io/crates/v/voile.svg)][lib-rs]
 [![Crates.io](https://img.shields.io/crates/l/voile.svg)][crates]
 [![docs.rs](https://docs.rs/voile/badge.svg)][doc-rs]
 [![cc-svg]][cc-url]
