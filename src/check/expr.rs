@@ -230,7 +230,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             Val::RowPoly(Variant, variants) if variants.is_empty() => {
                 Ok((Val::Lam(Closure::default()).into_info(*info), tcs))
             }
-            ty => Err(TCE::NotRowType(Variant, (*info).clone(), ty.clone())),
+            ty => Err(TCE::NotEmpty(info.clone(), ty.clone())),
         },
         // How about when `Dt` is `Plicit::Im`?
         (CaseOr(label, binding, uid, body, or), Val::Dt(Pi, Plicit::Ex, param_ty, ret_ty)) => {

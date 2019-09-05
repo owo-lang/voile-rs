@@ -1,0 +1,20 @@
+Parse successful.
+sign: set1
+body: Rec {}
+sign: set1
+body: Sum {}
+sign: Rec {}
+body: {||}
+sign: set1
+body: Sum {False: Rec {}, True: Rec {}}
+sign: Sum {False: Rec {}, True: Rec {}}
+body: (@True {||})
+sign: Sum {False: Rec {}, True: Rec {}}
+body: (@False {||})
+sign: ((Sum {False: Rec {}} -> Sum {False: Rec {}, True: Rec {}}) -> (Sum {False: Rec {}, True: Rec {}} -> Sum {False: Rec {}, True: Rec {}}))
+body: (\ (cases {{ True: \ (\ (@False {||})); } or [0]))
+sign: ((Sum {} -> Sum {False: Rec {}, True: Rec {}}) -> (Sum {False: Rec {}} -> Sum {False: Rec {}, True: Rec {}}))
+body: (\ (cases {{ False: \ (\ (@True {||})); } or [0]))
+sign: (Sum {False: Rec {}, True: Rec {}} -> Sum {False: Rec {}, True: Rec {}})
+body: (\ False => (\ (@True {||})); True => (\ (@False {||})); )
+Checkmate, dram!

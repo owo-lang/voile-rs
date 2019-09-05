@@ -3,6 +3,8 @@
 # 0.1.6
 
 + Integrate `minitt-util` for CLI
++ Fix type-checking bug
++ Fix reduction bug
 
 # 0.1.5
 

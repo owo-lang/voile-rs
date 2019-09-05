@@ -1,0 +1,30 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-08-29
+// simple-pattern-match
+// Author: ice10
+//
+
+let Unit = Rec {};
+let Bottom = Sum {};
+
+val unit : Unit;
+let unit = {| |};
+
+let Bool = Sum { True: Unit; False: Unit; };
+
+val true : Bool;
+let true = @True unit;
+
+val false : Bool;
+let false = @False unit;
+
+val notTrue : (Sum { False: Unit; } -> Bool)
+            -> Bool -> Bool;
+let notTrue = \f. case True u: false or f;
+
+val notFalse : (Bottom -> Bool)
+             -> Sum { False: Unit; } -> Bool;
+let notFalse = \f. case False u: true or f;
+
+val not : Bool -> Bool;
+let not = notTrue (notFalse whatever);

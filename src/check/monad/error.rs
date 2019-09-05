@@ -26,6 +26,7 @@ pub enum TCE {
     NotTypeAbs(Loc, Abs),
     NotTypeVal(Loc, Val),
     NotRowType(VarRec, Loc, Val),
+    NotEmpty(Loc, Val),
     NotRecVal(Loc, Val),
     NotUniverseVal(Loc, Val),
 
@@ -105,6 +106,11 @@ impl Display for TCE {
             TCE::NotRowType(VarRec::Variant, id, val) => write!(
                 f,
                 "Expected a variant type expression, got: `{}` at {}.",
+                val, id
+            ),
+            TCE::NotEmpty(id, val) => write!(
+                f,
+                "Expected an empty type expression, got: `{}` at {}.",
                 val, id
             ),
             TCE::MissingVariant(VarRec::Variant, variant) => {
