@@ -1,70 +1,19 @@
 use std::fmt::Display;
-use std::io::{stdin, stdout, Write};
 
-use rustyline::completion::{Completer, FilenameCompleter, Pair};
-use rustyline::error::ReadlineError;
-use rustyline::highlight::Highlighter;
-use rustyline::hint::Hinter;
-use rustyline::{CompletionType, Config, Context, Editor, Helper};
+use minitt_util::repl::{repl as repl_impl, MiniHelper, ReplEnvType};
+use rustyline::completion::FilenameCompleter;
+use rustyline::{CompletionType, Config, Editor};
+use voile_util::level::LiftEx;
 
 use voile::check::check_decls;
 use voile::check::monad::{MetaSolution, TCM, TCS as TCMS};
 use voile::syntax::abs::{trans_decls_contextual, trans_expr, Abs, TransState};
 use voile::syntax::common::MI;
 use voile::syntax::surf::{parse_expr_err_printed, parse_str_err_printed, Decl};
-use voile_util::level::LiftEx;
 
 use crate::util::parse_file;
 
 type TCS = (TCMS, TransState);
-
-struct VoileHelper {
-    all_cmd: Vec<String>,
-    file_completer: FilenameCompleter,
-}
-
-impl Completer for VoileHelper {
-    type Candidate = Pair;
-
-    fn complete(
-        &self,
-        line: &str,
-        pos: usize,
-        ctx: &Context<'_>,
-    ) -> Result<(usize, Vec<Self::Candidate>), ReadlineError> {
-        if line.starts_with(LOAD_PFX) {
-            return self.file_completer.complete(line, pos, ctx);
-        }
-        let vec = self
-            .all_cmd
-            .iter()
-            .filter(|cmd| cmd.starts_with(line))
-            .map(|str| Pair {
-                display: str.clone(),
-                replacement: str.clone(),
-            })
-            .collect();
-        Ok((0, vec))
-    }
-}
-
-impl Hinter for VoileHelper {
-    fn hint(&self, line: &str, pos: usize, _ctx: &Context<'_>) -> Option<String> {
-        if line.len() < 2 {
-            return None;
-        }
-        self.all_cmd
-            .iter()
-            .filter(|cmd| cmd.starts_with(line))
-            .cloned()
-            .map(|cmd| cmd[pos..].to_string())
-            .next()
-    }
-}
-
-impl Highlighter for VoileHelper {}
-
-impl Helper for VoileHelper {}
 
 const PROMPT: &str = "=> ";
 const QUIT_CMD: &str = ":quit";
@@ -105,7 +54,7 @@ fn show_meta_solutions(tcs: &TCS) {
     }
 }
 
-fn repl_work(tcs: TCS, current_mode: &str, line: &str) -> Option<TCS> {
+fn work(tcs: TCS, current_mode: ReplEnvType, line: &str) -> Option<TCS> {
     if line == QUIT_CMD {
         None
     } else if line.is_empty() {
@@ -208,8 +157,8 @@ pub fn code_to_abs(tcs: &mut TCS, code: &str) -> Option<Abs> {
 }
 
 #[allow(clippy::print_literal)]
-fn help(current_mode: &str) {
-    repl_welcome_message(current_mode);
+fn help(current_mode: ReplEnvType) {
+    welcome_message(current_mode);
     println!(
         "\
          Commands:\n\
@@ -241,7 +190,7 @@ fn help(current_mode: &str) {
     );
 }
 
-fn repl_welcome_message(current_mode: &str) {
+fn welcome_message(current_mode: ReplEnvType) {
     println!(
         "Interactive voilec {}\n\
          Source code: https://github.com/owo-lang/voile-rs\n\
@@ -258,24 +207,7 @@ fn repl_welcome_message(current_mode: &str) {
     );
 }
 
-pub fn repl_plain(mut tcs: TCS) {
-    repl_welcome_message("PLAIN");
-    let stdin = stdin();
-    loop {
-        print!("{}", PROMPT);
-        stdout().flush().expect("Cannot flush stdout!");
-        let mut line = String::new();
-        stdin.read_line(&mut line).expect("Cannot flush stdout!");
-        if let Some(ok) = repl_work(tcs, "PLAIN", line.trim()) {
-            tcs = ok;
-        } else {
-            break;
-        };
-    }
-}
-
-pub fn repl(mut tcs: TCS) {
-    repl_welcome_message("RICH");
+fn create_editor() -> Editor<MiniHelper> {
     let all_cmd: Vec<_> = vec![
         QUIT_CMD, GAMMA_CMD, CTX_CMD, META_CMD, HELP_CMD, INFER_PFX, LOAD_PFX, EVAL_PFX, LEVEL_PFX,
     ]
@@ -288,35 +220,15 @@ pub fn repl(mut tcs: TCS) {
             .completion_type(CompletionType::Circular)
             .build(),
     );
-    r.set_helper(Some(VoileHelper {
+    r.set_helper(Some(MiniHelper {
         all_cmd,
         file_completer: FilenameCompleter::new(),
     }));
-    // Load history?
-    loop {
-        match r.readline(PROMPT) {
-            Ok(line) => {
-                let line = line.trim();
-                r.add_history_entry(line);
-                if let Some(ok) = repl_work(tcs, "RICH", line) {
-                    tcs = ok;
-                } else {
-                    break;
-                };
-            }
-            Err(ReadlineError::Interrupted) => {
-                println!("Interrupted by Ctrl-c.");
-                break;
-            }
-            Err(ReadlineError::Eof) => {
-                println!("Interrupted by Ctrl-d");
-                break;
-            }
-            Err(err) => {
-                println!("Error: {:?}", err);
-                break;
-            }
-        };
+    r
+}
+
+pub fn repl(tcs: TCS, repl_kind: Option<ReplEnvType>) {
+    if let Some(kind) = repl_kind {
+        repl_impl(tcs, PROMPT, kind, create_editor, welcome_message, work);
     }
-    // Write history?
 }

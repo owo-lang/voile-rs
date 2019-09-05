@@ -5,6 +5,7 @@ use voile::check::monad::TCS;
 use voile::syntax::abs::trans_decls_contextual;
 
 use crate::repl::code_to_abs;
+use minitt_util::repl::ReplEnvType;
 
 mod args;
 mod repl;
@@ -69,9 +70,14 @@ fn main() {
     }
 
     // REPL
-    if args.interactive_plain {
-        repl::repl_plain(checked)
-    } else if args.interactive {
-        repl::repl(checked)
-    }
+    repl::repl(
+        checked,
+        if args.interactive_plain {
+            Some(ReplEnvType::Plain)
+        } else if args.interactive {
+            Some(ReplEnvType::Rich)
+        } else {
+            None
+        },
+    );
 }
