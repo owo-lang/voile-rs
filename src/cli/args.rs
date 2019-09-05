@@ -37,7 +37,6 @@ pub struct CliOptions {
 }
 
 #[derive(StructOpt)]
-#[structopt(rename_all = "kebab-case")]
 enum GenShellSubCommand {
     /// Prints completion scripts for your shell
     Completion {

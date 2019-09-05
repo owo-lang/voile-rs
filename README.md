@@ -1,6 +1,6 @@
 # voile-rs
 
-[![Crates.io](https://img.shields.io/crates/d/voile.svg)][crates]
+[![Crates.io](https://img.shields.io/crates/d/voile.svg)][lib-rs]
 [![Crates.io](https://img.shields.io/crates/v/voile.svg)][crates]
 [![Crates.io](https://img.shields.io/crates/l/voile.svg)][crates]
 [![docs.rs](https://docs.rs/voile/badge.svg)][doc-rs]
@@ -9,6 +9,7 @@
 [![dep-svg]][dep-rs]
 
  [crates]: https://crates.io/crates/voile/
+ [lib-rs]: https://lib.rs/voile/
  [cc-svg]: https://circleci.com/gh/owo-lang/voile-rs/tree/master.svg?style=svg
  [cc-url]: https://circleci.com/gh/owo-lang/voile-rs/tree/master
  [doc-rs]: https://docs.rs/voile
@@ -17,6 +18,7 @@
  [plugin]: https://github.com/owo-lang/intellij-dtlc/
  [av-url]: https://ci.appveyor.com/project/ice1000/voile-rs/branch/master
  [av-svg]: https://ci.appveyor.com/api/projects/status/8rehm08ncp6whxwt/branch/master?svg=true
+ [icon]: https://raw.githubusercontent.com/owo-lang/voile-rs/master/rustdoc/icon.svg?sanitize=true
 
 Voile is a dependently-typed programming language features in first-class
 sums and records.
@@ -24,12 +26,15 @@ For language description, please head to the [docs.rs][doc-rs] page.
 
 ## Resources
 
+![][icon]
+
 + [Docs.rs][doc-rs] documentation, including KaTeX-rendered typing rules
 + [Change Log](CHANGELOG.md), useful resource for tracking language evolution
 + [IntelliJ Plugin][plugin], which can export your code as clickable HTML
 + [Code Examples](samples), which also acts as integration test suites
 + [Utilities Library](voile-util), a rust crate extracted
   from Voile's prototype implementation with some util codes
++ Windows binary download by [AppVeyor][av-url]
 
 ## Install
 
