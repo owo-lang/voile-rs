@@ -34,7 +34,8 @@ fn main() {
 
                 // Type Check
                 let mut tcs = TCS::default();
-                tcs.expand_with_fresh_meta(abs_decls.meta_count);
+                tcs.meta_context
+                    .expand_with_fresh_meta(abs_decls.meta_count);
                 let checked = check_decls(tcs, abs_decls.decls.clone())
                     .map_err(|err| eprintln!("{}", err))
                     .unwrap_or_else(|()| {

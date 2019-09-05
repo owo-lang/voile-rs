@@ -28,7 +28,10 @@ fn inline_metas(mut tcs: TCS, val: ValInfo) -> ValTCM {
     use Neutral::*;
     let info = val.loc;
     let val = val.ast.try_map_neutral(&mut |neut| match neut {
-        Meta(mi) => tcs.take_meta(mi).ok_or_else(|| TCE::MetaUnsolved(mi)),
+        Meta(mi) => tcs
+            .meta_context
+            .take_meta(mi)
+            .ok_or_else(|| TCE::MetaUnsolved(mi)),
         e => Ok(Val::Neut(e)),
     })?;
     Ok((val.into_info(info), tcs))

@@ -17,7 +17,7 @@ fn solve_with(mut tcs: TCS, meta: MI, solution: Val) -> TCM {
     // TODO: remove this clone by introducing reference version of `try_fold_neutral`.
     let anticipated_solution = solution.clone().unimplemented_to_glob();
     check_solution(meta, solution)?;
-    tcs.solve_meta(meta, anticipated_solution);
+    tcs.meta_context.solve_meta(meta, anticipated_solution);
 
     Ok(tcs)
 }
@@ -136,7 +136,7 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
         (Rec(a_fields), Rec(b_fields)) if a_fields.len() == b_fields.len() => {
             tcs.unify_variants(VarRec::Record, a_fields, b_fields)
         }
-        (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => match &tcs.meta_solutions()[mi.0] {
+        (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => match &tcs.meta_context.solution(*mi) {
             MetaSolution::Unsolved => solve_with(tcs, *mi, term.clone()),
             MetaSolution::Solved(solution) => {
                 let val = *solution.clone();

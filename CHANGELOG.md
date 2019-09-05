@@ -2,6 +2,8 @@
 
 # 0.1.7
 
++ Create a meta variable utility in `voile-util`
+
 # 0.1.6
 
 + Integrate `minitt-util` for CLI

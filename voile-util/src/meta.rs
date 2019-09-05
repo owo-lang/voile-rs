@@ -31,6 +31,7 @@ impl<Val> MetaSolution<Val> {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct MetaContext<Val>(Vec<MetaSolution<Val>>);
 
 impl<Val> Default for MetaContext<Val> {
@@ -42,6 +43,10 @@ impl<Val> Default for MetaContext<Val> {
 impl<Val> MetaContext<Val> {
     pub fn solutions(&self) -> &Vec<MetaSolution<Val>> {
         &self.0
+    }
+
+    pub fn solution(&self, index: MI) -> &MetaSolution<Val> {
+        &self.solutions()[index.0]
     }
 
     pub fn mut_solutions(&mut self) -> &mut Vec<MetaSolution<Val>> {

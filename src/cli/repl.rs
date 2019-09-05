@@ -42,17 +42,6 @@ fn show_telescope(tcs: &TCS) {
     }
 }
 
-fn show_meta_solutions(tcs: &TCS) {
-    use voile_util::meta::MetaSolution::*;
-    for (index, solution) in tcs.0.meta_solutions().iter().enumerate() {
-        match solution {
-            Solved(solution) => println!("{}: {}", index, solution),
-            Unsolved => println!("{}: ???", index),
-            Inlined => println!("<inlined out>"),
-        }
-    }
-}
-
 fn work(tcs: TCS, current_mode: ReplEnvType, line: &str) -> Option<TCS> {
     if line == QUIT_CMD {
         None
@@ -65,7 +54,7 @@ fn work(tcs: TCS, current_mode: ReplEnvType, line: &str) -> Option<TCS> {
         show_telescope(&tcs);
         Some(tcs)
     } else if line == META_CMD {
-        show_meta_solutions(&tcs);
+        print!("{}", tcs.0.meta_context);
         Some(tcs)
     } else if line == HELP_CMD {
         help(current_mode);
@@ -130,12 +119,14 @@ fn expression_thing<T: Display>(
 
 fn update_tcs(tcs: TCS, decls: Vec<Decl>) -> TCS {
     let mut state = tcs.1;
-    state.meta_count = MI(tcs.0.meta_solutions().len());
+    state.meta_count = MI(tcs.0.meta_context.solutions().len());
     let state = trans_decls_contextual(state, decls)
         .map_err(|err| eprintln!("{}", err))
         .unwrap_or_default();
     let mut telescope = tcs.0;
-    telescope.expand_with_fresh_meta(state.meta_count);
+    telescope
+        .meta_context
+        .expand_with_fresh_meta(state.meta_count);
     let tcs = check_decls(telescope, state.decls.clone())
         .map_err(|err| eprintln!("{}", err))
         .unwrap_or_default();
@@ -144,7 +135,7 @@ fn update_tcs(tcs: TCS, decls: Vec<Decl>) -> TCS {
 
 pub fn code_to_abs(tcs: &mut TCS, code: &str) -> Option<Abs> {
     let trans_state = &mut tcs.1;
-    trans_state.meta_count = MI(tcs.0.meta_solutions().len());
+    trans_state.meta_count = MI(tcs.0.meta_context.solutions().len());
     trans_expr(
         parse_expr_err_printed(code).ok()?,
         &trans_state.decls,

@@ -1,7 +1,3 @@
-use std::hint::unreachable_unchecked;
-use std::mem::swap;
-
-use voile_util::meta::MI;
 use voile_util::uid::DBI;
 
 use crate::syntax::common::GI;
@@ -11,6 +7,7 @@ use crate::syntax::core::{Val, ValInfo};
 pub type Gamma = Vec<ValInfo>;
 
 pub type MetaSolution = voile_util::meta::MetaSolution<Val>;
+pub type MetaContext = voile_util::meta::MetaContext<Val>;
 
 /// Type-checking state.
 #[derive(Debug, Clone, Default)]
@@ -24,51 +21,14 @@ pub struct TCS {
     /// Local typing context.
     pub local_gamma: Gamma,
     /// Meta variable context. Always global.
-    meta_context: Vec<MetaSolution>,
+    pub meta_context: MetaContext,
 }
 
 impl TCS {
-    /// Submit a solution to a meta variable to the context.
-    pub fn solve_meta(&mut self, meta_index: MI, solution: Val) {
-        let meta_solution = &mut self.meta_context[meta_index.0];
-        debug_assert_eq!(meta_solution, &mut MetaSolution::Unsolved);
-        *meta_solution = MetaSolution::solved(solution);
-    }
-
-    pub fn meta_solutions(&self) -> &[MetaSolution] {
-        &self.meta_context
-    }
-
-    /// Add many unsolved metas to the context.
-    pub fn expand_with_fresh_meta(&mut self, meta_count: MI) {
-        debug_assert!(self.meta_context.len() <= meta_count.0);
-        self.meta_context
-            .resize_with(meta_count.0, Default::default);
-    }
-
     /// Create a new valid but unsolved meta variable,
     /// used for generating fresh metas during elaboration.
     pub fn fresh_meta(&mut self) -> Val {
-        let meta = Val::meta(MI(self.meta_context.len()));
-        self.meta_context.push(MetaSolution::Unsolved);
-        meta
-    }
-
-    pub fn take_meta(&mut self, meta_index: MI) -> Option<Val> {
-        let x = &mut self.meta_context[meta_index.0];
-        match x {
-            MetaSolution::Solved(_) => {
-                let mut inlined = MetaSolution::Inlined;
-                swap(&mut inlined, x);
-                match inlined {
-                    MetaSolution::Solved(solution) => Some(*solution),
-                    // It is too obvious that these cases are unreachable.
-                    _ => unsafe { unreachable_unchecked() },
-                }
-            }
-            MetaSolution::Unsolved => None,
-            MetaSolution::Inlined => None,
-        }
+        self.meta_context.fresh_meta(Val::meta)
     }
 
     pub fn local_type(&self, dbi: DBI) -> &ValInfo {
