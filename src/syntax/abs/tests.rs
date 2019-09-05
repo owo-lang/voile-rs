@@ -1,9 +1,10 @@
 use voile_util::loc::Ident;
+use voile_util::meta::MI;
 use voile_util::uid::DBI;
 
 use crate::check::monad::TCE;
 use crate::syntax::abs::{trans_expr, Abs};
-use crate::syntax::common::{PiSig, GI, MI};
+use crate::syntax::common::{PiSig, GI};
 use crate::syntax::surf::parse_str_err_printed;
 
 use super::{trans_decls, AbsDecl};

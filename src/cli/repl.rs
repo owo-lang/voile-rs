@@ -4,7 +4,7 @@ use minitt_util::repl::{repl as repl_impl, MiniHelper, ReplEnvType};
 use rustyline::Editor;
 
 use voile::check::check_decls;
-use voile::check::monad::{MetaSolution, TCM, TCS as TCMS};
+use voile::check::monad::{TCM, TCS as TCMS};
 use voile::syntax::abs::{trans_decls_contextual, trans_expr, Abs, TransState};
 use voile::syntax::surf::{parse_expr_err_printed, parse_str_err_printed, Decl};
 use voile_util::level::LiftEx;
@@ -43,7 +43,7 @@ fn show_telescope(tcs: &TCS) {
 }
 
 fn show_meta_solutions(tcs: &TCS) {
-    use MetaSolution::*;
+    use voile_util::meta::MetaSolution::*;
     for (index, solution) in tcs.0.meta_solutions().iter().enumerate() {
         match solution {
             Solved(solution) => println!("{}: {}", index, solution),

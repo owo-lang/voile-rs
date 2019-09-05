@@ -10,30 +10,7 @@ use crate::syntax::core::{Val, ValInfo};
 /// Typing context.
 pub type Gamma = Vec<ValInfo>;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum MetaSolution {
-    /// Solved meta.
-    ///
-    /// Boxed to make the variable smaller.
-    Solved(Box<Val>),
-    /// Not yet solved meta.
-    Unsolved,
-    /// This may probably be unused and we'll see.
-    /// If so, it's gonna be deleted.
-    Inlined,
-}
-
-impl Default for MetaSolution {
-    fn default() -> Self {
-        MetaSolution::Unsolved
-    }
-}
-
-impl MetaSolution {
-    pub fn solved(val: Val) -> Self {
-        MetaSolution::Solved(Box::new(val))
-    }
-}
+pub type MetaSolution = voile_util::meta::MetaSolution<Val>;
 
 /// Type-checking state.
 #[derive(Debug, Clone, Default)]
