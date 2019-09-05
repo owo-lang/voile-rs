@@ -14,8 +14,6 @@ repository = "https://github.com/owo-lang/voile-rs"
 appveyor = { repository = "owo-lang/voile-rs", service = "github" }
 circle-ci = { repository = "owo-lang/voile-rs", branch = "master" }
 maintenance = { status = "passively-maintained" }
-is-it-maintained-issue-resolution = { repository = "owo-lang/voile-rs" }
-is-it-maintained-open-issues = { repository = "owo-lang/voile-rs" }
 
 [package.metadata.docs.rs]
 rustdoc-args = ["--html-in-header", "rustdoc/katex-header.html", "--document-private-items"]
