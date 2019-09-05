@@ -1,8 +1,7 @@
 use std::fmt::Display;
 
 use minitt_util::repl::{repl as repl_impl, MiniHelper, ReplEnvType};
-use rustyline::completion::FilenameCompleter;
-use rustyline::{CompletionType, Config, Editor};
+use rustyline::Editor;
 use voile_util::level::LiftEx;
 
 use voile::check::check_decls;
@@ -208,23 +207,9 @@ fn welcome_message(current_mode: ReplEnvType) {
 }
 
 fn create_editor() -> Editor<MiniHelper> {
-    let all_cmd: Vec<_> = vec![
+    minitt_util::repl::create_editor(&[
         QUIT_CMD, GAMMA_CMD, CTX_CMD, META_CMD, HELP_CMD, INFER_PFX, LOAD_PFX, EVAL_PFX, LEVEL_PFX,
-    ]
-    .iter()
-    .map(|s| s.to_string())
-    .collect();
-    let mut r = Editor::with_config(
-        Config::builder()
-            .history_ignore_space(true)
-            .completion_type(CompletionType::Circular)
-            .build(),
-    );
-    r.set_helper(Some(MiniHelper {
-        all_cmd,
-        file_completer: FilenameCompleter::new(),
-    }));
-    r
+    ])
 }
 
 pub fn repl(tcs: TCS, repl_kind: Option<ReplEnvType>) {
