@@ -1,9 +1,9 @@
-use voile_util::meta::MI;
+use voile_util::meta::{MetaSolution, MI};
 
 use crate::syntax::common::VarRec;
 use crate::syntax::core::{CaseSplit, Closure, Neutral, TraverseNeutral, Val, Variants};
 
-use super::monad::{MetaSolution, TCE, TCM, TCS};
+use super::monad::{TCE, TCM, TCS};
 
 fn check_solution(meta: MI, rhs: Val) -> TCM<()> {
     rhs.try_fold_neutral((), |(), neut| match neut {

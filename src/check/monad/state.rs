@@ -1,3 +1,4 @@
+use voile_util::meta::MetaContext;
 use voile_util::uid::DBI;
 
 use crate::syntax::common::GI;
@@ -5,9 +6,6 @@ use crate::syntax::core::{Val, ValInfo};
 
 /// Typing context.
 pub type Gamma = Vec<ValInfo>;
-
-pub type MetaSolution = voile_util::meta::MetaSolution<Val>;
-pub type MetaContext = voile_util::meta::MetaContext<Val>;
 
 /// Type-checking state.
 #[derive(Debug, Clone, Default)]
@@ -21,7 +19,7 @@ pub struct TCS {
     /// Local typing context.
     pub local_gamma: Gamma,
     /// Meta variable context. Always global.
-    pub meta_context: MetaContext,
+    pub meta_context: MetaContext<Val>,
 }
 
 impl TCS {

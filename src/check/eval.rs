@@ -1,8 +1,9 @@
 use voile_util::level::LiftEx;
 use voile_util::loc::{merge_info, Ident};
+use voile_util::meta::MetaSolution;
 use voile_util::uid::DBI;
 
-use crate::check::monad::{MetaSolution, TCS};
+use crate::check::monad::TCS;
 use crate::syntax::abs::{Abs, LabAbs};
 use crate::syntax::core::{CaseSplit, Closure, Neutral, TraverseNeutral, Val, ValInfo, Variants};
 
