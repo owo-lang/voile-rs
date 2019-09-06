@@ -1,6 +1,8 @@
 use super::{Closure, Neutral, Val};
-use std::collections::BTreeMap;
-use voile_util::level::{Level, LevelCalcState, LiftEx};
+use voile_util::level::{
+    calc_slice_plus_one_level, calc_tree_map_level, calc_tree_map_plus_one_level, lift_tree_map,
+    Level, LevelCalcState, LiftEx,
+};
 
 pub const TYPE_OMEGA: Val = Val::Type(Level::Omega);
 
@@ -10,14 +12,11 @@ impl LiftEx for Val {
             Val::Type(l) => Val::Type(l + levels),
             Val::RowKind(l, k, ls) => Val::RowKind(l + levels, k, ls),
             Val::Lam(closure) => Val::Lam(closure.lift(levels)),
-            Val::Dt(kind, plicit, param_type, closure) => Val::Dt(
-                kind,
-                plicit,
-                Box::new(param_type.lift(levels)),
-                closure.lift(levels),
-            ),
-            Val::RowPoly(kind, variants) => Val::RowPoly(kind, lift_map(levels, variants)),
-            Val::Rec(fields) => Val::Rec(lift_map(levels, fields)),
+            Val::Dt(kind, plicit, param_type, closure) => {
+                Val::dependent_type(kind, plicit, param_type.lift(levels), closure.lift(levels))
+            }
+            Val::RowPoly(kind, variants) => Val::RowPoly(kind, lift_tree_map(levels, variants)),
+            Val::Rec(fields) => Val::Rec(lift_tree_map(levels, fields)),
             Val::Cons(name, e) => Val::cons(name, e.lift(levels)),
             Val::Pair(l, r) => Val::pair(l.lift(levels), r.lift(levels)),
             Val::Neut(neut) => Val::Neut(neut.lift(levels)),
@@ -27,8 +26,8 @@ impl LiftEx for Val {
     fn calc_level(&self) -> LevelCalcState {
         match self {
             Val::Type(level) | Val::RowKind(level, ..) => Some(*level + 1),
-            Val::RowPoly(_, variants) => calc_map_level(variants),
-            Val::Rec(fields) => calc_map_level(fields),
+            Val::RowPoly(_, variants) => calc_tree_map_level(variants),
+            Val::Rec(fields) => calc_tree_map_level(fields),
             Val::Dt(_, _, param_ty, closure) => {
                 Some(param_ty.calc_level()?.max(closure.calc_level()?))
             }
@@ -63,19 +62,9 @@ impl LiftEx for Neutral {
             Fst(expr) => expr.calc_level(),
             Snd(expr) => expr.calc_level(),
             Proj(expr, ..) => expr.calc_level(),
-            App(f, args) => {
-                let args: Option<Vec<_>> = args.iter().map(LiftEx::calc_level).collect();
-                let args = args?.into_iter().max();
-                Some(f.calc_level()?.max(args.unwrap_or_default()))
-            }
-            Rec(vs, ext) | Row(_, vs, ext) => {
-                let vs = calc_map_level(vs);
-                Some(ext.calc_level()?.max(vs.unwrap_or_default()))
-            }
-            SplitOn(split, on) | OrSplit(split, on) => {
-                let split = calc_map_level(split);
-                Some(on.calc_level()?.max(split.unwrap_or_default()))
-            }
+            App(f, args) => calc_slice_plus_one_level(&**f, args),
+            Rec(vs, ext) | Row(_, vs, ext) => calc_tree_map_plus_one_level(&**ext, vs),
+            SplitOn(split, on) | OrSplit(split, on) => calc_tree_map_plus_one_level(&**on, split),
         }
     }
 }
@@ -85,7 +74,7 @@ impl LiftEx for Closure {
         use super::Closure::*;
         match self {
             Plain(body) => Self::plain(body.lift(levels)),
-            Tree(split) => Tree(lift_map(levels, split)),
+            Tree(split) => Tree(lift_tree_map(levels, split)),
         }
     }
 
@@ -93,19 +82,7 @@ impl LiftEx for Closure {
         use super::Closure::*;
         match self {
             Plain(body) => body.calc_level(),
-            Tree(split) => calc_map_level(&split),
+            Tree(split) => calc_tree_map_level(&split),
         }
     }
-}
-
-fn lift_map<T: LiftEx>(levels: u32, fields: BTreeMap<String, T>) -> BTreeMap<String, T> {
-    fields
-        .into_iter()
-        .map(|(name, e)| (name, e.lift(levels)))
-        .collect()
-}
-
-fn calc_map_level(variants: &BTreeMap<String, impl LiftEx>) -> LevelCalcState {
-    let levels: Option<Vec<_>> = variants.values().map(LiftEx::calc_level).collect();
-    Some(levels?.into_iter().max().unwrap_or_default())
 }

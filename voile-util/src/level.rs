@@ -1,4 +1,5 @@
 use std::cmp::{max, Ordering};
+use std::collections::{BTreeMap, HashMap};
 use std::fmt::{Display, Error, Formatter};
 use std::ops::{Add, Sub};
 
@@ -119,4 +120,46 @@ impl Sub<u32> for Level {
     fn sub(self, rhs: u32) -> Self::Output {
         self.map(|a| a - rhs)
     }
+}
+
+pub fn lift_tree_map<T: LiftEx>(levels: u32, map: BTreeMap<String, T>) -> BTreeMap<String, T> {
+    map.into_iter()
+        .map(|(name, e)| (name, e.lift(levels)))
+        .collect()
+}
+
+pub fn lift_hash_map<T: LiftEx>(levels: u32, map: HashMap<String, T>) -> HashMap<String, T> {
+    map.into_iter()
+        .map(|(name, e)| (name, e.lift(levels)))
+        .collect()
+}
+
+pub fn calc_tree_map_level(map: &BTreeMap<String, impl LiftEx>) -> LevelCalcState {
+    let levels: Option<Vec<_>> = map.values().map(LiftEx::calc_level).collect();
+    Some(levels?.into_iter().max().unwrap_or_default())
+}
+
+pub fn calc_tree_map_plus_one_level(
+    one: &impl LiftEx,
+    map: &BTreeMap<String, impl LiftEx>,
+) -> LevelCalcState {
+    let levels: Option<Vec<_>> = map.values().map(LiftEx::calc_level).collect();
+    let level = levels?.into_iter().max().unwrap_or_default();
+    Some(one.calc_level()?.max(level))
+}
+
+pub fn calc_slice_level(vec: &[impl LiftEx]) -> LevelCalcState {
+    let levels: Option<Vec<_>> = vec.iter().map(LiftEx::calc_level).collect();
+    Some(levels?.into_iter().max().unwrap_or_default())
+}
+
+pub fn calc_slice_plus_one_level(one: &impl LiftEx, vec: &[impl LiftEx]) -> LevelCalcState {
+    let levels: Option<Vec<_>> = vec.iter().map(LiftEx::calc_level).collect();
+    let level = levels?.into_iter().max().unwrap_or_default();
+    Some(one.calc_level()?.max(level))
+}
+
+pub fn calc_hash_map_level(map: &HashMap<String, impl LiftEx>) -> LevelCalcState {
+    let levels: Option<Vec<_>> = map.values().map(LiftEx::calc_level).collect();
+    Some(levels?.into_iter().max().unwrap_or_default())
 }
