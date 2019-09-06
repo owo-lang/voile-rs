@@ -1,7 +1,6 @@
 use voile_util::meta::MetaContext;
-use voile_util::uid::DBI;
+use voile_util::uid::{DBI, GI};
 
-use crate::syntax::common::GI;
 use crate::syntax::core::{Val, ValInfo};
 
 /// Typing context.

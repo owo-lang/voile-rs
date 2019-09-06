@@ -1,6 +1,3 @@
-/// General definitions, `DBI`, etc.
-pub mod common;
-
 /// A Lisp parser as some testing utility.
 pub mod lisp;
 

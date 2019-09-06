@@ -1,4 +1,4 @@
-use std::collections::btree_map::BTreeMap;
+use std::collections::BTreeMap;
 
 use voile_util::loc::*;
 use voile_util::meta::MI;
@@ -6,7 +6,6 @@ use voile_util::tags::{PiSig::*, *};
 use voile_util::uid::*;
 
 use crate::check::monad::{TCE, TCM};
-use crate::syntax::common::*;
 use crate::syntax::surf::{Decl, DeclKind, Expr, Param};
 
 use super::ast::*;

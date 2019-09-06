@@ -53,3 +53,21 @@ impl Display for Loc {
         write!(f, "line {:?} ({:?}:{:?})", self.line, self.start, self.end)
     }
 }
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+/// Typed label
+pub struct Labelled<Expr> {
+    /// Label is an identifier
+    pub label: Ident,
+    /// The thing attached on this label
+    pub expr: Expr,
+}
+
+impl<Expr> Labelled<Expr> {
+    pub fn map_expr<Abs>(self, f: impl FnOnce(Expr) -> Abs) -> Labelled<Abs> {
+        Labelled {
+            label: self.label,
+            expr: f(self.expr),
+        }
+    }
+}

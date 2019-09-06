@@ -2,7 +2,6 @@ use voile_util::meta::MI;
 use voile_util::tags::*;
 use voile_util::uid::*;
 
-use crate::syntax::common::*;
 use crate::syntax::core::{Axiom, CaseSplit, Closure, Fields, Neutral, TVal, Val, Variants};
 
 /// Constructors and traversal functions.

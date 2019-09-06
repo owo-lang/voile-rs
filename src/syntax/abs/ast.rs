@@ -4,8 +4,6 @@ use voile_util::meta::MI;
 use voile_util::tags::*;
 use voile_util::uid::*;
 
-use crate::syntax::common::*;
-
 pub type LabAbs = Labelled<Abs>;
 
 #[derive(Debug, Clone, Eq, PartialEq)]

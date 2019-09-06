@@ -47,6 +47,11 @@ uid_basic_operations_impl!(DBI);
 pub struct UID(pub usize);
 uid_basic_operations_impl!(UID);
 
+/// Global reference indices.
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
+pub struct GI(pub usize);
+uid_basic_operations_impl!(GI);
+
 /// Unique-ID generator internal counter.
 static mut UID_COUNT: usize = 0;
 
