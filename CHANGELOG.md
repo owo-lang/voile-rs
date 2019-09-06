@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.1.8
+
++ Move `lisp`, `common.rs` to `voile-util`
+
 # 0.1.7
 
 + Create a meta variable utility in `voile-util`

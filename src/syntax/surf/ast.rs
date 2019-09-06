@@ -136,11 +136,6 @@ pub enum DeclKind {
     Sign,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Pragma {
-    name: Ident,
-}
-
 /// Surface syntax tree node: Declaration.
 ///
 /// It can be a type signature, where there's a name and a type expression;
@@ -150,5 +145,4 @@ pub struct Decl {
     pub name: Ident,
     pub body: Expr,
     pub kind: DeclKind,
-    // TODO more, like pragma
 }
