@@ -1,6 +1,6 @@
 use voile_util::meta::{MetaSolution, MI};
+use voile_util::tags::VarRec;
 
-use crate::syntax::common::VarRec;
 use crate::syntax::core::{CaseSplit, Closure, Neutral, TraverseNeutral, Val, Variants};
 
 use super::monad::{TCE, TCM, TCS};

@@ -2,9 +2,10 @@ use std::collections::BTreeMap;
 
 use voile_util::level::Level;
 use voile_util::meta::MI;
+use voile_util::tags::{PiSig, Plicit, VarRec};
 use voile_util::uid::{DBI, UID};
 
-use crate::syntax::common::{PiSig, Plicit, VarRec, GI};
+use crate::syntax::common::GI;
 
 use super::{RedEx, TraverseNeutral};
 
@@ -22,7 +23,9 @@ impl Val {
     pub fn apply(self, arg: Val) -> Self {
         match self {
             Val::Lam(closure) => closure.instantiate(arg),
-            Val::Neut(Neutral::OrSplit(split, ..)) => Closure::Tree(split).instantiate(arg),
+            Val::Neut(Neutral::OrSplit(split, or)) => Closure::Tree(split)
+                .instantiate_safe(arg)
+                .unwrap_or_else(|e| Val::app(*or, vec![e])),
             Val::Neut(Neutral::App(f, mut a)) => {
                 a.push(arg);
                 Val::app(*f, a)
@@ -330,17 +333,20 @@ impl Default for Closure {
 
 impl Closure {
     pub fn instantiate(self, arg: Val) -> Val {
+        self.instantiate_safe(arg)
+            .unwrap_or_else(|e| panic!("Cannot split on `{}`.", e))
+    }
+
+    pub fn instantiate_safe(self, arg: Val) -> Result<Val, Val> {
         match self {
-            Closure::Plain(body) => body.reduce_with_dbi(arg, Default::default()),
+            Closure::Plain(body) => Ok(body.reduce_with_dbi(arg, Default::default())),
             Closure::Tree(mut split) => match arg {
                 Val::Cons(label, arg) => match split.remove(&label) {
-                    Some(body) => body.instantiate(*arg),
-                    // We can actually replace this pattern matching with `.expect`,
-                    // but here we don't want to format the error message when things go correct.
-                    None => panic!("Cannot find clause for label `{}`.", label),
+                    Some(body) => body.instantiate_safe(*arg),
+                    None => Err(Val::Cons(label, arg)),
                 },
-                Val::Neut(neutral) => Val::split_on(split, neutral),
-                a => panic!("Cannot split on `{}`.", a),
+                Val::Neut(neutral) => Ok(Val::split_on(split, neutral)),
+                a => Err(a),
             },
         }
     }

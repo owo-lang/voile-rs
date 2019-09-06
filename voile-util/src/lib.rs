@@ -35,3 +35,6 @@ pub mod vec1;
 
 /// Generic meta variable utilities.
 pub mod meta;
+
+/// `VarRec`, `PiSig`, etc.
+pub mod tags;

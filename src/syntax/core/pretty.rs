@@ -1,10 +1,8 @@
 use std::fmt::{Display, Error, Formatter};
 
-use crate::syntax::common::PiSig::*;
+use voile_util::tags::{PiSig::*, Plicit};
 
-use super::{Axiom, Closure, Neutral, Val, ValInfo};
-use crate::syntax::common::Plicit;
-use crate::syntax::core::{CaseSplit, Variants};
+use super::{Axiom, CaseSplit, Closure, Neutral, Val, ValInfo, Variants};
 
 impl Display for Neutral {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {

@@ -1,10 +1,8 @@
 use voile_util::level::{Level, LiftEx};
 use voile_util::loc::*;
-use VarRec::*;
+use voile_util::tags::{PiSig::*, Plicit, VarRec, VarRec::*};
 
 use crate::syntax::abs::{Abs, LabAbs};
-use crate::syntax::common::PiSig::*;
-use crate::syntax::common::{Plicit, VarRec};
 use crate::syntax::core::{CaseSplit, Closure, Fields, Neutral, Val, Variants, TYPE_OMEGA};
 
 use super::eval::compile_cons;

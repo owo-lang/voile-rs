@@ -4,9 +4,9 @@ use pest_derive::Parser;
 use voile_util::level::Level;
 use voile_util::loc::{Ident, Loc};
 use voile_util::pest_util::end_of_rule;
+use voile_util::tags::{Plicit, VarRec};
 use voile_util::vec1::Vec1;
 
-use crate::syntax::common::{Plicit, VarRec};
 use crate::syntax::surf::LabExpr;
 
 use super::ast::Param;

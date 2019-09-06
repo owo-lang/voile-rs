@@ -1,8 +1,7 @@
 use std::fmt::{Display, Error, Formatter};
 
+use voile_util::tags::{PiSig, Plicit};
 use PiSig::*;
-
-use crate::syntax::common::{PiSig, Plicit};
 
 use super::{Abs, AbsDecl, LabAbs};
 

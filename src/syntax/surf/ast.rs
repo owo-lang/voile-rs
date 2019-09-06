@@ -1,8 +1,9 @@
 use voile_util::level::Level;
 use voile_util::loc::{Ident, Loc};
+use voile_util::tags::{Plicit, VarRec};
 use voile_util::vec1::Vec1;
 
-use crate::syntax::common::{Labelled, Plicit, VarRec};
+use crate::syntax::common::Labelled;
 
 pub type LabExpr = Labelled<Expr>;
 
