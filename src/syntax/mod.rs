@@ -1,6 +1,3 @@
-/// A Lisp parser as some testing utility.
-pub mod lisp;
-
 /// Core language, aka well-typed terms.
 pub mod core;
 

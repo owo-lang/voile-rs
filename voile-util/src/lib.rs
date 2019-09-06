@@ -30,6 +30,10 @@ pub mod level;
 #[macro_use]
 pub mod pest_util;
 
+/// A Lisp parser as some testing utility.
+#[cfg(feature = "lisp")]
+pub mod lisp;
+
 /// Not using https://docs.rs/vec1/1.4.0 because it doesn't have `fold1`.
 pub mod vec1;
 

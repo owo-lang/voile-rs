@@ -1,11 +1,11 @@
 use pest::Parser;
 use pest_derive::Parser;
 
-use voile_util::pest_util::end_of_rule;
-use voile_util::uid::DBI;
+use crate::pest_util::end_of_rule;
+use crate::uid::DBI;
 
 #[derive(Parser)]
-#[grammar = "syntax/lisp/lisp.pest"]
+#[grammar = "lisp/lisp.pest"]
 struct CoreParser;
 
 #[derive(Debug, Clone)]

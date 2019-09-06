@@ -1,8 +1,8 @@
 use voile_util::level::LiftEx;
+use voile_util::lisp::{self, Lisp};
 use voile_util::uid::UID;
 
 use crate::syntax::core::Val;
-use crate::syntax::lisp::{self, Lisp};
 
 fn from_str(s: &str) -> Val {
     let lisp = lisp::parse_str(s).unwrap_or_else(|err| panic!("Syntax error: `{}`.", err));
@@ -10,7 +10,7 @@ fn from_str(s: &str) -> Val {
 }
 
 fn lisp_to_val(lisp: &Lisp) -> Val {
-    use crate::syntax::lisp::Lisp::*;
+    use Lisp::*;
     match lisp {
         Num(dbi) => Val::var(*dbi),
         Sym(sym) => panic!("Unexpected symbol: `{}`.", sym),
@@ -19,7 +19,7 @@ fn lisp_to_val(lisp: &Lisp) -> Val {
 }
 
 fn many_to_val(block: &[Lisp], lisp: &Lisp) -> Val {
-    use crate::syntax::lisp::Lisp::*;
+    use Lisp::*;
     match block {
         // So `()` == `()`.
         [] => Val::postulate(UID(0)),
