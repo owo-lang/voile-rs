@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.2.0
+
++ Update docs
++ Move `Axiom` to `voile-util`
+
 # 0.1.8
 
 + Move `lisp`, `common.rs` to `voile-util`

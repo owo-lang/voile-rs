@@ -33,7 +33,7 @@ For language description, please head to the [docs.rs][doc-rs] page.
 + [IntelliJ Plugin][plugin], which can export your code as clickable HTML
 + [Code Examples](samples), which also acts as integration test suites
 + [Utilities Library](voile-util), a rust crate extracted
-  from Voile's prototype implementation with some util codes
+  from Voile's implementation with some util codes
 + Windows binary download by [AppVeyor][av-url]
 
 ## Install

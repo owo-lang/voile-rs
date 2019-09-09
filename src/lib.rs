@@ -109,8 +109,36 @@ combine the core with extensions they want like a Jigsaw
 and exclude everything else (to avoid unwanted dependencies) or create their
 own extensions without touching the original codebase.
 
-Extensible variant type is also useful
-for simulating exception-handling.
+Here's a simple example Voile program that type-checks:
+
+```text
+let Unit = Rec {};
+let Bottom = Sum {};
+
+val unit : Unit;
+let unit = {| |};
+
+let Bool = Sum { True: Unit; False: Unit; };
+
+val true : Bool;
+let true = @True unit;
+
+val false : Bool;
+let false = @False unit;
+
+val notTrue : (Sum { False: Unit; } -> Bool)
+            -> Bool -> Bool;
+let notTrue = \f. case True u: false or f;
+
+val notFalse : (Bottom -> Bool)
+             -> Sum { False: Unit; } -> Bool;
+let notFalse = \f. case False u: true or f;
+
+val not : Bool -> Bool;
+let not = notTrue (notFalse whatever);
+```
+
+Extensible variant type is also useful for simulating exception-handling.
 
  [rec-calc]: https://dl.acm.org/citation.cfm?id=218572
  [ext-rec]: https://wiki.haskell.org/Extensible_record
@@ -127,6 +155,9 @@ for simulating exception-handling.
 Voile's implementation is inspired from [Agda], [mlang] and its
 prototype, [minitt].
 The language design has been influenced by the [Trex] Haskell extension.
+
+It's ridicules to put an implementation notes here instead of into the rustdoc
+of the functions in this crate.
 
  [Agda]: http://www.cse.chalmers.se/~ulfn/papers/thesis.pdf
  [MiniAgda]: http://www.cse.chalmers.se/~abela/miniagda
