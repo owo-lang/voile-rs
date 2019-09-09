@@ -2,7 +2,8 @@ use voile_util::meta::MI;
 use voile_util::tags::*;
 use voile_util::uid::*;
 
-use crate::syntax::core::{Axiom, CaseSplit, Closure, Fields, Neutral, TVal, Val, Variants};
+use crate::syntax::core::{CaseSplit, Closure, Fields, Neutral, TVal, Val, Variants};
+use voile_util::axiom::Axiom;
 
 /// Constructors and traversal functions.
 impl Val {

@@ -23,6 +23,9 @@ pub mod loc;
 #[macro_use]
 pub mod uid;
 
+/// Defines the `Axiom` type and some functions on it.
+pub mod axiom;
+
 /// `Level`-related definitions and relevant operations and traits.
 pub mod level;
 
