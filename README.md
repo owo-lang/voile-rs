@@ -20,8 +20,8 @@
  [av-svg]: https://ci.appveyor.com/api/projects/status/8rehm08ncp6whxwt/branch/master?svg=true
  [icon]: https://raw.githubusercontent.com/owo-lang/voile-rs/master/rustdoc/icon.svg?sanitize=true
 
-Voile is a dependently-typed programming language features in first-class
-sums and records.
+Voile is a dependently-typed programming language with a non-dependent version
+of row-polymorphism, meta variable resolution and implicit parameter syntax.
 For language description, please head to the [docs.rs][doc-rs] page.
 
 ## Resources
