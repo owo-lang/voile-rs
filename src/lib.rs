@@ -16,7 +16,8 @@ Phrasing:
 */
 
 /*!
-Voile is a dependently-typed row-polymorphic programming language.
+Voile is a dependently-typed programming language with a non-dependent version
+of row-polymorphism, meta variable resolution and implicit parameter syntax.
 
 # Design
 
