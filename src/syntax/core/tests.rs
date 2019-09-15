@@ -92,12 +92,9 @@ fn test_issue_47() {
 
 #[test]
 fn test_lift() {
-    assert_eq!(
-        &format!("{}", from_str("(lift 1919810)")),
-        "(^[1] [1919810])"
-    );
+    assert_eq!(&format!("{}", from_str("(lift 1919810)")), "[1919810]");
     assert_eq!(
         &format!("{}", from_str("(lift (lift 1919810))")),
-        "(^[2] [1919810])"
+        "[1919810]"
     );
 }
