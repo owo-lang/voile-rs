@@ -45,7 +45,7 @@ impl LiftEx for Neutral {
         match self {
             Lift(n, expr) => Lift(n + levels, expr),
             Var(n) => Var(n),
-            Ref(n) => Lift(n + levels, Box::new(Ref(n))),
+            Ref(n) => Lift(levels, Box::new(Ref(n))),
             Meta(n) => Meta(n),
             Axi(x) => Axi(x),
             App(f, args) => App(

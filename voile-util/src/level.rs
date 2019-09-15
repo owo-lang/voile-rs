@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::fmt::{Display, Error, Formatter};
 use std::ops::{Add, Sub};
 
-pub type LevelType = i32;
+pub type LevelType = u32;
 
 /// Level, can be inferred or user-specified.
 #[derive(Debug, Copy, Clone, Ord, Eq, PartialEq)]
