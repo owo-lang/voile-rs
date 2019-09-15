@@ -1,9 +1,10 @@
+use voile_util::axiom::Axiom;
+use voile_util::level::LevelType;
 use voile_util::meta::MI;
 use voile_util::tags::*;
 use voile_util::uid::*;
 
 use crate::syntax::core::{CaseSplit, Closure, Fields, Neutral, TVal, Val, Variants};
-use voile_util::axiom::Axiom;
 
 /// Constructors and traversal functions.
 impl Val {
@@ -36,7 +37,7 @@ impl Val {
         Val::Lam(Closure::Tree(tree))
     }
 
-    pub fn lift(levels: u32, expr: Neutral) -> Self {
+    pub fn lift(levels: LevelType, expr: Neutral) -> Self {
         Val::Neut(Neutral::Lift(levels, Box::new(expr)))
     }
 

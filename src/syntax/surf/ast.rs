@@ -1,4 +1,4 @@
-use voile_util::level::Level;
+use voile_util::level::{Level, LevelType};
 use voile_util::loc::{Ident, Labelled, Loc};
 use voile_util::tags::{Plicit, VarRec};
 use voile_util::vec1::Vec1;
@@ -28,7 +28,7 @@ pub enum Expr {
     /// Explicit meta variable.
     Meta(Ident),
     /// Lift an expression many times.
-    Lift(Loc, u32, Box<Self>),
+    Lift(Loc, LevelType, Box<Self>),
     /// Record projections.
     Proj(Box<Self>, Vec1<Ident>),
     /// `Type` literal, with levels.
@@ -81,7 +81,7 @@ impl Expr {
         Expr::App(Box::new(Vec1::new(applied, arguments)))
     }
 
-    pub fn lift(info: Loc, count: u32, target: Self) -> Self {
+    pub fn lift(info: Loc, count: LevelType, target: Self) -> Self {
         Expr::Lift(info, count, Box::new(target))
     }
 

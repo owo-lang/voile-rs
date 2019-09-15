@@ -1,4 +1,4 @@
-use voile_util::level::Level;
+use voile_util::level::{Level, LevelType};
 use voile_util::loc::*;
 use voile_util::meta::MI;
 use voile_util::tags::*;
@@ -16,7 +16,7 @@ pub enum Abs {
     /// Meta variable
     Meta(Ident, MI),
     /// Lift an expression many times
-    Lift(Loc, u32, Box<Self>),
+    Lift(Loc, LevelType, Box<Self>),
     /// Constructor call
     Cons(Ident),
     /// Record projection
@@ -120,7 +120,7 @@ impl Abs {
         Abs::CaseOr(label, binding, uid, Box::new(clause), Box::new(or))
     }
 
-    pub fn lift(info: Loc, lift_count: u32, expr: Self) -> Self {
+    pub fn lift(info: Loc, lift_count: LevelType, expr: Self) -> Self {
         Abs::Lift(info, lift_count, Box::new(expr))
     }
 

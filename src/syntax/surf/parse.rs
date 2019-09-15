@@ -128,7 +128,7 @@ expr_parser!(pipe_expr, lift_expr, pipe);
 expr_parser!(app_expr, primary_expr, app);
 
 fn lift_expr(rules: Tok) -> Expr {
-    let mut lift_count = 0u32;
+    let mut lift_count = 0;
     let loc = From::from(rules.as_span());
     for smaller in rules.into_inner() {
         match smaller.as_rule() {

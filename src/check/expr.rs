@@ -119,7 +119,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
                 Err(TCE::LevelMismatch(expr.loc(), *lower + 1, *upper))
             }
         }
-        (RowKind(info, kind, labels), Val::Type(upper)) if *upper > From::from(0u32) => {
+        (RowKind(info, kind, labels), Val::Type(upper)) if *upper > From::from(0) => {
             let labels = labels.iter().map(|l| &l.text).cloned().collect();
             let expr = Val::RowKind(Default::default(), *kind, labels);
             Ok((expr.into_info(*info), tcs))
@@ -471,7 +471,7 @@ fn infer(tcs: TCS, value: &Abs) -> ValTCM {
     let info = value.loc();
     match value {
         Type(_, level) => Ok((Val::Type(*level + 1).into_info(info), tcs)),
-        RowKind(..) => Ok((Val::Type(From::from(1u32)).into_info(info), tcs)),
+        RowKind(..) => Ok((Val::Type(From::from(1)).into_info(info), tcs)),
         RowPoly(_, kind, variants, more) => {
             let mut labels = Vec::with_capacity(variants.len());
             let mut tcs = tcs;

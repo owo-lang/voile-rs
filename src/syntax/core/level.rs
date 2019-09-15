@@ -1,19 +1,20 @@
 use super::{Closure, Neutral, Val};
 use voile_util::level::{
     calc_slice_plus_one_level, calc_tree_map_level, calc_tree_map_plus_one_level, lift_tree_map,
-    Level, LevelCalcState, LiftEx,
+    Level, LevelCalcState, LevelType, LiftEx,
 };
 
 pub const TYPE_OMEGA: Val = Val::Type(Level::Omega);
 
 impl LiftEx for Val {
-    fn lift(self, levels: u32) -> Val {
+    fn lift(self, levels: LevelType) -> Val {
         match self {
             Val::Type(l) => Val::Type(l + levels),
             Val::RowKind(l, k, ls) => Val::RowKind(l + levels, k, ls),
             Val::Lam(closure) => Val::Lam(closure.lift(levels)),
             Val::Dt(kind, plicit, param_type, closure) => {
-                Val::dependent_type(kind, plicit, param_type.lift(levels), closure.lift(levels))
+                // Lift closure?
+                Val::dependent_type(kind, plicit, param_type.lift(levels), closure)
             }
             Val::RowPoly(kind, variants) => Val::RowPoly(kind, lift_tree_map(levels, variants)),
             Val::Rec(fields) => Val::Rec(lift_tree_map(levels, fields)),
@@ -40,7 +41,7 @@ impl LiftEx for Val {
 }
 
 impl LiftEx for Neutral {
-    fn lift(self, levels: u32) -> Self {
+    fn lift(self, levels: LevelType) -> Self {
         use super::Neutral::*;
         match self {
             Lift(n, expr) => Lift(n + levels, expr),
@@ -70,7 +71,7 @@ impl LiftEx for Neutral {
 }
 
 impl LiftEx for Closure {
-    fn lift(self, levels: u32) -> Self {
+    fn lift(self, levels: LevelType) -> Self {
         use super::Closure::*;
         match self {
             Plain(body) => Self::plain(body.lift(levels)),

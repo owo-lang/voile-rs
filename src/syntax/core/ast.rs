@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use voile_util::axiom::Axiom;
-use voile_util::level::Level;
+use voile_util::level::{Level, LevelType};
 use voile_util::meta::MI;
 use voile_util::tags::{PiSig, Plicit, VarRec};
 use voile_util::uid::{DBI, GI};
@@ -186,7 +186,7 @@ pub enum Neutral {
     /// Meta variable reference.
     Meta(MI),
     /// Lifting self to a higher/lower level.
-    Lift(u32, Box<Self>),
+    Lift(LevelType, Box<Self>),
     /// Postulated value, aka axioms.
     Axi(Axiom),
     /// Function application, with all arguments collected

@@ -3,11 +3,13 @@ use std::collections::{BTreeMap, HashMap};
 use std::fmt::{Display, Error, Formatter};
 use std::ops::{Add, Sub};
 
+pub type LevelType = i32;
+
 /// Level, can be inferred or user-specified.
 #[derive(Debug, Copy, Clone, Ord, Eq, PartialEq)]
 pub enum Level {
     Omega,
-    Num(u32),
+    Num(LevelType),
 }
 
 impl Level {
@@ -19,11 +21,11 @@ impl Level {
         }
     }
 
-    pub fn map(self, f: impl FnOnce(u32) -> u32) -> Self {
+    pub fn map(self, f: impl FnOnce(LevelType) -> LevelType) -> Self {
         self.and_then(|a| Level::Num(f(a)))
     }
 
-    pub fn and_then(self, f: impl FnOnce(u32) -> Self) -> Self {
+    pub fn and_then(self, f: impl FnOnce(LevelType) -> Self) -> Self {
         use Level::*;
         match self {
             Omega => Omega,
@@ -42,7 +44,7 @@ pub type LevelCalcState = Option<Level>;
 /// Expression with universe level (which means they can be lifted).
 pub trait LiftEx: Sized {
     /// Lift the level of `self`.
-    fn lift(self, levels: u32) -> Self;
+    fn lift(self, levels: LevelType) -> Self;
 
     /// Internal API, for code sharing only.
     fn calc_level(&self) -> LevelCalcState;
@@ -55,15 +57,15 @@ pub trait LiftEx: Sized {
     }
 }
 
-impl From<u32> for Level {
-    fn from(n: u32) -> Self {
+impl From<LevelType> for Level {
+    fn from(n: LevelType) -> Self {
         Level::Num(n)
     }
 }
 
 impl From<usize> for Level {
     fn from(n: usize) -> Self {
-        From::from(n as u32)
+        From::from(n as LevelType)
     }
 }
 
@@ -78,7 +80,7 @@ impl Display for Level {
 
 impl Default for Level {
     fn default() -> Self {
-        From::from(0u32)
+        From::from(0 as LevelType)
     }
 }
 
@@ -106,29 +108,32 @@ impl Add for Level {
     }
 }
 
-impl Add<u32> for Level {
+impl Add<LevelType> for Level {
     type Output = Self;
 
-    fn add(self, rhs: u32) -> Self::Output {
+    fn add(self, rhs: LevelType) -> Self::Output {
         self.map(|a| a + rhs)
     }
 }
 
-impl Sub<u32> for Level {
+impl Sub<LevelType> for Level {
     type Output = Self;
 
-    fn sub(self, rhs: u32) -> Self::Output {
+    fn sub(self, rhs: LevelType) -> Self::Output {
         self.map(|a| a - rhs)
     }
 }
 
-pub fn lift_tree_map<T: LiftEx>(levels: u32, map: BTreeMap<String, T>) -> BTreeMap<String, T> {
+pub fn lift_tree_map<T: LiftEx>(
+    levels: LevelType,
+    map: BTreeMap<String, T>,
+) -> BTreeMap<String, T> {
     map.into_iter()
         .map(|(name, e)| (name, e.lift(levels)))
         .collect()
 }
 
-pub fn lift_hash_map<T: LiftEx>(levels: u32, map: HashMap<String, T>) -> HashMap<String, T> {
+pub fn lift_hash_map<T: LiftEx>(levels: LevelType, map: HashMap<String, T>) -> HashMap<String, T> {
     map.into_iter()
         .map(|(name, e)| (name, e.lift(levels)))
         .collect()

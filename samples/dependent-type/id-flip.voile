@@ -4,10 +4,16 @@
 // Author: ice1000
 //
 
-val id: (A : Type) -> A -> A;
+val ID : Type1;
+let ID = (A : Type) -> A -> A;
+
+val id: ID;
 let id = \A a. a;
 
 val flip : (A B C : Type)
          -> (A -> B -> C)
          -> (B -> A -> C);
 let flip = \A B C f a b. id C $ f b a;
+
+val idId : ID;
+let idId = (^id) ID id;
