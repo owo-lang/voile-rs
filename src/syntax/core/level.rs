@@ -13,8 +13,7 @@ impl LiftEx for Val {
             Val::RowKind(l, k, ls) => Val::RowKind(l + levels, k, ls),
             Val::Lam(closure) => Val::Lam(closure.lift(levels)),
             Val::Dt(kind, plicit, param_type, closure) => {
-                // Lift closure?
-                Val::dependent_type(kind, plicit, param_type.lift(levels), closure)
+                Val::dependent_type(kind, plicit, param_type.lift(levels), closure.lift(levels))
             }
             Val::RowPoly(kind, variants) => Val::RowPoly(kind, lift_tree_map(levels, variants)),
             Val::Rec(fields) => Val::Rec(lift_tree_map(levels, fields)),
@@ -45,7 +44,21 @@ impl LiftEx for Neutral {
         use super::Neutral::*;
         match self {
             Lift(n, expr) => Lift(n + levels, expr),
-            e => Lift(levels, Box::new(e)),
+            Var(n) => Var(n),
+            Ref(n) => Ref(n),
+            Meta(n) => Meta(n),
+            Axi(x) => Axi(x),
+            App(f, args) => App(
+                Box::new(f.lift(levels)),
+                args.into_iter().map(|a| a.lift(levels)).collect(),
+            ),
+            Fst(p) => Fst(Box::new(p.lift(levels))),
+            Snd(p) => Snd(Box::new(p.lift(levels))),
+            Proj(r, n) => Proj(Box::new(r.lift(levels)), n),
+            Row(kind, v, e) => Row(kind, lift_tree_map(levels, v), Box::new(e.lift(levels))),
+            Rec(v, e) => Rec(lift_tree_map(levels, v), Box::new(e.lift(levels))),
+            SplitOn(split, on) => SplitOn(lift_tree_map(levels, split), Box::new(on.lift(levels))),
+            OrSplit(split, or) => OrSplit(lift_tree_map(levels, split), Box::new(or.lift(levels))),
         }
     }
 
