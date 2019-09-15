@@ -162,7 +162,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
         (Lam(..), Val::Dt(Pi, Plicit::Im, param_ty, ret_ty)) => {
             let param_type = param_ty.clone().into_info(Default::default());
             tcs.local_gamma.push(param_type);
-            let mocked = mock_for(&**param_ty, || Val::fresh_implicit());
+            let mocked = mock_for(&**param_ty, Val::fresh_implicit);
             let mocked_term = mocked.clone().into_info(Default::default());
             tcs.local_env.push(mocked_term);
             let ret_ty_body = ret_ty.instantiate_cloned(mocked);
@@ -226,8 +226,9 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             }
         }
         (Lift(info, levels, expr), anything) => {
+            let anything = anything.clone();
             let (expr, tcs) = tcs
-                .check(&**expr, &anything.clone().lift(0 - *levels))
+                .check(&**expr, &anything.fall(*levels))
                 .map_err(|e| e.wrap(*info))?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
@@ -235,7 +236,7 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             Val::RowPoly(Variant, variants) if variants.is_empty() => {
                 Ok((Val::Lam(Closure::default()).into_info(*info), tcs))
             }
-            ty => Err(TCE::NotEmpty(info.clone(), ty.clone())),
+            ty => Err(TCE::NotEmpty(*info, ty.clone())),
         },
         // How about when `Dt` is `Plicit::Im`?
         (CaseOr(label, binding, uid, body, or), Val::Dt(Pi, Plicit::Ex, param_ty, ret_ty)) => {

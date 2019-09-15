@@ -44,6 +44,11 @@ pub trait LiftEx: Sized {
     /// Lift the level of `self`.
     fn lift(self, levels: u32) -> Self;
 
+    /// Down-lift the level of `self`.
+    /// Separated with `lift` instead of allowing negative numbers to `lift`
+    /// because we want the symbol to be explicit.
+    fn fall(self, levels: u32) -> Self;
+
     /// Internal API, for code sharing only.
     fn calc_level(&self) -> LevelCalcState;
 
@@ -131,6 +136,18 @@ pub fn lift_tree_map<T: LiftEx>(levels: u32, map: BTreeMap<String, T>) -> BTreeM
 pub fn lift_hash_map<T: LiftEx>(levels: u32, map: HashMap<String, T>) -> HashMap<String, T> {
     map.into_iter()
         .map(|(name, e)| (name, e.lift(levels)))
+        .collect()
+}
+
+pub fn fall_tree_map<T: LiftEx>(levels: u32, map: BTreeMap<String, T>) -> BTreeMap<String, T> {
+    map.into_iter()
+        .map(|(name, e)| (name, e.fall(levels)))
+        .collect()
+}
+
+pub fn fall_hash_map<T: LiftEx>(levels: u32, map: HashMap<String, T>) -> HashMap<String, T> {
+    map.into_iter()
+        .map(|(name, e)| (name, e.fall(levels)))
         .collect()
 }
 
