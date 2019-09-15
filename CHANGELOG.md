@@ -1,6 +1,10 @@
 # Change Log
 
 # 0.2.1
+
++ Mock terms in a smarter way (#174)
++ Make lift actually work (#175)
+
 # 0.2.0
 
 + Update docs
