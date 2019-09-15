@@ -221,15 +221,31 @@ fn evaluate_variants(mut tcs: TCS, variants: Vec<LabAbs>) -> (Variants, TCS) {
 /// Expand global references to concrete values,
 /// like meta references or global references due to recursion.
 fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
-    let val = expr.map_neutral(&mut |neut| match neut {
-        Neutral::Ref(index) => tcs.glob_val(index).ast.clone(),
-        Neutral::Meta(mi) => match &tcs.meta_context.solution(mi) {
-            MetaSolution::Solved(val) => *val.clone(),
-            MetaSolution::Unsolved => panic!("Cannot eval unsolved meta: {:?}", mi),
-            MetaSolution::Inlined => unreachable!(),
-        },
-        neut => Val::Neut(neut),
-    });
+    use Neutral::*;
+    fn go(tcs: &TCS, neut: Neutral) -> Val {
+        let java = |neut: Box<Neutral>| go(tcs, *neut);
+        match neut {
+            Ref(index) => tcs.glob_val(index).ast.clone(),
+            Lift(levels, o) => java(o).lift(levels),
+            App(o, args) => args.into_iter().fold(java(o), Val::apply),
+            Fst(p) => java(p).first(),
+            Snd(p) => java(p).second(),
+            Proj(r, f) => java(r).project(f),
+            Meta(mi) => match &tcs.meta_context.solution(mi) {
+                MetaSolution::Solved(val) => *val.clone(),
+                MetaSolution::Unsolved => panic!("Cannot eval unsolved meta: {:?}", mi),
+                MetaSolution::Inlined => unreachable!(),
+            },
+            SplitOn(split, obj) => Val::case_tree(split).apply(java(obj)),
+            OrSplit(split, or) => Val::case_tree(split).split_extend(java(or)),
+            // Change variants?
+            Row(kind, variants, ext) => Val::RowPoly(kind, variants).row_extend(java(ext)),
+            // Change fields?
+            Rec(fields, ext) => Val::Rec(fields).row_extend(java(ext)),
+            neut => Val::Neut(neut),
+        }
+    }
+    let val = expr.map_neutral(&mut |neut| go(&tcs, neut));
     (val, tcs)
 }
 

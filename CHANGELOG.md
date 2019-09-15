@@ -4,6 +4,7 @@
 
 + Mock terms in a smarter way (#174)
 + Make lift actually work (#175)
++ Expand global references in nested neutral terms (#176)
 
 # 0.2.0
 
