@@ -124,12 +124,14 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             let expr = Val::RowKind(Default::default(), *kind, labels);
             Ok((expr.into_info(*info), tcs))
         }
-        (Meta(ident, mi), Val::RowPoly(Record, v)) if v.is_empty() => {
-            tcs.meta_context
-                .solve_meta(*mi, Val::Rec(Default::default()));
+        (Meta(ident, mi), ty) => {
+            let axiom = Val::fresh_axiom();
+            let mocked = mock_for(ty, || axiom.clone());
+            if mocked != axiom {
+                tcs.meta_context.solve_meta(*mi, mocked);
+            }
             Ok((Val::meta(*mi).into_info(ident.loc), tcs))
         }
-        (Meta(ident, mi), _) => Ok((Val::meta(*mi).into_info(ident.loc), tcs)),
         (Pair(info, fst, snd), Val::Dt(Sigma, Plicit::Ex, param_ty, closure)) => {
             let (fst_term, mut tcs) = tcs.check(&**fst, &**param_ty).map_err(|e| e.wrap(*info))?;
             let fst_term_ast = fst_term.ast.clone();
@@ -269,10 +271,18 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
 }
 
 fn mock_for(param_ty: &Val, fallback: impl FnOnce() -> Val) -> Val {
-    match param_ty {
-        Val::RowPoly(Record, v) if v.is_empty() => Val::Rec(Default::default()),
-        _ => fallback(),
+    use Val::*;
+    fn go(param_ty: &Val) -> Option<Val> {
+        match param_ty {
+            RowPoly(Record, v) if v.is_empty() => Some(Rec(Default::default())),
+            RowPoly(Variant, v) if v.len() == 1 => {
+                let (name, ty) = v.iter().next().unwrap();
+                Some(Val::cons(name.clone(), go(ty)?))
+            }
+            _ => None,
+        }
     }
+    go(param_ty).unwrap_or_else(fallback)
 }
 
 fn check_fallback(tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {

@@ -268,6 +268,7 @@ fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
             tcs.unify_case_split(split_a, split_b)?
                 .unify_neutral(&**a, &**b)
         }
+        (Axi(a), Axi(b)) if a.unique_id() == b.unique_id() => Ok(tcs),
         (e, t) => Err(TCE::CannotUnify(Val::Neut(e.clone()), Val::Neut(t.clone()))),
     }
 }

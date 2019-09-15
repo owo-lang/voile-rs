@@ -9,6 +9,14 @@ let Unit = Rec {};
 val unit : Unit;
 let unit = {| |};
 
+val unitSolved : Unit;
+let unitSolved = _;
+
+let WrappedUnit = Sum { U: Unit; };
+
+val unitSolved2 : WrappedUnit;
+let unitSolved2 = _;
+
 let Bool = Sum { True: Unit; False: Unit; };
 
 val true : Bool;

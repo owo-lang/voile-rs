@@ -3,6 +3,12 @@ sign: set1
 body: Rec {}
 sign: Rec {}
 body: {||}
+sign: Rec {}
+body: {||}
+sign: set1
+body: Sum {U: Rec {}}
+sign: Sum {U: Rec {}}
+body: (@U {||})
 sign: set1
 body: Sum {False: Rec {}, True: Rec {}}
 sign: Sum {False: Rec {}, True: Rec {}}
