@@ -1,6 +1,6 @@
 [package]
 name = "voile-util"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["ice1000 <ice1000kotlin@foxmail.com>"]
 edition = "2018"
 license = "Apache-2.0"

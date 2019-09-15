@@ -1,34 +1,27 @@
 use super::{Closure, Neutral, Val};
 use voile_util::level::{
-    calc_slice_plus_one_level, calc_tree_map_level, calc_tree_map_plus_one_level, fall_tree_map,
-    lift_tree_map, Level, LevelCalcState, LiftEx,
+    calc_slice_plus_one_level, calc_tree_map_level, calc_tree_map_plus_one_level, lift_tree_map,
+    Level, LevelCalcState, LiftEx,
 };
 
 pub const TYPE_OMEGA: Val = Val::Type(Level::Omega);
 
-macro_rules! define_val_lift {
-    ($lift:ident, $lift_tree:ident, $op:expr) => {
-        fn $lift(self, levels: u32) -> Val {
-            match self {
-                Val::Type(l) => Val::Type($op(l, levels)),
-                Val::RowKind(l, k, ls) => Val::RowKind($op(l, levels), k, ls),
-                Val::Lam(closure) => Val::Lam(closure.$lift(levels)),
-                Val::Dt(kind, plicit, param_type, closure) => {
-                    Val::dependent_type(kind, plicit, param_type.$lift(levels), closure.$lift(levels))
-                }
-                Val::RowPoly(kind, variants) => Val::RowPoly(kind, $lift_tree(levels, variants)),
-                Val::Rec(fields) => Val::Rec($lift_tree(levels, fields)),
-                Val::Cons(name, e) => Val::cons(name, e.$lift(levels)),
-                Val::Pair(l, r) => Val::pair(l.$lift(levels), r.$lift(levels)),
-                Val::Neut(neut) => Val::Neut(neut.$lift(levels)),
-            }
-        }
-    };
-}
-
 impl LiftEx for Val {
-    define_val_lift!(lift, lift_tree_map, ::std::ops::Add::add);
-    define_val_lift!(fall, fall_tree_map, ::std::ops::Sub::sub);
+    fn lift(self, levels: u32) -> Val {
+        match self {
+            Val::Type(l) => Val::Type(l + levels),
+            Val::RowKind(l, k, ls) => Val::RowKind(l + levels, k, ls),
+            Val::Lam(closure) => Val::Lam(closure.lift(levels)),
+            Val::Dt(kind, plicit, param_type, closure) => {
+                Val::dependent_type(kind, plicit, param_type.lift(levels), closure.lift(levels))
+            }
+            Val::RowPoly(kind, variants) => Val::RowPoly(kind, lift_tree_map(levels, variants)),
+            Val::Rec(fields) => Val::Rec(lift_tree_map(levels, fields)),
+            Val::Cons(name, e) => Val::cons(name, e.lift(levels)),
+            Val::Pair(l, r) => Val::pair(l.lift(levels), r.lift(levels)),
+            Val::Neut(neut) => Val::Neut(neut.lift(levels)),
+        }
+    }
 
     fn calc_level(&self) -> LevelCalcState {
         match self {
@@ -55,14 +48,6 @@ impl LiftEx for Neutral {
         }
     }
 
-    fn fall(self, levels: u32) -> Self {
-        use super::Neutral::*;
-        match self {
-            Lift(n, expr) => Lift(n - levels, expr),
-            e => panic!("Unexpected fall: `{}`.", e),
-        }
-    }
-
     fn calc_level(&self) -> LevelCalcState {
         use super::Neutral::*;
         match self {
@@ -84,21 +69,14 @@ impl LiftEx for Neutral {
     }
 }
 
-macro_rules! define_clos_lift {
-    ($lift:ident, $lift_tree:ident) => {
-        fn $lift(self, levels: u32) -> Self {
-            use super::Closure::*;
-            match self {
-                Plain(body) => Self::plain(body.$lift(levels)),
-                Tree(split) => Tree($lift_tree(levels, split)),
-            }
+impl LiftEx for Closure {
+    fn lift(self, levels: u32) -> Self {
+        use super::Closure::*;
+        match self {
+            Plain(body) => Self::plain(body.lift(levels)),
+            Tree(split) => Tree(lift_tree_map(levels, split)),
         }
     }
-}
-
-impl LiftEx for Closure {
-    define_clos_lift!(lift, lift_tree_map);
-    define_clos_lift!(fall, fall_tree_map);
 
     fn calc_level(&self) -> LevelCalcState {
         use super::Closure::*;
