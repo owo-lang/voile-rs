@@ -34,6 +34,7 @@ impl Display for Neutral {
             Snd(p) => write!(f, "({}.2)", p),
             Proj(rec, field) => write!(f, "({}.{})", rec, field),
             Lift(levels, p) => write!(f, "(^[{:?}] {})", levels, p),
+            Fall(levels, p) => write!(f, "(_[{:?}] {})", levels, p),
             Row(kind, variants, ext) => {
                 write!(f, "{} {{", kind)?;
                 write_variants(f, variants, ":")?;

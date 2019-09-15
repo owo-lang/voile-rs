@@ -1,4 +1,5 @@
 use super::{Closure, Neutral, Val};
+use std::cmp::Ordering;
 use voile_util::level::{
     calc_slice_plus_one_level, calc_tree_map_level, calc_tree_map_plus_one_level, fall_tree_map,
     lift_tree_map, Level, LevelCalcState, LiftEx,
@@ -7,14 +8,14 @@ use voile_util::level::{
 pub const TYPE_OMEGA: Val = Val::Type(Level::Omega);
 
 macro_rules! define_val_lift {
-    ($lift:ident, $lift_tree:ident, $op:expr) => {
+    ($lift:ident, $fall:ident, $lift_tree:ident, $op:expr) => {
         fn $lift(self, levels: u32) -> Val {
             match self {
                 Val::Type(l) => Val::Type($op(l, levels)),
                 Val::RowKind(l, k, ls) => Val::RowKind($op(l, levels), k, ls),
                 Val::Lam(closure) => Val::Lam(closure.$lift(levels)),
                 Val::Dt(kind, plicit, param_type, closure) => {
-                    Val::dependent_type(kind, plicit, param_type.$lift(levels), closure.$lift(levels))
+                    Val::dependent_type(kind, plicit, param_type.$fall(levels), closure.$lift(levels))
                 }
                 Val::RowPoly(kind, variants) => Val::RowPoly(kind, $lift_tree(levels, variants)),
                 Val::Rec(fields) => Val::Rec($lift_tree(levels, fields)),
@@ -27,8 +28,8 @@ macro_rules! define_val_lift {
 }
 
 impl LiftEx for Val {
-    define_val_lift!(lift, lift_tree_map, ::std::ops::Add::add);
-    define_val_lift!(fall, fall_tree_map, ::std::ops::Sub::sub);
+    define_val_lift!(lift, fall, lift_tree_map, ::std::ops::Add::add);
+    define_val_lift!(fall, lift, fall_tree_map, ::std::ops::Sub::sub);
 
     fn calc_level(&self) -> LevelCalcState {
         match self {
@@ -51,6 +52,11 @@ impl LiftEx for Neutral {
         use super::Neutral::*;
         match self {
             Lift(n, expr) => Lift(n + levels, expr),
+            Fall(n, expr) => match n.cmp(&levels) {
+                Ordering::Less => Lift(levels - n, expr),
+                Ordering::Equal => *expr,
+                Ordering::Greater => Fall(n - levels, expr),
+            },
             e => Lift(levels, Box::new(e)),
         }
     }
@@ -58,8 +64,13 @@ impl LiftEx for Neutral {
     fn fall(self, levels: u32) -> Self {
         use super::Neutral::*;
         match self {
-            Lift(n, expr) => Lift(n - levels, expr),
-            e => panic!("Unexpected fall: `{}`.", e),
+            Fall(n, expr) => Lift(n + levels, expr),
+            Lift(n, expr) => match n.cmp(&levels) {
+                Ordering::Less => Fall(levels - n, expr),
+                Ordering::Equal => *expr,
+                Ordering::Greater => Lift(n - levels, expr),
+            },
+            e => Fall(levels, Box::new(e)),
         }
     }
 
@@ -70,6 +81,10 @@ impl LiftEx for Neutral {
                 Some(m) => Some(m + *n),
                 // Trying to lift yourself makes you omega.
                 None => Some(Level::Omega),
+            },
+            Fall(n, expr) => match expr.calc_level() {
+                Some(m) => Some(m - *n),
+                None => unreachable!(),
             },
             // Level is zero by default
             Var(..) | Axi(..) | Meta(..) => Some(Default::default()),
