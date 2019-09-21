@@ -29,6 +29,18 @@ macro_rules! uid_basic_operations_impl {
             }
         }
 
+        impl $name {
+            pub fn succ(mut self) -> Self {
+                self.0 += 1;
+                self
+            }
+
+            pub fn pred(mut self) -> Self {
+                self.0 -= 1;
+                self
+            }
+        }
+
         impl std::fmt::Display for $name {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::result::Result<(), std::fmt::Error> {
                 self.0.fmt(f)
