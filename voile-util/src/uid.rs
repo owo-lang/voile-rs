@@ -30,15 +30,18 @@ macro_rules! uid_basic_operations_impl {
         }
 
         impl $name {
+            /// Successor.
             pub fn succ(mut self) -> Self {
                 self.0 += 1;
                 self
             }
 
+            /// Predecessor.
             pub fn pred(self) -> Self {
                 self.nat().unwrap()
             }
 
+            /// Pattern matcher.
             pub fn nat(self) -> Option<Self> {
                 if self.0 == 0 {
                     None
@@ -73,6 +76,11 @@ uid_basic_operations_impl!(GI);
 
 /// Unique-ID generator internal counter.
 static mut UID_COUNT: usize = 0;
+
+/// Reset the unique-ID generator.
+pub unsafe fn reset_uid_counter() {
+    UID_COUNT = 0;
+}
 
 /// Unique-ID generation function.
 pub unsafe fn next_uid() -> UID {
