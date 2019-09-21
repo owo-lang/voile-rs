@@ -35,9 +35,16 @@ macro_rules! uid_basic_operations_impl {
                 self
             }
 
-            pub fn pred(mut self) -> Self {
-                self.0 -= 1;
-                self
+            pub fn pred(self) -> Self {
+                self.nat().unwrap()
+            }
+
+            pub fn nat(self) -> Option<Self> {
+                if self.0 == 0 {
+                    None
+                } else {
+                    Some($name(self.0 - 1))
+                }
             }
         }
 
