@@ -19,10 +19,15 @@
  [av-url]: https://ci.appveyor.com/project/ice1000/voile-rs/branch/master
  [av-svg]: https://ci.appveyor.com/api/projects/status/8rehm08ncp6whxwt/branch/master?svg=true
  [icon]: https://raw.githubusercontent.com/owo-lang/voile-rs/master/rustdoc/icon.svg?sanitize=true
+ [Narc]: https://github.com/owo-lang/narc-rs
+ [minitt]: https://github.com/owo-lang/minitt-rs
 
 Voile is a dependently-typed programming language with a non-dependent version
 of row-polymorphism, meta variable resolution and implicit parameter syntax.
 For language description, please head to the [docs.rs][doc-rs] page.
+
+Voile is the language *after* [minitt],
+and the *next* language after Voile is [Narc].
 
 ## Resources
 
