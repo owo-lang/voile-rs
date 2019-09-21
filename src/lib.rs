@@ -171,19 +171,19 @@ of the functions in this crate.
 <details>
 <summary>About the name, Voile</summary>
 <span>
-This name is inspired from a friend whose username is <a
+This language is named after a person whose username is <a
 href="https://www.codewars.com/users/Voile"><em>Voile</em></a> (or
 <a href="https://github.com/Voileexperiments"><em>Voileexperiments</em></a>).
-However, this is also the name of a library in the
+However, this is also the name of a library of the
 <a href="https://en.touhouwiki.net/wiki/Scarlet_Devil_Mansion"><em>
 Scarlet Devil Mansion</em></a>.
-</span></span>
+</span>
 <span><details>
 <summary>The librarian of Voile, the Magic Library</summary>
 <img src=
 "https://raw.githubusercontent.com/owo-lang/voile-rs/master/rustdoc/voile-librarian.png"
-alt="" />
-</details>
+alt=""></img>
+</details></span>
 </details></span>
 */
 
