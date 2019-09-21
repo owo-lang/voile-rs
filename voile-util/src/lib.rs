@@ -7,6 +7,8 @@ to help the development of other dependently-typed lambda calculus type checkers
 It contains helper functions for the [Pest] parser
 (supported via optional feature `parser`),
 a non-empty vector, some location utils, a unique-ID type with utils,
+many indices type support (meta-variable indices, global definition indices,
+de-bruijn indices) with pattern matcher and operators,
 a lisp parser for term generation,
 and universe level utilities (with omega).
 

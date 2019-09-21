@@ -9,6 +9,22 @@ macro_rules! uid_basic_operations_impl {
             }
         }
 
+        impl std::ops::Add<u32> for $name {
+            type Output = $name;
+
+            fn add(self, rhs: u32) -> Self::Output {
+                self.add(rhs as usize)
+            }
+        }
+
+        impl std::ops::Add<i32> for $name {
+            type Output = $name;
+
+            fn add(self, rhs: i32) -> Self::Output {
+                Self(((self.0 as i32) + rhs) as usize)
+            }
+        }
+
         impl std::ops::Add for $name {
             type Output = $name;
 
@@ -46,7 +62,7 @@ macro_rules! uid_basic_operations_impl {
                 if self.0 == 0 {
                     None
                 } else {
-                    Some($name(self.0 - 1))
+                    Some(Self(self.0 - 1))
                 }
             }
         }

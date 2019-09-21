@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.2.2
+
++ Documentation fix
++ Add few more power to the util library
+
 # 0.2.1
 
 + Mock terms in a smarter way (#174)
