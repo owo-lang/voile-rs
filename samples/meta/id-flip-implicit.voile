@@ -11,3 +11,5 @@ val flip : {A B C : Type}
          -> (A -> B -> C)
          -> (B -> A -> C);
 let flip = \f a b. id (f b a);
+
+let idId = (^id) id;
