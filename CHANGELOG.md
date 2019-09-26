@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.2.3
+
++ Inline metas more eagerly (#178)
+
 # 0.2.2
 
 + Documentation fix
