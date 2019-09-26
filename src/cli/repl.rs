@@ -3,8 +3,8 @@ use std::fmt::Display;
 use minitt_util::repl::{repl as repl_impl, MiniHelper, ReplEnvType};
 use rustyline::Editor;
 
-use voile::check::check_decls;
 use voile::check::monad::{TCM, TCS as TCMS};
+use voile::check::{check_decls, inline_metas};
 use voile::syntax::abs::{trans_decls_contextual, trans_expr, Abs, TransState};
 use voile::syntax::surf::{parse_expr_err_printed, parse_str_err_printed, Decl};
 use voile_util::level::LiftEx;
@@ -85,7 +85,10 @@ fn work(tcs: TCS, current_mode: ReplEnvType, line: &str) -> Option<TCS> {
 }
 
 fn infer(tcs: TCS, line: &str) -> TCS {
-    expression_thing(tcs, line, INFER_CMD, |tcms, abs| tcms.infer(&abs))
+    expression_thing(tcs, line, INFER_CMD, |tcms, abs| {
+        let (inferred, tcs) = tcms.infer(&abs)?;
+        inline_metas(tcs, inferred)
+    })
 }
 
 fn eval(tcs: TCS, line: &str) -> TCS {

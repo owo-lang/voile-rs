@@ -178,7 +178,13 @@ fn evaluate(tcs: TCS, abs: Abs) -> (ValInfo, TCS) {
             let (expr, tcs) = tcs.expand_global(expr.ast);
             (expr.lift(levels).into_info(info), tcs)
         }
-        Meta(ident, mi) => (Val::meta(mi).into_info(ident.loc), tcs),
+        Meta(ident, mi) => {
+            if let MetaSolution::Solved(sol) = tcs.meta_context.solution(mi) {
+                (sol.clone().into_info(ident.loc), tcs)
+            } else {
+                (Val::meta(mi).into_info(ident.loc), tcs)
+            }
+        }
         RowPoly(info, kind, variants, ext) => {
             let (variants, tcs) = evaluate_variants(tcs, variants);
             let row_poly = Val::RowPoly(kind, variants);

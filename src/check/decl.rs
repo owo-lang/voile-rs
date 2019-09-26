@@ -24,7 +24,7 @@ fn unimplemented_to_glob(v: &mut [ValInfo], i: usize) {
     swap(&mut placeholder, &mut v[i]);
 }
 
-fn inline_metas(mut tcs: TCS, val: ValInfo) -> ValTCM {
+pub fn inline_metas(mut tcs: TCS, val: ValInfo) -> ValTCM {
     use Neutral::*;
     let info = val.loc;
     let val = val.ast.try_map_neutral(&mut |neut| match neut {

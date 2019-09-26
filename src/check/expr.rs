@@ -1,5 +1,6 @@
 use voile_util::level::{Level, LevelType, LiftEx};
 use voile_util::loc::*;
+use voile_util::meta::MetaSolution;
 use voile_util::tags::{PiSig::*, Plicit, VarRec, VarRec::*};
 
 use crate::syntax::abs::{Abs, LabAbs};
@@ -610,6 +611,13 @@ fn check_app_type(tcs: TCS, f: &Abs, info: Loc, a: &Abs, pi_ty: &Val) -> ValTCM 
             let new_closure = closure.instantiate_cloned(inserted_meta);
             check_app_type(tcs, f, info, a, &new_closure)
         }
+        Val::Neut(Neutral::Meta(mi)) => match tcs.meta_context.solution(*mi) {
+            MetaSolution::Solved(sol) => {
+                let sol = *sol.clone();
+                check_app_type(tcs, f, info, a, &sol)
+            }
+            _ => Err(TCE::MetaUnsolved(*mi)),
+        },
         other => Err(TCE::NotPi(info, other.clone())),
     }
 }
