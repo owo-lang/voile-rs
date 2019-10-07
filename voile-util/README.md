@@ -16,6 +16,6 @@ It contains helper functions for the [Pest] parser
 (supported via optional feature `parser`),
 a non-empty vector, some location utils, a unique-ID type with utils,
 a lisp parser for term generation,
-and universe level utilities (with omega).
+and universe level utilities (with omega type as the maximum universe).
 
  [Pest]: https://pest.rs
