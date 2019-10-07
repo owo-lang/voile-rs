@@ -1,5 +1,5 @@
-use pest::iterators::Pairs;
-use pest::{RuleType, Span};
+use pest::iterators::{Pair, Pairs};
+use pest::{Parser, RuleType, Span};
 
 use crate::loc::Loc;
 
@@ -22,24 +22,41 @@ macro_rules! next_rule {
 }
 
 #[macro_export]
-macro_rules! define_parse_str {
-    ($name:ident, $parser:ident, $root_rule:ident, $root_trans:ident, $ret:ty) => {
-        /// Parse a string into an optional expr based on the `$root_rule` rule:
-        pub fn $name(input: &str) -> Result<$ret, String> {
-            let the_rule: Tok = $parser::parse(Rule::$root_rule, input)
-                .map_err(|err| format!("Parse failed at:{}", err))?
-                .next()
-                .unwrap();
-            let end_pos = the_rule.as_span().end_pos().pos();
-            let expr = $root_trans(the_rule);
-            if end_pos < input.len() {
-                let rest = &input[end_pos..];
-                Err(format!("Does not consume the following code:\n{}", rest))
-            } else {
-                Ok(expr)
+macro_rules! many_prefix_parser {
+    ($name:ident, $prefix_ty:ident, $prefix:ident, $end:ident, $e:ty) => {
+        fn $name(rules: Tok) -> (Vec<$prefix_ty>, Option<$e>) {
+            let mut prefixes = Vec::new();
+            let mut end = None;
+            for the_rule in rules.into_inner() {
+                match the_rule.as_rule() {
+                    Rule::$prefix => prefixes.push($prefix(the_rule)),
+                    Rule::$end => end = Some($end(the_rule)),
+                    e => panic!("Unexpected rule: {:?} with token {}.", e, the_rule.as_str()),
+                }
             }
+            (prefixes, end)
         }
     };
+}
+
+pub fn strict_parse<'a, P, F, R, T>(rule: R, input: &'a str, f: F) -> Result<T, String>
+where
+    P: Parser<R>,
+    R: RuleType,
+    F: FnOnce(Pair<'a, R>) -> T,
+{
+    let rule = P::parse(rule, input)
+        .map_err(|err| format!("Parse failed at:{}", err))?
+        .next()
+        .unwrap();
+    let end_pos = rule.as_span().end_pos();
+
+    if end_pos.pos() < input.len() {
+        let rest = &input[end_pos.pos()..];
+        Err(format!("Does not consume the following code: '{}'", rest))
+    } else {
+        Ok(f(rule))
+    }
 }
 
 #[inline]

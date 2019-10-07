@@ -3,6 +3,7 @@
 # 0.2.3
 
 + Inline metas more eagerly (#178)
++ Improve pest utility
 
 # 0.2.2
 

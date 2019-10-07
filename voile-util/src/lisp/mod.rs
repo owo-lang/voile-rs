@@ -1,7 +1,6 @@
-use pest::Parser;
 use pest_derive::Parser;
 
-use crate::pest_util::end_of_rule;
+use crate::pest_util::{end_of_rule, strict_parse};
 use crate::uid::DBI;
 
 #[derive(Parser)]
@@ -48,7 +47,9 @@ impl<'a> std::fmt::Display for Lisp<'a> {
 
 tik_tok!();
 
-define_parse_str!(parse_str, CoreParser, element, element, Lisp);
+pub fn parse_str(input: &str) -> Result<Lisp, String> {
+    strict_parse::<CoreParser, _, _, _>(Rule::element, input, element)
+}
 
 fn element(rules: Tok) -> Lisp {
     let mut inner: Tik = rules.into_inner();

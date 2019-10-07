@@ -1,9 +1,8 @@
-use pest::Parser;
 use pest_derive::Parser;
 
 use voile_util::level::Level;
 use voile_util::loc::{Ident, Loc};
-use voile_util::pest_util::end_of_rule;
+use voile_util::pest_util::{end_of_rule, strict_parse};
 use voile_util::tags::{Plicit, VarRec};
 use voile_util::vec1::Vec1;
 
@@ -19,8 +18,13 @@ struct VoileParser;
 
 tik_tok!();
 
-define_parse_str!(parse_str, VoileParser, file, declarations, Vec<Decl>);
-define_parse_str!(parse_str_expr, VoileParser, standalone_expr, expr, Expr);
+pub fn parse_str(input: &str) -> Result<Vec<Decl>, String> {
+    strict_parse::<VoileParser, _, _, _>(Rule::file, input, declarations)
+}
+
+pub fn parse_str_expr(input: &str) -> Result<Expr, String> {
+    strict_parse::<VoileParser, _, _, _>(Rule::standalone_expr, input, expr)
+}
 
 macro_rules! expr_parser {
     ($name:ident,$smaller:ident,$cons:ident) => {
@@ -35,23 +39,6 @@ macro_rules! expr_parser {
             } else {
                 Expr::$cons(first, exprs)
             }
-        }
-    };
-}
-
-macro_rules! many_prefix_parser {
-    ($name:ident, $prefix_ty:ident, $prefix:ident, $end:ident) => {
-        fn $name(rules: Tok) -> (Vec<$prefix_ty>, Option<Expr>) {
-            let mut prefixes = Vec::new();
-            let mut end = None;
-            for the_rule in rules.into_inner() {
-                match the_rule.as_rule() {
-                    Rule::$prefix => prefixes.push($prefix(the_rule)),
-                    Rule::$end => end = Some($end(the_rule)),
-                    e => panic!("Unexpected rule: {:?} with token {}.", e, the_rule.as_str()),
-                }
-            }
-            (prefixes, end)
         }
     };
 }
@@ -84,8 +71,8 @@ fn row_rest(rules: Tok) -> Expr {
     expr
 }
 
-many_prefix_parser!(row_polymorphic, LabExpr, labelled, row_rest);
-many_prefix_parser!(record_literal, LabExpr, rec_field, row_rest);
+many_prefix_parser!(row_polymorphic, LabExpr, labelled, row_rest, Expr);
+many_prefix_parser!(record_literal, LabExpr, rec_field, row_rest, Expr);
 
 fn record(rules: Tok) -> Expr {
     let info = Loc::from(rules.as_span());
@@ -231,10 +218,10 @@ fn param(rules: Tok) -> Param {
     param
 }
 
-many_prefix_parser!(pi_expr_internal, Param, param, dollar_expr);
-many_prefix_parser!(sig_expr_internal, Param, param, pi_expr);
-many_prefix_parser!(multi_param, Ident, ident, expr);
-many_prefix_parser!(lambda_internal, Ident, ident, expr);
+many_prefix_parser!(pi_expr_internal, Param, param, dollar_expr, Expr);
+many_prefix_parser!(sig_expr_internal, Param, param, pi_expr, Expr);
+many_prefix_parser!(multi_param, Ident, ident, expr, Expr);
+many_prefix_parser!(lambda_internal, Ident, ident, expr, Expr);
 
 fn pi_expr(rules: Tok) -> Expr {
     let (params, ret) = pi_expr_internal(rules);
