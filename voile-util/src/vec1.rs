@@ -22,6 +22,23 @@ impl<T> Vec1<T> {
         self.tail.push(new)
     }
 
+    pub fn append(&mut self, mut new: Vec1<T>) {
+        self.push(new.head);
+        self.append_vec(&mut new.tail)
+    }
+
+    pub fn append_vec(&mut self, new: &mut Vec<T>) {
+        self.tail.append(new)
+    }
+
+    pub fn tail(&self) -> &T {
+        self.tail.last().unwrap_or(&self.head)
+    }
+
+    pub fn tail_mut(&mut self) -> &mut T {
+        self.tail.last_mut().unwrap_or(&mut self.head)
+    }
+
     pub fn insert(&mut self, index: usize, mut new: T) {
         if index == 0 {
             swap(&mut new, &mut self.head);
