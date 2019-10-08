@@ -13,13 +13,43 @@ impl<T> From<T> for Vec1<T> {
     }
 }
 
+impl<T> Into<Vec<T>> for Vec1<T> {
+    fn into(mut self) -> Vec<T> {
+        let mut v = Vec::with_capacity(self.len());
+        v.push(self.head);
+        v.append(&mut self.tail);
+        v
+    }
+}
+
 impl<T> Vec1<T> {
     pub fn new(head: T, tail: Vec<T>) -> Self {
         Self { head, tail }
     }
 
+    pub fn len(&self) -> usize {
+        self.tail.len() + 1
+    }
+
+    pub fn is_empty(&self) -> bool {
+        false
+    }
+
+    pub fn is_single(&self) -> bool {
+        self.tail.is_empty()
+    }
+
+    pub fn into_vec(self) -> Vec<T> {
+        self.into()
+    }
+
     pub fn push(&mut self, new: T) {
         self.tail.push(new)
+    }
+
+    pub fn append_self_into(mut self, target: &mut Vec<T>) {
+        target.push(self.head);
+        target.append(&mut self.tail);
     }
 
     pub fn append(&mut self, mut new: Vec1<T>) {
