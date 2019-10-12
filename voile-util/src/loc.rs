@@ -21,7 +21,7 @@ pub struct Ident {
 
 impl ToLoc for Ident {
     fn loc(&self) -> Loc {
-        self.loc.clone()
+        self.loc
     }
 }
 
@@ -38,6 +38,7 @@ pub trait ToLoc {
 impl Add for Loc {
     type Output = Self;
 
+    #[allow(clippy::suspicious_arithmetic_impl)]
     fn add(self, rhs: Self) -> Self::Output {
         Self::Output {
             line: self.line,
@@ -64,6 +65,10 @@ pub struct Labelled<Expr> {
 }
 
 impl<Expr> Labelled<Expr> {
+    pub fn new(label: Ident, expr: Expr) -> Self {
+        Self { label, expr }
+    }
+
     pub fn map_expr<Abs>(self, f: impl FnOnce(Expr) -> Abs) -> Labelled<Abs> {
         Labelled {
             label: self.label,

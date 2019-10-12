@@ -61,11 +61,11 @@ impl<T> Vec1<T> {
         self.tail.append(new)
     }
 
-    pub fn tail(&self) -> &T {
+    pub fn last(&self) -> &T {
         self.tail.last().unwrap_or(&self.head)
     }
 
-    pub fn tail_mut(&mut self) -> &mut T {
+    pub fn last_mut(&mut self) -> &mut T {
         self.tail.last_mut().unwrap_or(&mut self.head)
     }
 
