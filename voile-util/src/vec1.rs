@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::mem::swap;
 
 /// Non-empty vector.
@@ -10,6 +11,19 @@ pub struct Vec1<T> {
 impl<T> From<T> for Vec1<T> {
     fn from(head: T) -> Self {
         Self::new(head, Default::default())
+    }
+}
+
+impl<T> TryFrom<Vec<T>> for Vec1<T> {
+    type Error = ();
+
+    fn try_from(mut value: Vec<T>) -> Result<Self, Self::Error> {
+        if value.is_empty() {
+            Err(())
+        } else {
+            let head = value.remove(0);
+            Ok(Vec1::new(head, value))
+        }
     }
 }
 
@@ -105,12 +119,8 @@ impl<T> Vec1<T> {
         ))
     }
 
-    pub fn try_fold1<E>(self, mut f: impl FnMut(T, T) -> Result<T, E>) -> Result<T, E> {
-        let mut accum = self.head;
-        for x in self.tail.into_iter() {
-            accum = f(accum, x)?;
-        }
-        Ok(accum)
+    pub fn try_fold1<E>(self, f: impl FnMut(T, T) -> Result<T, E>) -> Result<T, E> {
+        self.tail.into_iter().try_fold(self.head, f)
     }
 
     pub fn try_fold<R, E>(self, init: R, mut f: impl FnMut(R, T) -> Result<R, E>) -> Result<R, E> {
