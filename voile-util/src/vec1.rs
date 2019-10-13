@@ -61,6 +61,22 @@ impl<T> Vec1<T> {
         self.tail.append(new)
     }
 
+    pub fn head(&self) -> &T {
+        &self.head
+    }
+
+    pub fn head_mut(&mut self) -> &mut T {
+        &mut self.head
+    }
+
+    pub fn tail(&self) -> &Vec<T> {
+        &self.tail
+    }
+
+    pub fn tail_mut(&mut self) -> &mut Vec<T> {
+        &mut self.tail
+    }
+
     pub fn last(&self) -> &T {
         self.tail.last().unwrap_or(&self.head)
     }
@@ -95,6 +111,11 @@ impl<T> Vec1<T> {
             accum = f(accum, x)?;
         }
         Ok(accum)
+    }
+
+    pub fn try_fold<R, E>(self, init: R, mut f: impl FnMut(R, T) -> Result<R, E>) -> Result<R, E> {
+        let init = f(init, self.head)?;
+        self.tail.into_iter().try_fold(init, f)
     }
 
     pub fn fold1(self, f: impl FnMut(T, T) -> T) -> T {
