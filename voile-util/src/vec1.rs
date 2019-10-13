@@ -112,6 +112,32 @@ impl<T> Vec1<T> {
         Vec1::new(f(self.head), self.tail.into_iter().map(f).collect())
     }
 
+    pub fn scan<St, B>(self, init: St, mut f: impl FnMut(St, T) -> (B, St)) -> (St, Vec1<B>) {
+        let (head, mut init) = f(init, self.head);
+        let mut ret = Vec::with_capacity(self.tail.len());
+        for e in self.tail {
+            let (e, new_init) = f(init, e);
+            init = new_init;
+            ret.push(e);
+        }
+        (init, Vec1::new(head, ret))
+    }
+
+    pub fn try_scan<St, B, E>(
+        self,
+        init: St,
+        mut f: impl FnMut(St, T) -> Result<(B, St), E>,
+    ) -> Result<(St, Vec1<B>), E> {
+        let (head, mut init) = f(init, self.head)?;
+        let mut ret = Vec::with_capacity(self.tail.len());
+        for e in self.tail {
+            let (e, new_init) = f(init, e)?;
+            init = new_init;
+            ret.push(e);
+        }
+        Ok((init, Vec1::new(head, ret)))
+    }
+
     pub fn try_map<E, R>(self, mut f: impl FnMut(T) -> Result<R, E>) -> Result<Vec1<R>, E> {
         Ok(Vec1::new(
             f(self.head)?,
