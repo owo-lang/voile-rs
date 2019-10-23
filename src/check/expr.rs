@@ -227,8 +227,9 @@ fn check(mut tcs: TCS, expr: &Abs, expected_type: &Val) -> ValTCM {
             }
         }
         (Lift(info, levels, expr), anything) => {
+            let anything = anything.clone();
             let (expr, tcs) = tcs
-                .check(&**expr, &anything.clone().lift(0 - *levels))
+                .check(&**expr, &anything.fall(*levels))
                 .map_err(|e| e.wrap(*info))?;
             Ok((expr.map_ast(|ast| ast.lift(*levels)), tcs))
         }
