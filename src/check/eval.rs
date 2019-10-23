@@ -245,9 +245,21 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
             SplitOn(split, obj) => Val::case_tree(split).apply(java(obj)),
             OrSplit(split, or) => Val::case_tree(split).split_extend(java(or)),
             // Change variants?
-            Row(kind, variants, ext) => Val::RowPoly(kind, variants).row_extend(java(ext)),
+            Row(kind, variants, ext) => Val::RowPoly(kind, variants)
+                .row_extend_safe(java(ext))
+                .unwrap_or_else(|(a, b)| match (a, b) {
+                    (Val::RowPoly(_, v), Val::Neut(ext)) => Val::neutral_row_type(kind, v, ext),
+                    _ => unreachable!(),
+                }),
             // Change fields?
-            Rec(fields, ext) => Val::Rec(fields).row_extend(java(ext)),
+            Rec(fields, ext) => {
+                (Val::Rec(fields).row_extend_safe(java(ext))).unwrap_or_else(|(a, b)| {
+                    match (a, b) {
+                        (Val::Rec(v), Val::Neut(ext)) => Val::neutral_record(v, ext),
+                        _ => unreachable!(),
+                    }
+                })
+            }
             neut => Val::Neut(neut),
         }
     }

@@ -105,42 +105,47 @@ impl Val {
 
     /// Extension for row-polymorphic types.
     pub fn row_extend(self, ext: Self) -> Self {
+        let err = format!("Cannot extend `{}` by `{}`.", self, ext);
+        self.row_extend_safe(ext).expect(&err)
+    }
+
+    pub fn row_extend_safe(self, ext: Self) -> Result<Self, (Self, Self)> {
         use {Neutral::Row, Val::*, VarRec::*};
         match (self, ext) {
             (RowPoly(Record, mut fields), RowPoly(Record, mut ext)) => {
                 fields.append(&mut ext);
-                Self::record_type(fields)
+                Ok(Self::record_type(fields))
             }
             (RowPoly(Record, mut fields), Neut(Row(Record, mut ext, more))) => {
                 fields.append(&mut ext);
-                Self::record_type(fields).row_extend(Neut(*more))
+                Self::record_type(fields).row_extend_safe(Neut(*more))
             }
             (RowPoly(Variant, mut variants), RowPoly(Variant, mut ext)) => {
                 variants.append(&mut ext);
-                Self::variant_type(variants)
+                Ok(Self::variant_type(variants))
             }
             (RowPoly(Variant, mut variants), Neut(Row(Variant, mut ext, more))) => {
                 variants.append(&mut ext);
-                Self::variant_type(variants).row_extend(Neut(*more))
+                Self::variant_type(variants).row_extend_safe(Neut(*more))
             }
             (RowPoly(kind, mut variants), RowPoly(_, mut ext)) => {
                 eprintln!("Warning: incorrect row extension!");
                 variants.append(&mut ext);
-                RowPoly(kind, variants)
+                Ok(RowPoly(kind, variants))
             }
             (RowPoly(kind, mut variants), Neut(Row(_, mut ext, more))) => {
                 eprintln!("Warning: incorrect row extension!");
                 variants.append(&mut ext);
-                RowPoly(kind, variants).row_extend(Neut(*more))
+                RowPoly(kind, variants).row_extend_safe(Neut(*more))
             }
             (RowPoly(kind, variants), Neut(otherwise)) => {
                 if variants.is_empty() {
-                    Neut(otherwise)
+                    Ok(Neut(otherwise))
                 } else {
-                    Self::neutral_row_type(kind, variants, otherwise)
+                    Ok(Self::neutral_row_type(kind, variants, otherwise))
                 }
             }
-            (a, b) => panic!("Cannot extend `{}` by `{}`.", a, b),
+            (a, b) => Err((a, b)),
         }
     }
 

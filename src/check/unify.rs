@@ -165,6 +165,28 @@ fn unify_meta_with(tcs: TCS, term: &Val, mi: MI) -> TCM {
     }
 }
 
+fn unify_neutral_variants(
+    tcs: TCS,
+    a_fields: &Variants,
+    b_fields: &Variants,
+    a_more: &Neutral,
+    b_more: &Neutral,
+    kind: VarRec,
+) -> TCM {
+    let (more, less, more_r, less_r) = match a_fields.len().cmp(&b_fields.len()) {
+        Ordering::Equal => {
+            return tcs
+                .unify_variants(kind, a_fields, b_fields)?
+                .unify_neutral(a_more, b_more);
+        }
+        Ordering::Greater => (a_fields.clone(), b_fields, a_more, b_more),
+        Ordering::Less => (b_fields.clone(), a_fields, b_more, a_more),
+    };
+    // `less` should be exhausted
+    let (rest, tcs) = unify_partial_variants(tcs, more, less, kind)?;
+    tcs.unify_neutral(&Neutral::Row(kind, rest, Box::new(more_r.clone())), less_r)
+}
+
 fn unify_partial_variants(
     mut tcs: TCS,
     mut more: Variants,
@@ -283,22 +305,11 @@ fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
         (Lift(x, a), Lift(y, b)) if x == y => tcs.unify_neutral(&**a, &**b),
         (App(f, a), App(g, b)) if a.len() == b.len() => (a.iter().zip(b.iter()))
             .try_fold(tcs.unify_neutral(&*f, &*g)?, |tcs, (x, y)| tcs.unify(x, y)),
-        (Rec(a_fields, a_more), Rec(b_fields, b_more)) if a_fields.len() == b_fields.len() => tcs
-            .unify_variants(VarRec::Record, a_fields, b_fields)?
-            .unify_neutral(&**a_more, &**b_more),
+        (Rec(a_f, a_more), Rec(b_f, b_more)) => {
+            unify_neutral_variants(tcs, a_f, b_f, &**a_more, &**b_more, VarRec::Record)
+        }
         (Row(a_kind, a_fields, a_more), Row(b_kind, b_fields, b_more)) if a_kind == b_kind => {
-            let (more, less, more_r, less_r) = match a_fields.len().cmp(&b_fields.len()) {
-                Ordering::Equal => {
-                    return tcs
-                        .unify_variants(*a_kind, a_fields, b_fields)?
-                        .unify_neutral(&**a_more, &**b_more);
-                }
-                Ordering::Greater => (a_fields.clone(), b_fields, a_more, b_more),
-                Ordering::Less => (b_fields.clone(), a_fields, b_more, a_more),
-            };
-            // `less` should be exhausted
-            let (rest, tcs) = unify_partial_variants(tcs, more, less, *a_kind)?;
-            tcs.unify_neutral(&Row(*a_kind, rest, more_r.clone()), &**less_r)
+            unify_neutral_variants(tcs, a_fields, b_fields, &**a_more, &**b_more, *a_kind)
         }
         (Snd(a), Snd(b)) | (Fst(a), Fst(b)) => tcs.unify_neutral(&**a, &**b),
         (Proj(a, lab_a), Proj(b, lab_b)) if lab_a == lab_b => tcs.unify_neutral(&**a, &**b),
