@@ -1,12 +1,12 @@
 //
 // Created by Dependently-Typed Lambda Calculus on 2019-08-23
-// only-if-you-have-x
+// project-poly
 // Author: ice10
 //
 
-val only_if_you_have_x
+val project_poly
    :  (A : Type)
    -> (r : Rec [x])
    -> Rec { x: A; ... = r }
    -> A;
-let only_if_you_have_x = \A R r. r.x;
+let project_poly = \A R r. r.x;

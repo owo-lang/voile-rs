@@ -4,6 +4,7 @@ use voile_util::tags::VarRec;
 use crate::syntax::core::{CaseSplit, Closure, Neutral, TraverseNeutral, Val, Variants};
 
 use super::monad::{TCE, TCM, TCS};
+use std::cmp::Ordering;
 
 fn check_solution(meta: MI, rhs: Val) -> TCM<()> {
     rhs.try_fold_neutral((), |(), neut| match neut {
@@ -147,16 +148,20 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
             let (more, tcs) = unify_partial_variants(tcs, more.clone(), less, *kind0)?;
             tcs.unify(&RowPoly(*kind0, more), &Neut(*ext.clone()))
         }
-        (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => match &tcs.meta_context.solution(*mi) {
-            MetaSolution::Unsolved => solve_with(tcs, *mi, term.clone()),
-            MetaSolution::Solved(solution) => {
-                let val = *solution.clone();
-                tcs.unify(&val, term)
-            }
-            MetaSolution::Inlined => unreachable!(),
-        },
+        (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => unify_meta_with(tcs, term, *mi),
         (Neut(a), Neut(b)) => tcs.unify_neutral(a, b),
         (e, t) => Err(TCE::CannotUnify(e.clone(), t.clone())),
+    }
+}
+
+fn unify_meta_with(tcs: TCS, term: &Val, mi: MI) -> TCM {
+    match &tcs.meta_context.solution(mi) {
+        MetaSolution::Unsolved => solve_with(tcs, mi, term.clone()),
+        MetaSolution::Solved(solution) => {
+            let val = *solution.clone();
+            tcs.unify(&val, term)
+        }
+        MetaSolution::Inlined => unreachable!(),
     }
 }
 
@@ -281,11 +286,19 @@ fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
         (Rec(a_fields, a_more), Rec(b_fields, b_more)) if a_fields.len() == b_fields.len() => tcs
             .unify_variants(VarRec::Record, a_fields, b_fields)?
             .unify_neutral(&**a_more, &**b_more),
-        (Row(a_kind, a_fields, a_more), Row(b_kind, b_fields, b_more))
-            if a_kind == b_kind && a_fields.len() == b_fields.len() =>
-        {
-            tcs.unify_variants(*a_kind, a_fields, b_fields)?
-                .unify_neutral(&**a_more, &**b_more)
+        (Row(a_kind, a_fields, a_more), Row(b_kind, b_fields, b_more)) if a_kind == b_kind => {
+            let (more, less, more_r, less_r) = match a_fields.len().cmp(&b_fields.len()) {
+                Ordering::Equal => {
+                    return tcs
+                        .unify_variants(*a_kind, a_fields, b_fields)?
+                        .unify_neutral(&**a_more, &**b_more);
+                }
+                Ordering::Greater => (a_fields.clone(), b_fields, a_more, b_more),
+                Ordering::Less => (b_fields.clone(), a_fields, b_more, a_more),
+            };
+            // `less` should be exhausted
+            let (rest, tcs) = unify_partial_variants(tcs, more, less, *a_kind)?;
+            tcs.unify_neutral(&Row(*a_kind, rest, more_r.clone()), &**less_r)
         }
         (Snd(a), Snd(b)) | (Fst(a), Fst(b)) => tcs.unify_neutral(&**a, &**b),
         (Proj(a, lab_a), Proj(b, lab_b)) if lab_a == lab_b => tcs.unify_neutral(&**a, &**b),
@@ -294,6 +307,7 @@ fn unify_neutral(tcs: TCS, a: &Neutral, b: &Neutral) -> TCM {
                 .unify_neutral(&**a, &**b)
         }
         (Axi(a), Axi(b)) if a.unique_id() == b.unique_id() => Ok(tcs),
+        (Meta(mi), sol) | (sol, Meta(mi)) => unify_meta_with(tcs, &Val::Neut(sol.clone()), *mi),
         (e, t) => Err(TCE::CannotUnify(Val::Neut(e.clone()), Val::Neut(t.clone()))),
     }
 }
