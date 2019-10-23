@@ -65,21 +65,26 @@ impl Val {
 
     /// Extension for records.
     pub fn rec_extend(self, ext: Self) -> Self {
+        let err = format!("Cannot extend `{}` by `{}`.", self, ext);
+        self.rec_extend_safe(ext).expect(&err)
+    }
+
+    pub fn rec_extend_safe(self, ext: Self) -> Result<Self, (Self, Self)> {
         use Val::*;
         match (self, ext) {
             (Rec(mut fields), Rec(mut ext)) => {
                 fields.append(&mut ext);
-                Rec(fields)
+                Ok(Rec(fields))
             }
             (Rec(mut fields), Neut(Neutral::Rec(mut more, ext)))
             | (Neut(Neutral::Rec(mut more, ext)), Rec(mut fields)) => {
                 fields.append(&mut more);
-                Rec(fields).rec_extend(Neut(*ext))
+                Rec(fields).rec_extend_safe(Neut(*ext))
             }
             (Rec(fields), Neut(otherwise)) | (Neut(otherwise), Rec(fields)) => {
-                Self::neutral_record(fields, otherwise)
+                Ok(Self::neutral_record(fields, otherwise))
             }
-            (a, b) => panic!("Cannot extend `{}` by `{}`.", a, b),
+            (a, b) => Err((a, b)),
         }
     }
 

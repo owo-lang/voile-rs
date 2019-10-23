@@ -138,7 +138,7 @@ impl RedEx for Neutral {
             Rec(fields, ext) => {
                 let fields = reduce_variants_with_dbi(fields, dbi, arg);
                 let ext = ext.reduce_with_dbi_borrow(&arg, dbi);
-                Val::Rec(fields).row_extend(ext)
+                Val::Rec(fields).rec_extend(ext)
             }
         }
     }
