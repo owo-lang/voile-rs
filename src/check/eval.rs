@@ -239,6 +239,7 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
             Proj(r, f) => java(r).project(f),
             Meta(mi) => match &tcs.meta_context.solution(mi) {
                 MetaSolution::Solved(val) => *val.clone(),
+                // Type-checking error instead of panicking?
                 MetaSolution::Unsolved => panic!("Cannot eval unsolved meta: {:?}", mi),
                 MetaSolution::Inlined => unreachable!(),
             },
@@ -253,7 +254,7 @@ fn expand_global(tcs: TCS, expr: Val) -> (Val, TCS) {
                 }),
             // Change fields?
             Rec(fields, ext) => {
-                (Val::Rec(fields).row_extend_safe(java(ext))).unwrap_or_else(|(a, b)| {
+                (Val::Rec(fields).rec_extend_safe(java(ext))).unwrap_or_else(|(a, b)| {
                     match (a, b) {
                         (Val::Rec(v), Val::Neut(ext)) => Val::neutral_record(v, ext),
                         _ => unreachable!(),

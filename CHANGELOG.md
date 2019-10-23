@@ -3,6 +3,7 @@
 # 0.2.4
 
 + Add `fall` back
++ Fix the fix to expand-global on neutral terms and a typo
 
 # 0.2.3
 
