@@ -2,20 +2,20 @@ use super::{Closure, Neutral, Val};
 use std::cmp::Ordering;
 use voile_util::level::{
     calc_slice_plus_one_level, calc_tree_map_level, calc_tree_map_plus_one_level, fall_tree_map,
-    lift_tree_map, Level, LevelCalcState, LiftEx,
+    lift_tree_map, Level, LevelCalcState, LevelType, LiftEx,
 };
 
 pub const TYPE_OMEGA: Val = Val::Type(Level::Omega);
 
 macro_rules! define_val_lift {
-    ($lift:ident, $fall:ident, $lift_tree:ident, $op:expr) => {
-        fn $lift(self, levels: u32) -> Val {
+    ($lift:ident, $lift_tree:ident, $op:expr) => {
+        fn $lift(self, levels: LevelType) -> Val {
             match self {
                 Val::Type(l) => Val::Type($op(l, levels)),
                 Val::RowKind(l, k, ls) => Val::RowKind($op(l, levels), k, ls),
                 Val::Lam(closure) => Val::Lam(closure.$lift(levels)),
                 Val::Dt(kind, plicit, param_type, closure) => {
-                    Val::dependent_type(kind, plicit, param_type.$fall(levels), closure.$lift(levels))
+                    Val::dependent_type(kind, plicit, param_type.$lift(levels), closure.$lift(levels))
                 }
                 Val::RowPoly(kind, variants) => Val::RowPoly(kind, $lift_tree(levels, variants)),
                 Val::Rec(fields) => Val::Rec($lift_tree(levels, fields)),
@@ -28,8 +28,8 @@ macro_rules! define_val_lift {
 }
 
 impl LiftEx for Val {
-    define_val_lift!(lift, fall, lift_tree_map, ::std::ops::Add::add);
-    define_val_lift!(fall, lift, fall_tree_map, ::std::ops::Sub::sub);
+    define_val_lift!(lift, lift_tree_map, ::std::ops::Add::add);
+    define_val_lift!(fall, fall_tree_map, ::std::ops::Sub::sub);
 
     fn calc_level(&self) -> LevelCalcState {
         match self {
@@ -47,46 +47,57 @@ impl LiftEx for Val {
     }
 }
 
-impl LiftEx for Neutral {
-    fn lift(self, levels: u32) -> Self {
-        use super::Neutral::*;
-        match self {
-            Lift(n, expr) => Lift(n + levels, expr),
-            Fall(n, expr) => match n.cmp(&levels) {
-                Ordering::Less => Lift(levels - n, expr),
-                Ordering::Equal => *expr,
-                Ordering::Greater => Fall(n - levels, expr),
-            },
-            Var(n) => Var(n),
-            Ref(n) => Lift(levels, Box::new(Ref(n))),
-            Meta(n) => Meta(n),
-            Axi(x) => Axi(x),
-            App(f, args) => App(
-                Box::new(f.lift(levels)),
-                args.into_iter().map(|a| a.lift(levels)).collect(),
-            ),
-            Fst(p) => Fst(Box::new(p.lift(levels))),
-            Snd(p) => Snd(Box::new(p.lift(levels))),
-            Proj(r, n) => Proj(Box::new(r.lift(levels)), n),
-            Row(kind, v, e) => Row(kind, lift_tree_map(levels, v), Box::new(e.lift(levels))),
-            Rec(v, e) => Rec(lift_tree_map(levels, v), Box::new(e.lift(levels))),
-            SplitOn(split, on) => SplitOn(lift_tree_map(levels, split), Box::new(on.lift(levels))),
-            OrSplit(split, or) => OrSplit(lift_tree_map(levels, split), Box::new(or.lift(levels))),
+// I wish this can be type-directed :(
+macro_rules! define_neut_lift {
+    ($lift:ident, $lift_tree:ident, $ref_op:ident, $lift_op:expr, $fall_op:expr) => {
+        fn $lift(self, levels: LevelType) -> Self {
+            use super::Neutral::*;
+            match self {
+                Lift(n, expr) => $lift_op(n, expr, levels),
+                Fall(n, expr) => $fall_op(n, expr, levels),
+                Var(n) => Var(n),
+                Ref(n) => $ref_op(levels, Box::new(Ref(n))),
+                Meta(n) => Meta(n),
+                Axi(x) => Axi(x),
+                App(f, args) => App(
+                    Box::new(f.$lift(levels)),
+                    args.into_iter().map(|a| a.$lift(levels)).collect(),
+                ),
+                Fst(p) => Fst(Box::new(p.$lift(levels))),
+                Snd(p) => Snd(Box::new(p.$lift(levels))),
+                Proj(r, n) => Proj(Box::new(r.$lift(levels)), n),
+                Row(kind, v, e) => Row(kind, $lift_tree(levels, v), Box::new(e.$lift(levels))),
+                Rec(v, e) => Rec($lift_tree(levels, v), Box::new(e.$lift(levels))),
+                SplitOn(split, on) => SplitOn($lift_tree(levels, split), Box::new(on.$lift(levels))),
+                OrSplit(split, or) => OrSplit($lift_tree(levels, split), Box::new(or.$lift(levels))),
+            }
         }
     }
+}
 
-    fn fall(self, levels: u32) -> Self {
-        use super::Neutral::*;
-        match self {
-            Fall(n, expr) => Lift(n + levels, expr),
-            Lift(n, expr) => match n.cmp(&levels) {
-                Ordering::Less => Fall(levels - n, expr),
-                Ordering::Equal => *expr,
-                Ordering::Greater => Lift(n - levels, expr),
-            },
-            e => Fall(levels, Box::new(e)),
+impl LiftEx for Neutral {
+    define_neut_lift!(
+        lift,
+        lift_tree_map,
+        Lift,
+        |n: LevelType, expr: Box<Neutral>, levels: LevelType| Lift(n + levels, expr),
+        |n: LevelType, expr: Box<Neutral>, levels: LevelType| match n.cmp(&levels) {
+            Ordering::Less => Lift(levels - n, expr),
+            Ordering::Equal => *expr,
+            Ordering::Greater => Fall(n - levels, expr),
         }
-    }
+    );
+    define_neut_lift!(
+        fall,
+        fall_tree_map,
+        Fall,
+        |n: LevelType, expr: Box<Neutral>, levels: LevelType| match n.cmp(&levels) {
+            Ordering::Less => Fall(levels - n, expr),
+            Ordering::Equal => *expr,
+            Ordering::Greater => Lift(n - levels, expr),
+        },
+        |n: LevelType, expr: Box<Neutral>, levels: LevelType| Lift(n + levels, expr)
+    );
 
     fn calc_level(&self) -> LevelCalcState {
         use super::Neutral::*;
@@ -115,7 +126,7 @@ impl LiftEx for Neutral {
 
 macro_rules! define_clos_lift {
     ($lift:ident, $lift_tree:ident) => {
-        fn $lift(self, levels: u32) -> Self {
+        fn $lift(self, levels: LevelType) -> Self {
             use super::Closure::*;
             match self {
                 Plain(body) => Self::plain(body.$lift(levels)),

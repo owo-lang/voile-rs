@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.2.4
+
++ Add `fall` back
+
 # 0.2.3
 
 + Inline metas more eagerly (#178)
