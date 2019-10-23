@@ -35,7 +35,7 @@ visitor or object-algebra in Java, or finally-tagless or DTALC in Haskell).
 + Dependent type goodies
   + Pi/Sigma
 
-### Extensible ADTs
+### Extensible Data Types
 
 Voile supports sum-types (coproduct), record-types (product) and their
 instances as first-class language components.
@@ -78,9 +78,7 @@ $$
 \newcommand{\T}[0]{\texttt{Rec} \\{\xx:A, ...=r\\}}
 \begin{alignedat}{2}
 &\texttt{getX}&&:\forall A: \T \rarr A \\\\ \space
-&\texttt{getX}&&=\lambda s. (s.\xx) \\\\ \space
-&\texttt{setX}&&:\forall A: \T \rarr A \rarr \T \\\\ \space
-&\texttt{setX}&&= [\text{syntax undecided yet}]
+&\texttt{getX}&&=\lambda s. (s.\xx)
 \end{alignedat}
 $$
 
@@ -139,8 +137,11 @@ val not : Bool -> Bool;
 let not = notTrue (notFalse whatever);
 ```
 
+There's another good [example][ex-2] that uses implicit argument syntax.
+
 Extensible variant type is also useful for simulating exception-handling.
 
+ [ex-2]: https://github.com/owo-lang/voile-rs/blob/master/samples/row-polymorphism/solve-ext-meta.voile
  [rec-calc]: https://dl.acm.org/citation.cfm?id=218572
  [ext-rec]: https://wiki.haskell.org/Extensible_record
  [row-poly]: https://en.wikipedia.org/wiki/Row_polymorphism

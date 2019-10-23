@@ -41,6 +41,9 @@ and the *next* language after Voile is [Narc].
   from Voile's implementation with some util codes
 + Windows binary download by [AppVeyor][av-url]
 
+The most good-looking example is
+[this one](samples/row-polymorphism/solve-ext-meta.voile).
+
 ## Install
 
 You can install the voile type-checker by this command
