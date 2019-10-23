@@ -136,6 +136,17 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
         (Rec(a_fields), Rec(b_fields)) if a_fields.len() == b_fields.len() => {
             tcs.unify_variants(VarRec::Record, a_fields, b_fields)
         }
+        (Rec(more), Neut(Neutral::Rec(less, ext))) | (Neut(Neutral::Rec(less, ext)), Rec(more)) => {
+            let (more, tcs) = unify_partial_variants(tcs, more.clone(), less, VarRec::Record)?;
+            tcs.unify(&Rec(more), &Neut(*ext.clone()))
+        }
+        (RowPoly(kind0, more), Neut(Neutral::Row(kind1, less, ext)))
+        | (Neut(Neutral::Row(kind1, less, ext)), RowPoly(kind0, more))
+            if kind0 == kind1 =>
+        {
+            let (more, tcs) = unify_partial_variants(tcs, more.clone(), less, *kind0)?;
+            tcs.unify(&RowPoly(*kind0, more), &Neut(*ext.clone()))
+        }
         (term, Neut(Meta(mi))) | (Neut(Meta(mi)), term) => match &tcs.meta_context.solution(*mi) {
             MetaSolution::Unsolved => solve_with(tcs, *mi, term.clone()),
             MetaSolution::Solved(solution) => {
@@ -147,6 +158,20 @@ fn unify(tcs: TCS, a: &Val, b: &Val) -> TCM {
         (Neut(a), Neut(b)) => tcs.unify_neutral(a, b),
         (e, t) => Err(TCE::CannotUnify(e.clone(), t.clone())),
     }
+}
+
+fn unify_partial_variants(
+    mut tcs: TCS,
+    mut more: Variants,
+    less: &Variants,
+    kind: VarRec,
+) -> TCM<(Variants, TCS)> {
+    for (lab, term) in less {
+        tcs = (more.remove(lab))
+            .ok_or_else(|| TCE::MissingVariant(kind, lab.to_owned()))
+            .and_then(|t| tcs.unify(term, &t))?;
+    }
+    Ok((more, tcs))
 }
 
 /**

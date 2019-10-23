@@ -4,6 +4,7 @@
 
 + Inline metas more eagerly (#178)
 + Improve pest utility
++ Unification now unifies extension
 
 # 0.2.2
 
