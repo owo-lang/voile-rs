@@ -1,0 +1,14 @@
+Parse successful.
+sign: ({set0} -> ({Rec0 {x}} -> (Rec {x: [1] | [0]} -> [2])))
+body: (\ ([0].x))
+sign: set1
+body: Rec {}
+sign: Rec {}
+body: {||}
+sign: (Rec0 {x, b} -> set1)
+body: (\ Rec {b: Rec {}, x: Rec {} | [0]})
+sign: ({Rec0 {x, b}} -> ([0] -> Rec {b: Rec {}, x: Rec {} | [1]}))
+body: (\ {|b = {||}, x = {||}, ... = [0]|})
+sign: Rec {}
+body: {||}
+Checkmate, dram!

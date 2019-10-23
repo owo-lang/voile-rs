@@ -1,0 +1,26 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-10-23
+// solve-ext-meta
+// Author: ice10
+//
+
+val project_poly
+   :  {A : Type}
+   -> {r : Rec [x]}
+   -> Rec { x: A; ... = r }
+   -> A;
+let project_poly = \r. r.x;
+
+let Unit = Rec {};
+
+val unit : Unit;
+let unit = {| |};
+
+val ThreeUnit : Rec [x b] -> Type1;
+let ThreeUnit = \r. Rec { x: Unit; b: Unit; ... = r };
+
+val threeUnit : {r : Rec [x b]} -> r -> ThreeUnit r;
+let threeUnit = \r. {| x = unit; b = unit; ... = r |};
+
+val solve_ext_meta : Unit;
+let solve_ext_meta = project_poly (threeUnit unit);

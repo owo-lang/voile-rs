@@ -5,7 +5,7 @@
 + Inline metas more eagerly (#178)
 + Improve pest utility
 + Unification now unifies extension
-+ Fix expand-global on neutral terms
++ Fix expand-global on neutral terms and a typo
 
 # 0.2.2
 
