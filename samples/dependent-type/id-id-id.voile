@@ -1,0 +1,16 @@
+//
+// Created by Dependently-Typed Lambda Calculus on 2019-10-23
+// id-id-id
+// Author: ice10
+//
+
+val ID : Type1;
+let ID = (A : Type) -> A -> A;
+
+val id: ID;
+let id = \A a. a;
+
+let id_id_id = (^id) ID ((^id) ID
+  ((^id) ID ((^id) ID
+  ((^id) ID ((^id) ID
+  ((^id) ID ((^id) ID id)))))));

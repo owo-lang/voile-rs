@@ -1,0 +1,8 @@
+Parse successful.
+sign: set1
+body: (set0 -> ([0] -> [1]))
+sign: (set0 -> ([0] -> [1]))
+body: (\ (\ [0]))
+sign: (set0 -> ([0] -> [1]))
+body: (\ (\ [0]))
+Checkmate, dram!
