@@ -190,8 +190,10 @@ pub enum Neutral {
     Ref(GI),
     /// Meta variable reference.
     Meta(MI),
-    /// Lifting self to a higher/lower level.
+    /// Lifting self to a higher level.
     Lift(LevelType, Box<Self>),
+    /// Down-lifting self to a lower level.
+    Fall(LevelType, Box<Self>),
     /// Postulated value, aka axioms.
     Axi(Axiom),
     /// Function application, with all arguments collected
@@ -236,6 +238,7 @@ impl Neutral {
             Ref(n) => Ref(n),
             Meta(n) => Meta(n),
             Lift(levels, expr) => Lift(levels, Box::new(expr.map_axiom(f))),
+            Fall(levels, expr) => Fall(levels, Box::new(expr.map_axiom(f))),
             Row(kind, variants, ext) => {
                 let variants = variants.into_iter().map(map_val).collect();
                 Row(kind, variants, Box::new(ext.map_axiom(f)))

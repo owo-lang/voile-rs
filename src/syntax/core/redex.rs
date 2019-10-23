@@ -90,6 +90,7 @@ impl RedEx for Neutral {
             Snd(pair) => pair.reduce_with_dbi(arg, dbi).second(),
             Proj(rec, field) => rec.reduce_with_dbi(arg, dbi).project(field),
             Lift(levels, neut) => neut.reduce_with_dbi(arg, dbi).lift(levels),
+            Fall(levels, neut) => neut.reduce_with_dbi(arg, dbi).fall(levels),
             Row(kind, variants, ext) => {
                 let variants = reduce_variants_with_dbi(variants, dbi, &arg);
                 let ext = ext.reduce_with_dbi(arg, dbi);
@@ -128,6 +129,7 @@ impl RedEx for Neutral {
             Snd(pair) => pair.reduce_with_dbi_borrow(arg, dbi).second(),
             Proj(pair, field) => pair.reduce_with_dbi_borrow(arg, dbi).project(field),
             Lift(levels, neut) => neut.reduce_with_dbi_borrow(arg, dbi).lift(levels),
+            Fall(levels, neut) => neut.reduce_with_dbi_borrow(arg, dbi).fall(levels),
             Row(kind, variants, ext) => {
                 let variants = reduce_variants_with_dbi(variants, dbi, arg);
                 let ext = ext.reduce_with_dbi_borrow(&arg, dbi);
