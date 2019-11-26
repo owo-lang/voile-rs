@@ -20,11 +20,11 @@ rustdoc-args = ["--html-in-header", "rustdoc/katex-header.html", "--document-pri
 
 [dependencies]
 pest = "2.1.2"
-pest_derive = "2.1.0"
-voile-util = { version = "0.2.0", features = ["parser", "lisp"] }
-clap = { version = "2.33.0", optional = true }
+pest_derive = "2.1"
+voile-util = { version = "0.2", features = ["parser", "lisp"] }
+clap = { version = "2.33", optional = true }
 structopt = { version = "0.3", optional = true }
-rustyline = { version = "5.0.0", optional = true }
+rustyline = { version = "5.0", optional = true }
 minitt-util = { version = "0.2.2", features = ["cli", "repl"], optional = true }
 
 [features]
