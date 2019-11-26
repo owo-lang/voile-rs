@@ -19,6 +19,12 @@ pub struct Ident {
     pub text: String,
 }
 
+impl Ident {
+    pub fn new(loc: Loc, text: String) -> Self {
+        Self { loc, text }
+    }
+}
+
 impl ToLoc for Ident {
     fn loc(&self) -> Loc {
         self.loc

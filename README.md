@@ -4,6 +4,7 @@
 [![Crates.io](https://img.shields.io/crates/v/voile.svg)][lib-rs]
 [![Crates.io](https://img.shields.io/crates/l/voile.svg)][crates]
 [![docs.rs](https://docs.rs/voile/badge.svg)][doc-rs]
+[![Actions Status][ga-svg]][ga-url]
 [![dep-svg]][dep-rs]
 
  [crates]: https://crates.io/crates/voile/
@@ -15,6 +16,8 @@
  [icon]: https://raw.githubusercontent.com/owo-lang/voile-rs/master/rustdoc/icon.svg?sanitize=true
  [Narc]: https://github.com/owo-lang/narc-rs
  [minitt]: https://github.com/owo-lang/minitt-rs
+ [ga-svg]: https://github.com/owo-lang/voile-rs/workflows/build/badge.svg
+ [ga-url]: https://github.com/owo-lang/voile-rs/actions
 
 Voile is a dependently-typed programming language with a non-dependent version
 of row-polymorphism, meta variable resolution and implicit parameter syntax.
@@ -33,11 +36,17 @@ and the *next* language after Voile is [Narc].
 + [Code Examples](samples), which also acts as integration test suites
 + [Utilities Library](voile-util), a rust crate extracted
   from Voile's implementation with some util codes
++ [**Binary Download**][ga-url] on GitHub Actions page for
+  Windows, Ubuntu and macOS
 
 The most good-looking example is
 [this one](samples/row-polymorphism/solve-ext-meta.voile).
 
 ## Install
+
+The most recommended way of installation is to download the prebuilt binaries
+from [GitHub Actions page][ga-url].
+Here's [how to find them](https://github.com/actions/upload-artifact).
 
 You can install the voile type-checker by this command
 (cargo installation and rust stable toolchain are assumed):

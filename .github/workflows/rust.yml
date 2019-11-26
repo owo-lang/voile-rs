@@ -23,17 +23,17 @@ jobs:
     - uses: actions/upload-artifact@master
       if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
       with:
-        name: voile-ubuntu
-        path: target/release/voile
+          name: voilec-ubuntu
+        path: target/release/voilec
 
     - uses: actions/upload-artifact@master
       if: matrix.os == 'macOS-latest' && matrix.rust == 'stable'
       with:
-        name: voile-macos
-        path: target/release/voile
+        name: voilec-macos
+        path: target/release/voilec
 
     - uses: actions/upload-artifact@master
       if: matrix.os == 'windows-latest' && matrix.rust == 'stable'
       with:
-        name: voile-windows
-        path: target/release/voile.exe
+        name: voilec-windows
+        path: target/release/voilec.exe
