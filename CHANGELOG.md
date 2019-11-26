@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.2.5
+
++ Replace AppVeyor + CircleCI with GitHub Actions
+
 # 0.2.4
 
 + Add `fall` back
