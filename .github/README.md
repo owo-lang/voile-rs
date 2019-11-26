@@ -31,16 +31,16 @@ and the *next* language after Voile is [Narc].
 ![][icon]
 
 + [Docs.rs][doc-rs] documentation, including KaTeX-rendered typing rules
-+ [Change Log](CHANGELOG.md), useful resource for tracking language evolution
++ [Change Log](../CHANGELOG.md), useful resource for tracking language evolution
 + [IntelliJ Plugin][plugin], which can export your code as clickable HTML
-+ [Code Examples](samples), which also acts as integration test suites
-+ [Utilities Library](voile-util), a rust crate extracted
++ [Code Examples](../samples), which also acts as integration test suites
++ [Utilities Library](../voile-util), a rust crate extracted
   from Voile's implementation with some util codes
 + [**Binary Download**][ga-url] on GitHub Actions page for
   Windows, Ubuntu and macOS
 
 The most good-looking example is
-[this one](samples/row-polymorphism/solve-ext-meta.voile).
+[this one](../samples/row-polymorphism/solve-ext-meta.voile).
 
 ## Install
 

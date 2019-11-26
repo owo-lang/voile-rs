@@ -23,7 +23,7 @@ jobs:
     - uses: actions/upload-artifact@master
       if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
       with:
-          name: voilec-ubuntu
+        name: voilec-ubuntu
         path: target/release/voilec
 
     - uses: actions/upload-artifact@master
