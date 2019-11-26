@@ -1,61 +1,63 @@
 extern crate voile;
 
-use voile::check::check_decls;
-use voile::check::monad::TCS;
-use voile::syntax::abs::trans_decls_contextual;
-
 use crate::repl::code_to_abs;
 use minitt_util::repl::ReplEnvType;
+use voile::check::check_decls;
+use voile::check::monad::TCS;
+use voile::syntax::abs::{trans_decls_contextual, TransState};
 
 mod args;
 mod repl;
 mod util;
 
+fn main_file(
+    file_ref: Option<&String>,
+    quiet: bool,
+    parse_only: bool,
+) -> Option<(TCS, TransState)> {
+    let decls = util::parse_file(file_ref?)?;
+    if !quiet {
+        println!("Parse successful.");
+    }
+    if parse_only {
+        return None;
+    }
+
+    // Translate to abstract syntax
+    let abs_decls = trans_decls_contextual(Default::default(), decls).unwrap_or_else(|err| {
+        eprintln!("{}", err);
+        eprintln!("Nou!");
+        std::process::exit(1)
+    });
+
+    // Type Check
+    let mut tcs = TCS::default();
+    tcs.meta_context
+        .expand_with_fresh_meta(abs_decls.meta_count);
+    let checked = check_decls(tcs, abs_decls.decls.clone()).unwrap_or_else(|err| {
+        eprintln!("{}", err);
+        eprintln!("Change my mind!");
+        std::process::exit(1)
+    });
+
+    if !quiet {
+        for (ty, val) in checked.gamma.iter().zip(checked.env.iter()) {
+            println!("sign: {}", ty.ast);
+            println!("body: {}", val.ast);
+        }
+
+        // Meme: https://github.com/owo-lang/voile-rs/issues/56
+        println!("Checkmate, dram!");
+    }
+
+    Some((checked, abs_decls))
+}
+
 fn main() {
     let args = args::pre();
 
-    let decls = args.file.as_ref().and_then(|s| util::parse_file(s));
-    let mut checked = decls
-        .map(|decls| {
-            if !args.quiet {
-                println!("Parse successful.");
-            }
-
-            if !args.parse_only {
-                // Translate to abstract syntax
-                let abs_decls =
-                    trans_decls_contextual(Default::default(), decls).unwrap_or_else(|err| {
-                        eprintln!("{}", err);
-                        eprintln!("Nou!");
-                        std::process::exit(1)
-                    });
-
-                // Type Check
-                let mut tcs = TCS::default();
-                tcs.meta_context
-                    .expand_with_fresh_meta(abs_decls.meta_count);
-                let checked = check_decls(tcs, abs_decls.decls.clone()).unwrap_or_else(|err| {
-                    eprintln!("{}", err);
-                    eprintln!("Change my mind!");
-                    std::process::exit(1)
-                });
-
-                if !args.quiet {
-                    for (ty, val) in checked.gamma.iter().zip(checked.env.iter()) {
-                        println!("sign: {}", ty.ast);
-                        println!("body: {}", val.ast);
-                    }
-
-                    // Meme: https://github.com/owo-lang/voile-rs/issues/56
-                    println!("Checkmate, dram!");
-                }
-
-                (checked, abs_decls)
-            } else {
-                Default::default()
-            }
-        })
-        .unwrap_or_default();
+    let mut checked =
+        main_file(args.file.as_ref(), args.quiet, args.parse_only).unwrap_or_default();
 
     if let Some(abs) = args
         .evaluate
