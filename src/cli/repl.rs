@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use minitt_util::repl::{repl as repl_impl, MiniHelper, ReplEnvType};
+use minitt_util::io::history_file;
 use rustyline::Editor;
 
 use voile::check::monad::{TCM, TCS as TCMS};
@@ -208,6 +209,7 @@ fn create_editor() -> Editor<MiniHelper> {
 
 pub fn repl(tcs: TCS, repl_kind: Option<ReplEnvType>) {
     if let Some(kind) = repl_kind {
-        repl_impl(tcs, PROMPT, kind, create_editor, welcome_message, work);
+        let history = || history_file("voilec").ok();
+        repl_impl(tcs, PROMPT, kind, create_editor, history, welcome_message, work);
     }
 }

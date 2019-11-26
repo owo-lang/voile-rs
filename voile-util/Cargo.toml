@@ -11,8 +11,8 @@ documentation = "https://docs.rs/voile-util"
 repository = "https://github.com/owo-lang/voile-rs"
 
 [badges]
-appveyor = { repository = "owo-lang/voile-rs", service = "github" }
-circle-ci = { repository = "owo-lang/voile-rs", branch = "master" }
+# appveyor = { repository = "owo-lang/voile-rs", service = "github" }
+# circle-ci = { repository = "owo-lang/voile-rs", branch = "master" }
 maintenance = { status = "passively-maintained" }
 
 [dependencies]

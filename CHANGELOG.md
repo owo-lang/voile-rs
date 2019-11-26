@@ -3,6 +3,7 @@
 # 0.2.5
 
 + Replace AppVeyor + CircleCI with GitHub Actions
++ Support saving & loading command line history
 
 # 0.2.4
 
