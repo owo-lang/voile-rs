@@ -14,10 +14,8 @@ mod util;
 fn main() {
     let args = args::pre();
 
-    let mut checked = args
-        .file
-        .clone()
-        .and_then(|s| util::parse_file(s.as_str()))
+    let decls = args.file.as_ref().and_then(|s| util::parse_file(s));
+    let mut checked = decls
         .map(|decls| {
             if !args.quiet {
                 println!("Parse successful.");
