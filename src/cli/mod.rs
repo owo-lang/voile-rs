@@ -25,9 +25,9 @@ fn main() {
 
             if !args.parse_only {
                 // Translate to abstract syntax
-                let abs_decls = trans_decls_contextual(Default::default(), decls)
-                    .map_err(|err| eprintln!("{}", err))
-                    .unwrap_or_else(|()| {
+                let abs_decls =
+                    trans_decls_contextual(Default::default(), decls).unwrap_or_else(|err| {
+                        eprintln!("{}", err);
                         eprintln!("Nou!");
                         std::process::exit(1)
                     });
@@ -36,12 +36,11 @@ fn main() {
                 let mut tcs = TCS::default();
                 tcs.meta_context
                     .expand_with_fresh_meta(abs_decls.meta_count);
-                let checked = check_decls(tcs, abs_decls.decls.clone())
-                    .map_err(|err| eprintln!("{}", err))
-                    .unwrap_or_else(|()| {
-                        eprintln!("Change my mind!");
-                        std::process::exit(1)
-                    });
+                let checked = check_decls(tcs, abs_decls.decls.clone()).unwrap_or_else(|err| {
+                    eprintln!("{}", err);
+                    eprintln!("Change my mind!");
+                    std::process::exit(1)
+                });
 
                 if !args.quiet {
                     for (ty, val) in checked.gamma.iter().zip(checked.env.iter()) {
