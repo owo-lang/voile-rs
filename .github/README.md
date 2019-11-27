@@ -46,7 +46,7 @@ The most good-looking example is
 
 The most recommended way of installation is to download the prebuilt binaries
 from [GitHub Actions page][ga-url].
-Here's [how to find them](https://github.com/actions/upload-artifact).
+Here's [how to find them](https://github.com/actions/upload-artifact#where-does-the-upload-go).
 
 You can install the voile type-checker by this command
 (cargo installation and rust stable toolchain are assumed):
