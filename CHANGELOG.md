@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.2.6
+
++ Improve CLI implementation
++ Add `Sub` impl for `DBI`-like types
+
 # 0.2.5
 
 + Replace AppVeyor + CircleCI with GitHub Actions
