@@ -9,6 +9,14 @@ macro_rules! uid_basic_operations_impl {
             }
         }
 
+        impl std::ops::Sub<usize> for $name {
+            type Output = $name;
+
+            fn sub(self, rhs: usize) -> Self::Output {
+                Self(self.0 - rhs)
+            }
+        }
+
         impl std::ops::Add<u32> for $name {
             type Output = $name;
 
@@ -17,11 +25,27 @@ macro_rules! uid_basic_operations_impl {
             }
         }
 
+        impl std::ops::Sub<u32> for $name {
+            type Output = $name;
+
+            fn sub(self, rhs: u32) -> Self::Output {
+                self.sub(rhs as usize)
+            }
+        }
+
         impl std::ops::Add<i32> for $name {
             type Output = $name;
 
             fn add(self, rhs: i32) -> Self::Output {
                 Self(((self.0 as i32) + rhs) as usize)
+            }
+        }
+
+        impl std::ops::Sub<i32> for $name {
+            type Output = $name;
+
+            fn sub(self, rhs: i32) -> Self::Output {
+                Self(((self.0 as i32) - rhs) as usize)
             }
         }
 
@@ -39,9 +63,29 @@ macro_rules! uid_basic_operations_impl {
             }
         }
 
+        impl std::ops::Sub for $name {
+            type Output = $name;
+
+            fn sub(self, rhs: $name) -> Self::Output {
+                Self(self.0 - rhs.0)
+            }
+        }
+
+        impl std::ops::SubAssign<usize> for $name {
+            fn sub_assign(&mut self, rhs: usize) {
+                self.0 -= rhs
+            }
+        }
+
         impl std::ops::AddAssign for $name {
             fn add_assign(&mut self, rhs: $name) {
                 self.0 += rhs.0
+            }
+        }
+
+        impl std::ops::SubAssign for $name {
+            fn sub_assign(&mut self, rhs: $name) {
+                self.0 -= rhs.0
             }
         }
 
