@@ -3,6 +3,7 @@
 # 0.2.6
 
 + Improve CLI implementation
++ Upgrade minitt-util
 + Add `Sub` impl for `DBI`-like types
 
 # 0.2.5
